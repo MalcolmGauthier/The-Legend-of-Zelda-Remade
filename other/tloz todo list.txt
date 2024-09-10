@@ -1,0 +1,15 @@
+tloz todo list:
+
+bugs:
+
+
+to make:
+- get dungeon working
+- add item collision to sword
+- make fire a projectile
+- make bombs a projectile
+- add enemy buffer anti-respawn
+- finish sfx
+	- item get
+	- fairy appearence
+	- water

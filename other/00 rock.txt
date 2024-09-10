@@ -1,0 +1,60 @@
+00// rock
+01// ground
+02// rock T
+03// black hole
+04// rock TR
+05// rock TL
+06// rock BR
+07// rock BL
+08// rock snail
+09// tree
+0a// water
+0b// water L
+0c// water TL
+0d// water T
+0e// water TR
+0f// water R
+10// water BR
+11// water B
+12// water BL
+13// ladder
+14// dock
+15// stairs
+16// sand
+17// waterfall
+18// waterfall bottom
+19// tombstone
+1a// stump TL
+1b// stump BL
+1c// stump BR
+1d// stump TR
+1e// stump face
+1f// ruins TL
+20// ruins BL
+21// ruins TR
+22// ruins BR
+23// ruins face 1 eye
+24// ruins face 2 eyes
+25// statue
+26// water I TR
+27// water I TL
+28// water I BL
+29// water I BR
+2a// blowable rock
+2b// burnable tree
+2c// fast travel staircase
+2d// water raft tile
+2e// invisible half block used by ladder & pushable rock
+2f// idem but yflip
+
+dungeon:
+00// basic walkable tile
+01// basic block
+02// water
+03// left statue
+04// right statue
+05// sand
+06// stairs
+07// black void
+08// gray bricks
+09// gray stairs

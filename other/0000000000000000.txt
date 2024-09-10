@@ -1,0 +1,16 @@
+0d = -20r
+1d = +10r
+2d = +30r
+3d = +100r
+4d = potion seller
+5d = gambling
+6d = take any road you want
+7d = shop: shield160, key100, candle60
+8d = shop: shield90, bait100, heart10
+9d = shop: shield130, bomb20, arrow80
+Ad = shop: key80, ring250, bait60
+Bd = new item
+Cd = payed advice
+Dd = free advice
+E = dungeon
+Fd = heart container or red potion
