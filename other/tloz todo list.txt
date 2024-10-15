@@ -1,7 +1,11 @@
 tloz todo list:
 
 bugs:
-
+- fire from candle glitched
+- candle does not reset in dungeon screen load
+- boomerang hits link
+- menu auto-selects slot 0 even when other slots filled
+- dying does not reset screen to bottom middle
 
 to make:
 - get dungeon working

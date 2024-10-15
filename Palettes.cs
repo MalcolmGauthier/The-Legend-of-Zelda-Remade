@@ -1,6 +1,89 @@
 ﻿using static SDL2.SDL;
 namespace The_Legend_of_Zelda
 {
+    public enum Color : byte
+    {
+        DARK_GRAY,
+        DARK_BLUE,
+        BLUE,
+        DARK_INDIGO,
+        PURPLE,
+        MAGENTA,
+        RED,
+        BROWN,
+        DARK_YELLOW,
+        DARK_GREEN,
+        GREEN,
+        FOREST_GREEN,
+        AQUA,
+        NULL_DO_NOT_USE,
+        BLACK_0E,
+        BLACK_0F,
+
+        GRAY,
+        SEMI_LIGHT_BLUE,
+        SMEI_DARK_BLUE,
+        INDIGO,
+        SEMI_DARK_PURPLE,
+        ROSE,
+        RED_ORANGE,
+        DARK_GOLD,
+        OLIVE,
+        SEMI_DARK_GREEN,
+        SEMI_LIGHT_GREEN,
+        EVERGREEN,
+        DARK_CYAN,
+        BLACK,
+        BLACK_1E,
+        BLACK_1F,
+
+        WHITE,
+        LIGHT_BLUE,
+        LIGHT_INDIGO,
+        LIGHT_PURPLE,
+        PINK,
+        LIGHT_RED,
+        LIGHT_ORANGE,
+        GOLD,
+        LIGHT_OLIVE,
+        LIGHT_GREEN,
+        LIME,
+        TURQUOISE,
+        CYAN,
+        DARKER_GRAY,
+        BLACK_2E,
+        BLACK_2F,
+
+        WHITE_30,
+        LIGHTER_BLUE,
+        LIGHTER_INDIGO,
+        LIGHTER_PURPLE,
+        LIGHTER_PINK,
+        LIGHTER_RED,
+        LIGHTER_ORANGE,
+        BEIGE,
+        LIGHT_YELLOW,
+        LIGHTER_GREEN,
+        LIGHT_LIME,
+        LIGHT_TURQUOISE,
+        LIGHT_CYAN,
+        LIGHT_GRAY_3D,
+        BLACK_3E,
+        BLACK_3F
+    }
+
+    public enum PaletteID
+    {
+        BG_0,
+        BG_1,
+        BG_2,
+        BG_3,
+        SP_0,
+        SP_1,
+        SP_2,
+        SP_3
+    }
+
     public unsafe static class Palettes
     {
         const int COLORS_IN_PALETTE = 4;
@@ -29,18 +112,6 @@ namespace The_Legend_of_Zelda
             DUNGEON4_6,
             DUNGEON5_7,
             DUNGEON8_9,
-        }
-
-        public enum PaletteID
-        {
-            BG_0,
-            BG_1,
-            BG_2,
-            BG_3,
-            SP_0,
-            SP_1,
-            SP_2,
-            SP_3
         }
 
         public static byte[] active_palette_list = new byte[COLORS_IN_PALETTE * NUM_PALETTES];
@@ -143,76 +214,6 @@ namespace The_Legend_of_Zelda
             new SDL_Color(){r=0, g=0, b=0, a=255},
             new SDL_Color(){r=0, g=0, b=0, a=255}
         };
-        public enum Color : byte
-        {
-            DARK_GRAY,
-            DARK_BLUE,
-            BLUE,
-            DARK_INDIGO,
-            PURPLE,
-            MAGENTA,
-            RED,
-            BROWN,
-            DARK_YELLOW,
-            DARK_GREEN,
-            GREEN,
-            FOREST_GREEN,
-            AQUA,
-            NULL_DO_NOT_USE,
-            BLACK_0E,
-            BLACK_0F,
-
-            GRAY,
-            SEMI_LIGHT_BLUE,
-            SMEI_DARK_BLUE,
-            INDIGO,
-            SEMI_DARK_PURPLE,
-            ROSE,
-            ORANGE,
-            DARK_GOLD,
-            OLIVE,
-            SEMI_DARK_GREEN,
-            SEMI_LIGHT_GREEN,
-            EVERGREEN,
-            DARK_CYAN,
-            BLACK,
-            BLACK_1E,
-            BLACK_1F,
-
-            WHITE,
-            LIGHT_BLUE,
-            LIGHT_INDIGO,
-            LIGHT_PURPLE,
-            PINK,
-            LIGHT_RED,
-            LIGHT_ORANGE,
-            GOLD,
-            LIGHT_OLIVE,
-            LIGHT_GREEN,
-            LIME,
-            TURQUOISE,
-            CYAN,
-            DARKER_GRAY,
-            BLACK_2E,
-            BLACK_2F,
-
-            WHITE_30,
-            LIGHTER_BLUE,
-            LIGHTER_INDIGO,
-            LIGHTER_PURPLE,
-            LIGHTER_PINK,
-            LIGHTER_RED,
-            LIGHTER_ORANGE,
-            BEIGE,
-            LIGHT_YELLOW,
-            LIGHTER_GREEN,
-            LIGHT_LIME,
-            LIGHT_TURQUOISE,
-            LIGHT_CYAN,
-            LIGHT_GRAY_3D,
-            BLACK_3E,
-            BLACK_3F
-        }
 
         public static bool grayscale_mode = false;
 
@@ -236,9 +237,9 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        public static void LoadPalette(byte active_plt_index, byte active_plt_color, byte color_index)
+        public static void LoadPalette(byte active_plt_index, byte active_plt_color, Color color_index)
         {
-            active_palette_list[active_plt_index * COLORS_IN_PALETTE + active_plt_color] = color_index;
+            active_palette_list[active_plt_index * COLORS_IN_PALETTE + active_plt_color] = (byte)color_index;
         }
 
         public static SDL_Color[] GetPalette()

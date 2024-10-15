@@ -13,7 +13,7 @@ namespace The_Legend_of_Zelda
         public static bool draw_hud_objects = false;
 
         public static sbyte selected_menu_index = 0;
-        public static byte current_B_item = 0;
+        public static SpriteID current_B_item = 0;
         public static byte fire_out = 0;
         static byte rupie_count_display = 0;
         static byte menu_animation_timer = 250;
@@ -33,34 +33,42 @@ namespace The_Legend_of_Zelda
              0b0000101100010100,
              0b0010111111100000,
              0b0000011101000000},
+
             {0b0000001011010000,
              0b0000000011110000,
              0b0000000011110000,
              0b0000101111100000},
+
             {0b0000000000000000,
              0b0000101100010000,
              0b0011111111110000,
              0b0010001101000000},
+
             {0b0000111011110000,
              0b0000111101000000,
              0b0000110100000000,
              0b0000011110000000},
+
             {0b0000011011010000,
              0b0000111010110000,
              0b0000000111110000,
              0b0000101011110000},
+
             {0b0001111111110100,
              0b0011110100111000,
              0b0011000000000000,
              0b0011011100000000},
+
             {0b0001111011111000,
              0b0011111110000000,
              0b0011110101000000,
              0b0011111110101000},
+
             {0b0000000111010000,
              0b0001110111010000,
              0b0010111111010000,
              0b0000010111010000},
+
             {0b0111111111111101,
              0b1111101111101111,
              0b1111111111111111,
@@ -82,7 +90,7 @@ namespace The_Legend_of_Zelda
         {
             if (menu_open)
             {
-                if (Control.IsPressed(Control.Buttons.START) && can_open_menu)
+                if (Control.IsPressed(Buttons.START) && can_open_menu)
                 {
                     menu_animation_timer = 100;
                     can_open_menu = false;
@@ -90,12 +98,12 @@ namespace The_Legend_of_Zelda
 
                 if (can_open_menu)
                 {
-                    if (Control.IsPressed(Control.Buttons.LEFT))
+                    if (Control.IsPressed(Buttons.LEFT))
                     {
                         AutoSwitchBItem(selected_menu_index, false);
                         MoveCursor();
                     }
-                    else if (Control.IsPressed(Control.Buttons.RIGHT))
+                    else if (Control.IsPressed(Buttons.RIGHT))
                     {
                         AutoSwitchBItem(selected_menu_index, true);
                         MoveCursor();
@@ -104,7 +112,7 @@ namespace The_Legend_of_Zelda
             }
             else
             {
-                if (Control.IsPressed(Control.Buttons.START) && can_open_menu)
+                if (Control.IsPressed(Buttons.START) && can_open_menu)
                 {
                     menu_animation_timer = 0;
                     can_open_menu = false;
@@ -164,6 +172,7 @@ namespace The_Legend_of_Zelda
             if (menu_animation_timer < 200)
                 menu_animation_timer++;
         }
+
         public static void InitHUD()
         {
             if (sprites.Contains(map_dot))
@@ -181,6 +190,7 @@ namespace The_Legend_of_Zelda
 
             Textures.DrawHUDBG();
         }
+
         public static void DrawHUD()
         {
             if (!draw_hud_objects)
@@ -376,92 +386,123 @@ namespace The_Legend_of_Zelda
                 }
             }
         }
+
         static void InitMenu()
         {
             sprites.Add(menu_selection_left);
             sprites.Add(menu_selection_right);
+
             if (raft[current_save_file])
             {
-                menu_sprites[0] = new StaticSprite(0x6c, 4, 128, 31);
-                menu_sprites[1] = new StaticSprite(0x6c, 4, 136, 31, xflip: true);
+                menu_sprites[0] = new StaticSprite((byte)SpriteID.RAFT, (byte)PaletteID.SP_0, 128, 31);
+                menu_sprites[1] = new StaticSprite((byte)SpriteID.RAFT, (byte)PaletteID.SP_0, 136, 31, xflip: true);
             }
+
             if (book_of_magic[current_save_file])
             {
-                menu_sprites[2] = new StaticSprite(0x42, 6, 152, 31);
+                menu_sprites[2] = new StaticSprite((byte)SpriteID.BOOK_OF_MAGIC, (byte)PaletteID.SP_2, 152, 31);
             }
+
             if (blue_ring[current_save_file] || red_ring[current_save_file])
             {
-                byte make_ring_red = 5;
+                PaletteID make_ring_red = PaletteID.SP_1;
                 if (red_ring[current_save_file])
-                    make_ring_red++;
+                {
+                    make_ring_red = PaletteID.SP_2;
+                }
 
-                menu_sprites[3] = new StaticSprite(0x46, make_ring_red, 164, 31);
+                menu_sprites[3] = new StaticSprite((byte)SpriteID.RING, (byte)make_ring_red, 164, 31);
             }
+
             if (ladder[current_save_file])
             {
-                menu_sprites[4] = new StaticSprite(0x76, 4, 176, 31);
-                menu_sprites[5] = new StaticSprite(0x76, 4, 184, 31, xflip: true);
+                menu_sprites[4] = new StaticSprite((byte)SpriteID.LADDER, (byte)PaletteID.SP_0, 176, 31);
+                menu_sprites[5] = new StaticSprite((byte)SpriteID.LADDER, (byte)PaletteID.SP_0, 184, 31, xflip: true);
             }
+
             if (magical_key[current_save_file])
             {
-                menu_sprites[6] = new StaticSprite(0x2c, 6, 196, 31);
+                menu_sprites[6] = new StaticSprite((byte)SpriteID.MAGICAL_KEY, (byte)PaletteID.SP_2, 196, 31);
             }
+
             if (power_bracelet[current_save_file])
             {
-                menu_sprites[7] = new StaticSprite(0x4e, 6, 208, 31);
+                menu_sprites[7] = new StaticSprite((byte)SpriteID.POWER_BRACELET, (byte)PaletteID.SP_2, 208, 31);
             }
+
             if (boomerang[current_save_file] || magical_boomerang[current_save_file])
             {
-                byte make_boom_blue = 4;
+                PaletteID make_boom_blue = PaletteID.SP_0;
                 if (magical_boomerang[current_save_file])
-                    make_boom_blue++;
-                menu_sprites[8] = new StaticSprite(0x36, make_boom_blue, 132, 55);
+                {
+                    make_boom_blue = PaletteID.SP_1;
+                }
+
+                menu_sprites[8] = new StaticSprite((byte)SpriteID.BOOMERANG, (byte)make_boom_blue, 132, 55);
             }
+
             if (bomb_count[current_save_file] > 0)
             {
-                menu_sprites[9] = new StaticSprite(0x34, 5, 156, 55);
+                menu_sprites[9] = new StaticSprite((byte)SpriteID.BOMB, (byte)PaletteID.SP_1, 156, 55);
             }
+
             if (arrow[current_save_file] || silver_arrow[current_save_file])
             {
-                byte make_arrow_silver = 4;
+                PaletteID make_arrow_silver = PaletteID.SP_0;
                 if (silver_arrow[current_save_file])
-                    make_arrow_silver++;
-                menu_sprites[10] = new StaticSprite(0x28, make_arrow_silver, 176, 55);
+                {
+                    make_arrow_silver = PaletteID.SP_1;
+                }
+
+                menu_sprites[10] = new StaticSprite((byte)SpriteID.ARROW, (byte)make_arrow_silver, 176, 55);
             }
+
             if (bow[current_save_file])
             {
-                menu_sprites[11] = new StaticSprite(0x2a, 4, 184, 55);
+                menu_sprites[11] = new StaticSprite((byte)SpriteID.BOW, (byte)PaletteID.SP_0, 184, 55);
             }
+
             if (red_candle[current_save_file] || blue_candle[current_save_file])
             {
-                byte make_candle_red = 5;
+                PaletteID make_candle_red = PaletteID.SP_1;
                 if (red_candle[current_save_file])
-                    make_candle_red++;
-                menu_sprites[12] = new StaticSprite(0x26, make_candle_red, 204, 55);
+                {
+                    make_candle_red = PaletteID.SP_2;
+                }
+
+                menu_sprites[12] = new StaticSprite((byte)SpriteID.CANDLE, (byte)make_candle_red, 204, 55);
             }
+
             if (recorder[current_save_file])
             {
-                menu_sprites[13] = new StaticSprite(0x24, 6, 132, 71);
+                menu_sprites[13] = new StaticSprite((byte)SpriteID.RECORDER, (byte)PaletteID.SP_2, 132, 71);
             }
+
             if (bait[current_save_file])
             {
-                menu_sprites[14] = new StaticSprite(0x22, 6, 156, 71);
+                menu_sprites[14] = new StaticSprite((byte)SpriteID.BAIT, (byte)PaletteID.SP_2, 156, 71);
             }
+
             if (red_potion[current_save_file] || blue_potion[current_save_file] || letter[current_save_file])
             {
-                byte make_red = 5;
-                byte is_potion = 0x4c;
+                byte make_red = (byte)PaletteID.SP_1;
+                SpriteID is_potion = SpriteID.MAP;
                 if (red_potion[current_save_file] || blue_potion[current_save_file])
                 {
                     if (red_potion[current_save_file])
-                        make_red++;
-                    is_potion = 0x40;
+                    {
+                        make_red = (byte)PaletteID.SP_2;
+                    }
+
+                    is_potion = SpriteID.POTION;
                 }
-                menu_sprites[15] = new StaticSprite(is_potion, make_red, 180, 71);
+
+                menu_sprites[15] = new StaticSprite((byte)is_potion, make_red, 180, 71);
             }
+
             if (magical_rod[current_save_file])
             {
-                menu_sprites[16] = new StaticSprite(0x4a, 5, 204, 70);
+                menu_sprites[16] = new StaticSprite(0x4a, (byte)PaletteID.SP_1, 204, 70);
             }
 
             for (int i = 0; i < menu_sprites.Length; i++)
@@ -473,6 +514,8 @@ namespace The_Legend_of_Zelda
                 }
             }
         }
+
+        // remove all menu sprites, used when menu closes
         static void RemoveMenu()
         {
             for (int i = 0; i < menu_sprites.Length; i++)
@@ -482,9 +525,11 @@ namespace The_Legend_of_Zelda
                     sprites.Remove(menu_sprites[i]);
                 }
             }
+
             sprites.Remove(menu_selection_left);
             sprites.Remove(menu_selection_right);
         }
+
         public static void MoveCursor()
         {
             sbyte index = (sbyte)Array.IndexOf(menu_item_list, current_B_item);
@@ -497,16 +542,19 @@ namespace The_Legend_of_Zelda
             }
             selected_menu_index = index;
 
-            menu_selection_left.x = (short)(128 + (selected_menu_index & 3) * 24);
-            menu_selection_left.y = (short)(359 + (selected_menu_index >> 2) * 16);
-            menu_selection_right.x = (short)(136 + (selected_menu_index & 3) * 24);
-            menu_selection_right.y = (short)(359 + (selected_menu_index >> 2) * 16);
+            menu_selection_left.x = 128 + (selected_menu_index & 3) * 24;
+            menu_selection_left.y = 359 + (selected_menu_index >> 2) * 16;
+            menu_selection_right.x = 136 + (selected_menu_index & 3) * 24;
+            menu_selection_right.y = 359 + (selected_menu_index >> 2) * 16;
 
             byte switch_to = menu_item_list[selected_menu_index];
             if (switch_to == 0x40 && !blue_potion[current_save_file] && !red_potion[current_save_file])
                 switch_to = 0x4c;
+
             current_B_item = switch_to;
         }
+
+        // draw the big triforce on the menu screen in overworld
         static void DrawTriforce()
         {
             if (GetTriforceFlag(current_save_file, 0))
@@ -515,24 +563,28 @@ namespace The_Legend_of_Zelda
                 Textures.ppu[0x6ce] = 0xe7;
                 Textures.ppu[0x6cf] = 0xf5;
             }
+
             if (GetTriforceFlag(current_save_file, 1))
             {
                 Textures.ppu[0x6b0] = 0xe8;
                 Textures.ppu[0x6d0] = 0xf5;
                 Textures.ppu[0x6d1] = 0xe8;
             }
+
             if (GetTriforceFlag(current_save_file, 2))
             {
                 Textures.ppu[0x6ed] = 0xe7;
                 Textures.ppu[0x70c] = 0xe7;
                 Textures.ppu[0x70d] = 0xf5;
             }
+
             if (GetTriforceFlag(current_save_file, 3))
             {
                 Textures.ppu[0x6f2] = 0xe8;
                 Textures.ppu[0x712] = 0xf5;
                 Textures.ppu[0x713] = 0xe8;
             }
+
             bool piece_4 = GetTriforceFlag(current_save_file, 4);
             bool piece_5 = GetTriforceFlag(current_save_file, 5);
             if (piece_4 || piece_5)
@@ -557,6 +609,7 @@ namespace The_Legend_of_Zelda
                     Textures.ppu[0x70f] = 0xe8;
                 }
             }
+
             bool piece_6 = GetTriforceFlag(current_save_file, 6);
             bool piece_7 = GetTriforceFlag(current_save_file, 7);
             if (piece_6 || piece_7)
@@ -582,19 +635,32 @@ namespace The_Legend_of_Zelda
                 }
             }
         }
+
+        // draw the big map on the menu screen in dungeon
         static void DrawMap()
         {
             // TODO: LOLOLOLOLOLOL gl lmao
         }
+
         public static void DrawHudMap()
         {
-            byte[] tile_locations = { 0x24, 0xfb, 0x67, 0xff };
-            for (int i = 0; i < 4; i++)
+            // chr nametable address for each of the 4 dungeon hud map blocks
+            byte[] tile_locations = { 0x24, 0xfb, 0x67, 0xff }; // none, bottom, top, both
+            const int BIT_MASK = 0b11;
+            const int MASK_BIT_LEN = 2;
+            const int HUD_MAP_WIDTH = 8;
+            const int HUD_MAP_HEIGHT = 4;
+            const int HUD_MAP_OFFSET = 0x62;
+
+            int shift = (HUD_MAP_WIDTH - 1) * MASK_BIT_LEN;
+            for (int i = 0; i < HUD_MAP_HEIGHT; i++)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < HUD_MAP_WIDTH; j++)
                 {
-                    int shift = 14 - (2 * j);
-                    Textures.ppu[0x62 + i * 32 + j] = tile_locations[(hud_dungeon_maps[DungeonCode.current_dungeon, i] & (0b11 << shift)) >> shift];
+                    shift -= MASK_BIT_LEN;
+                    Textures.ppu[HUD_MAP_OFFSET + i * Textures.PPU_WIDTH + j] = tile_locations[
+                        (hud_dungeon_maps[DungeonCode.current_dungeon, i] & (BIT_MASK << shift)) >> shift
+                    ];
                 }
             }
         }

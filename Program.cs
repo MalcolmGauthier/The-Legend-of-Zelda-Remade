@@ -1,9 +1,6 @@
-﻿using System.Reflection;
-using static SDL2.SDL;
-using static SDL2.SDL_image;
+﻿using static SDL2.SDL;
 using static SDL2.SDL_mixer;
-using The_Legend_of_Zelda;
-using static The_Legend_of_Zelda.Screen;
+
 namespace The_Legend_of_Zelda
 {
     public static unsafe class Program
@@ -19,6 +16,8 @@ namespace The_Legend_of_Zelda
             SCREENTEST
         }
 
+        private const double NES_FPS = 60.1; // the NES runs at just under 60.1 frames per second. This is the goal.
+
         public static IntPtr window;
         public static SDL_Event e;
 
@@ -27,7 +26,7 @@ namespace The_Legend_of_Zelda
         public static bool can_pause = false;
 
         public static int gTimer = 0;
-        const int FPS = (int)(10000000 / 60.1);
+        const int FPS = (int)(TimeSpan.TicksPerSecond / NES_FPS);
         static long frame_time;
 
         public static Gamemode gamemode = Gamemode.TITLESCREEN;
@@ -53,7 +52,7 @@ namespace The_Legend_of_Zelda
                     Code();
                     Render();
                 }
-                SDL_RenderPresent(render);
+                SDL_RenderPresent(Screen.render);
 
                 if (!uncap_fps)
                     while (frame_time > DateTime.Now.Ticks - FPS) ;
@@ -71,7 +70,7 @@ namespace The_Legend_of_Zelda
                 #endregion
             }
 
-            SDL_DestroyRenderer(render);
+            SDL_DestroyRenderer(Screen.render);
             SDL_DestroyWindow(window);
             Mix_Quit();
             SDL_Quit();
@@ -85,12 +84,15 @@ namespace The_Legend_of_Zelda
             Palettes.Init();
             Textures.Init();
             Screen.Init();
-            SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
-            SDL_RenderPresent(render);
+            SDL_SetRenderDrawColor(Screen.render, 0, 0, 0, 255);
+            SDL_RenderPresent(Screen.render);
+
             if (uncap_fps)
                 mute_sound = true;
+
             if (screentest)
                 gamemode = Gamemode.SCREENTEST;
+
             Sound.Init();
         }
 
@@ -99,7 +101,7 @@ namespace The_Legend_of_Zelda
             switch (gamemode)
             {
                 case Gamemode.SCREENTEST:
-                    ScreenTest();
+                    Screen.ScreenTest();
                     break;
                 case Gamemode.TITLESCREEN:
                     TitlescreenCode.Tick();
@@ -118,9 +120,9 @@ namespace The_Legend_of_Zelda
                     break;
             }
 
-            for (int i = 0; i < sprites.Count; i++)
+            for (int i = 0; i < Screen.sprites.Count; i++)
             {
-                sprites[i].Action();
+                Screen.sprites[i].Action();
             }
         }
 
@@ -131,7 +133,6 @@ namespace The_Legend_of_Zelda
 
             Screen.Render();
 
-            SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
             if (show_fps)
             {
                 if (last_fps_display + 10000000 < DateTime.Now.Ticks)
@@ -147,41 +148,43 @@ namespace The_Legend_of_Zelda
             }
             if (input_display)
             {
-                SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
-                if (Control.IsHeld(Control.Buttons.LEFT))
-                    SDL_RenderDrawPoint(render, 10, 30);
-                if (Control.IsHeld(Control.Buttons.UP))
-                    SDL_RenderDrawPoint(render, 12, 28);
-                if (Control.IsHeld(Control.Buttons.RIGHT))
-                    SDL_RenderDrawPoint(render, 14, 30);
-                if (Control.IsHeld(Control.Buttons.DOWN))
-                    SDL_RenderDrawPoint(render, 12, 32);
-                if (Control.IsHeld(Control.Buttons.A))
-                    SDL_RenderDrawPoint(render, 30, 29);
-                if (Control.IsHeld(Control.Buttons.B))
-                    SDL_RenderDrawPoint(render, 33, 29);
-                if (Control.IsHeld(Control.Buttons.START))
-                    SDL_RenderDrawPoint(render, 20, 30);
-                if (Control.IsHeld(Control.Buttons.SELECT))
-                    SDL_RenderDrawPoint(render, 23, 30);
+                // held buttons shown as red dots
+                SDL_SetRenderDrawColor(Screen.render, 255, 0, 0, 255);
+                if (Control.IsHeld(Buttons.LEFT))
+                    SDL_RenderDrawPoint(Screen.render, 10, 30);
+                if (Control.IsHeld(Buttons.UP))
+                    SDL_RenderDrawPoint(Screen.render, 12, 28);
+                if (Control.IsHeld(Buttons.RIGHT))
+                    SDL_RenderDrawPoint(Screen.render, 14, 30);
+                if (Control.IsHeld(Buttons.DOWN))
+                    SDL_RenderDrawPoint(Screen.render, 12, 32);
+                if (Control.IsHeld(Buttons.A))
+                    SDL_RenderDrawPoint(Screen.render, 30, 29);
+                if (Control.IsHeld(Buttons.B))
+                    SDL_RenderDrawPoint(Screen.render, 33, 29);
+                if (Control.IsHeld(Buttons.START))
+                    SDL_RenderDrawPoint(Screen.render, 20, 30);
+                if (Control.IsHeld(Buttons.SELECT))
+                    SDL_RenderDrawPoint(Screen.render, 23, 30);
 
-                SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
-                if (Control.IsPressed(Control.Buttons.LEFT))
-                    SDL_RenderDrawPoint(render, 10, 30);
-                if (Control.IsPressed(Control.Buttons.UP))
-                    SDL_RenderDrawPoint(render, 12, 28);
-                if (Control.IsPressed(Control.Buttons.RIGHT))
-                    SDL_RenderDrawPoint(render, 14, 30);
-                if (Control.IsPressed(Control.Buttons.DOWN))
-                    SDL_RenderDrawPoint(render, 12, 32);
-                if (Control.IsPressed(Control.Buttons.A))
-                    SDL_RenderDrawPoint(render, 30, 29);
-                if (Control.IsPressed(Control.Buttons.B))
-                    SDL_RenderDrawPoint(render, 33, 29);
-                if (Control.IsPressed(Control.Buttons.START))
-                    SDL_RenderDrawPoint(render, 20, 30);
-                if (Control.IsPressed(Control.Buttons.SELECT))
-                    SDL_RenderDrawPoint(render, 23, 30);
+                // freshly pressed buttons shown as green dots for 1 frame
+                SDL_SetRenderDrawColor(Screen.render, 0, 255, 0, 255);
+                if (Control.IsPressed(Buttons.LEFT))
+                    SDL_RenderDrawPoint(Screen.render, 10, 30);
+                if (Control.IsPressed(Buttons.UP))
+                    SDL_RenderDrawPoint(Screen.render, 12, 28);
+                if (Control.IsPressed(Buttons.RIGHT))
+                    SDL_RenderDrawPoint(Screen.render, 14, 30);
+                if (Control.IsPressed(Buttons.DOWN))
+                    SDL_RenderDrawPoint(Screen.render, 12, 32);
+                if (Control.IsPressed(Buttons.A))
+                    SDL_RenderDrawPoint(Screen.render, 30, 29);
+                if (Control.IsPressed(Buttons.B))
+                    SDL_RenderDrawPoint(Screen.render, 33, 29);
+                if (Control.IsPressed(Buttons.START))
+                    SDL_RenderDrawPoint(Screen.render, 20, 30);
+                if (Control.IsPressed(Buttons.SELECT))
+                    SDL_RenderDrawPoint(Screen.render, 23, 30);
             }
             //Text.DisplayText(SDL_GetError(), 1, 200, 1);
             //Text.DisplayText(gTimer.ToString(), 10, 40, 1);
@@ -192,21 +195,15 @@ namespace The_Legend_of_Zelda
             if (gamemode != Gamemode.OVERWORLD && gamemode != Gamemode.DUNGEON)
                 return false;
 
-            if (game_paused)
+            if (game_paused && Control.IsPressed(Buttons.SELECT))
             {
-                if (Control.IsPressed(Control.Buttons.SELECT))
-                {
-                    game_paused = false;
-                    Sound.PauseMusic(true);
-                }
+                game_paused = false;
+                Sound.PauseMusic(true);
             }
-            else
+            else if (can_pause && Control.IsPressed(Buttons.SELECT))
             {
-                if (Control.IsPressed(Control.Buttons.SELECT) && can_pause)
-                {
-                    game_paused = true;
-                    Sound.PauseMusic();
-                }
+                game_paused = true;
+                Sound.PauseMusic();
             }
 
             return game_paused;
@@ -214,6 +211,7 @@ namespace The_Legend_of_Zelda
 
         public static unsafe void Screenshot()
         { 
+            // little endian >:(
             byte[] bmp_header =
             {
                 0x42, 0x4D,             // format windows
@@ -248,7 +246,7 @@ namespace The_Legend_of_Zelda
 
                 bw.Write(bmp_header);
 
-                byte* ref_screen = (byte*)((SDL_Surface*)window_surface)->pixels;
+                byte* ref_screen = (byte*)((SDL_Surface*)Screen.window_surface)->pixels;
 
                 for (int y = 239; y >= 0; y--)
                 {
@@ -290,9 +288,9 @@ namespace The_Legend_of_Zelda
         // toutes ces valeures peuvent êtres complètements différentes d'une image à l'autre, mais marchent mieux avec un changement lent.
         public static short extra_y = 0;
         public static int ret_length = 0, text_tick = 0;
-        private static void DisplayChar(char charac, short x, short y, byte size, short i, byte r, byte g, byte b, byte a)
+        private static void DisplayChar(char charac, int x, int y, byte size, short i, byte r, byte g, byte b, byte a)
         {
-            SDL_SetRenderDrawColor(render, r, g, b, a);
+            SDL_SetRenderDrawColor(Screen.render, r, g, b, a);
             y += extra_y;
             x -= (short)ret_length;
             if (x + size * 5 > 256)
@@ -303,294 +301,294 @@ namespace The_Legend_of_Zelda
             switch (charac)
             {
                 case 'a':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case 'b':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 3 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 3 * size, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x, y + 5 * size, x + 5 * size, y + 7 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 7 * size, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 3 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 3 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 5 * size, x + 5 * size, y + 7 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 7 * size, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case 'c':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case 'd':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 2 * size, y);
-                    SDL_RenderDrawLine(render, x + 2 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 2 * size, y + 10 * size, x + 5 * size, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 2 * size, y, x + 5 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 2 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 2 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 2 * size, y + 10 * size, x + 5 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 2 * size, y, x + 5 * size, y + 5 * size);
                     break;
                 case 'e':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case 'f':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case 'g':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x + 5 * size, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x + 3 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x + 5 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x + 3 * size, y + 5 * size);
                     break;
                 case 'h':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case 'i':
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, (int)(x + 2.5f * size), y, (int)(x + 2.5f * size), y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, (int)(x + 2.5f * size), y, (int)(x + 2.5f * size), y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case 'j':
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y + 7 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y + 7 * size);
                     break;
                 case 'k':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y + 5 * size, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x, y + 5 * size, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y + 5 * size, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x, y + 5 * size, x + 5 * size, y + 10 * size);
                     break;
                 case 'l':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case 'm':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y, (int)(x + 2.5f * size), y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, (int)(x + 2.5f * size), y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, (int)(x + 2.5f * size), y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, (int)(x + 2.5f * size), y + 5 * size);
                     break;
                 case 'n':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y + 10 * size);
                     break;
                 case 'o':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case 'p':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case 'q':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 4 * size, y, x + 4 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y, x + 4 * size, y);
-                    SDL_RenderDrawLine(render, x + 4 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x + 3 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 4 * size, y, x + 4 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 4 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 4 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x + 3 * size, y + 5 * size);
                     break;
                 case 'r':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 2 * size, y + 5 * size, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 2 * size, y + 5 * size, x + 5 * size, y + 10 * size);
                     break;
                 case 's':
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x, y, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x + 5 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x + 5 * size, y + 5 * size);
                     break;
                 case 't':
-                    SDL_RenderDrawLine(render, (int)(x + 2.5f * size), y, (int)(x + 2.5f * size), y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, (int)(x + 2.5f * size), y, (int)(x + 2.5f * size), y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
                     break;
                 case 'u':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case 'v':
-                    SDL_RenderDrawLine(render, x, y, (int)(x + 2.5f * size), y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, (int)(x + 2.5f * size), y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, (int)(x + 2.5f * size), y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, (int)(x + 2.5f * size), y + 10 * size);
                     break;
                 case 'w':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, (int)(x + 2.5f * size), y + 10 * size, (int)(x + 2.5f * size), y + 4 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, (int)(x + 2.5f * size), y + 10 * size, (int)(x + 2.5f * size), y + 4 * size);
                     break;
                 case 'x':
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x, y + 10 * size);
                     break;
                 case 'y':
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y, (int)(x + 2.5f * size), y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, (int)(x + 2.5f * size), y + 5 * size);
                     break;
                 case 'z':
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x, y + 10 * size);
                     break;
                 case '0':
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case '1':
-                    SDL_RenderDrawLine(render, x, y + 3 * size, (int)(x + 2.5f * size), y);
-                    SDL_RenderDrawLine(render, (int)(x + 2.5f * size), y, (int)(x + 2.5f * size), y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 3 * size, (int)(x + 2.5f * size), y);
+                    SDL_RenderDrawLine(Screen.render, (int)(x + 2.5f * size), y, (int)(x + 2.5f * size), y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case '2':
-                    SDL_RenderDrawLine(render, x, y + 3 * size, x + 1 * size, y);
-                    SDL_RenderDrawLine(render, x + 1 * size, y, x + 4 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 3 * size, x + 4 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 3 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 3 * size, x + 1 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 1 * size, y, x + 4 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 3 * size, x + 4 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 3 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case '3':
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case '4':
-                    SDL_RenderDrawLine(render, x, y + 5 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 5 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case '5':
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x, y);
-                    SDL_RenderDrawLine(render, x, y + 5 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x + 5 * size, y + 8 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 8 * size, x + 4 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 4 * size, y + 10 * size, x + 1 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 1 * size, y + 10 * size, x, y + 8 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y + 5 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x + 5 * size, y + 8 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 8 * size, x + 4 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 4 * size, y + 10 * size, x + 1 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 1 * size, y + 10 * size, x, y + 8 * size);
                     break;
                 case '6':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x + 5 * size, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x + 5 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case '7':
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x, y + 10 * size);
                     break;
                 case '8':
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
                     break;
                 case '9':
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x, y, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x, y, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case ' ':
                     break;
                 case '.':
-                    SDL_RenderDrawPoint(render, x, y + 10 * size);
+                    SDL_RenderDrawPoint(Screen.render, x, y + 10 * size);
                     break;
                 case ':':
-                    SDL_RenderDrawPoint(render, x, y + 3 * size);
-                    SDL_RenderDrawPoint(render, x, y + 7 * size);
+                    SDL_RenderDrawPoint(Screen.render, x, y + 3 * size);
+                    SDL_RenderDrawPoint(Screen.render, x, y + 7 * size);
                     break;
                 case '\n':
                     extra_y += (short)(13 * size);
                     ret_length = (int)((i + 1) * 8 * size);
                     break;
                 case ',':
-                    SDL_RenderDrawLine(render, x + 2 * size, y + 8 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 2 * size, y + 8 * size, x, y + 10 * size);
                     break;
                 case '\'':
-                    SDL_RenderDrawLine(render, x + 2 * size, y + 2 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 2 * size, y + 2 * size, x, y);
                     break;
                 case 'é':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 1 * size, y - 2, x + 4 * size, y - 4);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 1 * size, y - 2, x + 4 * size, y - 4);
                     break;
                 case 'è':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 1 * size, y - 4, x + 4 * size, y - 2);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 1 * size, y - 4, x + 4 * size, y - 2);
                     break;
                 case 'à':
-                    SDL_RenderDrawLine(render, x + 1 * size, y - 2, x + 4 * size, y);
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y, x + 5 * size, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 1 * size, y - 2, x + 4 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y, x + 5 * size, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
                     break;
                 case '"':
-                    SDL_RenderDrawLine(render, x + 2 * size, y, x + 2 * size, y + 3 * size);
-                    SDL_RenderDrawLine(render, x + 4 * size, y, x + 4 * size, y + 3 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 2 * size, y, x + 2 * size, y + 3 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 4 * size, y, x + 4 * size, y + 3 * size);
                     break;
                 case '-':
-                    SDL_RenderDrawLine(render, x + 1 * size, y + 5 * size, x + 4 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 1 * size, y + 5 * size, x + 4 * size, y + 5 * size);
                     break;
                 case 'ê':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x, y);
-                    SDL_RenderDrawLine(render, x, y, x + 5 * size, y);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y + 10 * size);
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 5 * size, x, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + 1 * size, y - 2, (int)(x + 2.5f * size), y - 4);
-                    SDL_RenderDrawLine(render, x + 4 * size, y - 2, (int)(x + 2.5f * size), y - 4);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x, y, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y + 10 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 5 * size, x, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 1 * size, y - 2, (int)(x + 2.5f * size), y - 4);
+                    SDL_RenderDrawLine(Screen.render, x + 4 * size, y - 2, (int)(x + 2.5f * size), y - 4);
                     break;
                 case '/':
-                    SDL_RenderDrawLine(render, x, y + 10 * size, x + 5 * size, y);
+                    SDL_RenderDrawLine(Screen.render, x, y + 10 * size, x + 5 * size, y);
                     break;
                 case '\\':
-                    SDL_RenderDrawLine(render, x + 5 * size, y + 10 * size, x, y);
+                    SDL_RenderDrawLine(Screen.render, x + 5 * size, y + 10 * size, x, y);
                     break;
                 case '(':
-                    SDL_RenderDrawLine(render, x + 4 * size, y, x + 2 * size, y + 3 * size);
-                    SDL_RenderDrawLine(render, x + 2 * size, y + 3 * size, x + 2 * size, y + 7 * size);
-                    SDL_RenderDrawLine(render, x + 4 * size, y + 10 * size, x + 2 * size, y + 7 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 4 * size, y, x + 2 * size, y + 3 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 2 * size, y + 3 * size, x + 2 * size, y + 7 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 4 * size, y + 10 * size, x + 2 * size, y + 7 * size);
                     break;
                 case ')':
-                    SDL_RenderDrawLine(render, x + 1 * size, y, x + 3 * size, y + 3 * size);
-                    SDL_RenderDrawLine(render, x + 3 * size, y + 3 * size, x + 3 * size, y + 7 * size);
-                    SDL_RenderDrawLine(render, x + 1 * size, y + 10 * size, x + 3 * size, y + 7 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 1 * size, y, x + 3 * size, y + 3 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 3 * size, y + 3 * size, x + 3 * size, y + 7 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 1 * size, y + 10 * size, x + 3 * size, y + 7 * size);
                     break;
                 case '+':
-                    SDL_RenderDrawLine(render, x + 0 * size, y + 5 * size, x + 4 * size, y + 5 * size);
-                    SDL_RenderDrawLine(render, x + (int)(2.5f * size), y + 3 * size, x + (int)(2.5f * size), y + 7 * size);
+                    SDL_RenderDrawLine(Screen.render, x + 0 * size, y + 5 * size, x + 4 * size, y + 5 * size);
+                    SDL_RenderDrawLine(Screen.render, x + (int)(2.5f * size), y + 3 * size, x + (int)(2.5f * size), y + 7 * size);
                     break;
                     //case '':
                     //    break;
             }
         }
-        public static void DisplayText(string text, short x, short y, byte size, int color = 0xFFFFFF, short alpha = 255, int scroll = int.MaxValue)
+        public static void DisplayText(string text, int x, int y, byte size, int color = 0xFFFFFF, short alpha = 255, int scroll = int.MaxValue)
         {
             extra_y = 0;
             ret_length = 0;

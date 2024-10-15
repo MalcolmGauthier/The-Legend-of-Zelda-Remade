@@ -1235,8 +1235,8 @@
                 else if (Link.facing_direction == Direction.RIGHT)
                     new_x = -48;
 
-                if (!(Control.IsHeld(Control.Buttons.UP) || Control.IsHeld(Control.Buttons.DOWN) ||
-                    Control.IsHeld(Control.Buttons.LEFT) || Control.IsHeld(Control.Buttons.RIGHT)))
+                if (!(Control.IsHeld(Buttons.UP) || Control.IsHeld(Buttons.DOWN) ||
+                    Control.IsHeld(Buttons.LEFT) || Control.IsHeld(Buttons.RIGHT)))
                 {
                     new_x = -new_x;
                     new_y = -new_y;

@@ -48,7 +48,7 @@ namespace The_Legend_of_Zelda
             }
             else
             {
-                if (scroll_direction == ScrollDirection.UP)
+                if (scroll_direction == Direction.UP)
                 {
                     if (id < 176)
                         screen_to_apply_to = scroll_destination;

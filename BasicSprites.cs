@@ -62,7 +62,7 @@ namespace The_Legend_of_Zelda
     }
     internal class WaterFallSprite : Sprite
     {
-        public WaterFallSprite(byte tile_index, byte palette_index, short x, short y) : base(tile_index, palette_index)
+        public WaterFallSprite(byte tile_index, byte palette_index, int x, int y) : base(tile_index, palette_index)
         {
             this.x = x;
             this.y = y;
@@ -87,7 +87,7 @@ namespace The_Legend_of_Zelda
         public bool smoke_stage { get; set; } = true;
 
         StaticSprite counterpart = new StaticSprite(0x70, 5, 0, 0);
-        public UndergroundFireSprite(byte tile_index, byte palette_index, short x, short y) : base(tile_index, palette_index)
+        public UndergroundFireSprite(byte tile_index, byte palette_index, int x, int y) : base(tile_index, palette_index)
         {
             this.tile_index = tile_index;
             this.palette_index = palette_index;
@@ -275,7 +275,7 @@ namespace The_Legend_of_Zelda
     }
     internal class StaticFairySprite : FairySprite
     {
-        public StaticFairySprite(short x, short y) : base(x, y)
+        public StaticFairySprite(int x, int y) : base(x, y)
         {
             return;
         }

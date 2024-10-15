@@ -185,13 +185,13 @@ namespace The_Legend_of_Zelda
             {
                 y_scroll = 0;
                 Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 0, 0);
-                Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_0, Palettes.PaletteGroups.TITLESCREEN_1);
-                Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_1, Palettes.PaletteGroups.TITLESCREEN_2);
-                Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_2, Palettes.PaletteGroups.TITLESCREEN_3);
-                Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_3, Palettes.PaletteGroups.TITLESCREEN_4);
-                Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_1, Palettes.PaletteGroups.TITLESCREEN_2);
-                Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_2, Palettes.PaletteGroups.TITLESCREEN_3);
-                Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_3, Palettes.PaletteGroups.TITLESCREEN_4);
+                Palettes.LoadPaletteGroup(PalettedID.BG_0, Palettes.PaletteGroups.TITLESCREEN_1);
+                Palettes.LoadPaletteGroup(PalettedID.BG_1, Palettes.PaletteGroups.TITLESCREEN_2);
+                Palettes.LoadPaletteGroup(PalettedID.BG_2, Palettes.PaletteGroups.TITLESCREEN_3);
+                Palettes.LoadPaletteGroup(PalettedID.BG_3, Palettes.PaletteGroups.TITLESCREEN_4);
+                Palettes.LoadPaletteGroup(PalettedID.SP_1, Palettes.PaletteGroups.TITLESCREEN_2);
+                Palettes.LoadPaletteGroup(PalettedID.SP_2, Palettes.PaletteGroups.TITLESCREEN_3);
+                Palettes.LoadPaletteGroup(PalettedID.SP_3, Palettes.PaletteGroups.TITLESCREEN_4);
                 Sound.PlaySong(Sound.Songs.SPLASH, false);
                 sprites.Clear();
                 intro_scroll_counter = 0;
@@ -283,10 +283,10 @@ namespace The_Legend_of_Zelda
                     sprites.Clear();
                     break;
                 case 945:
-                    Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
+                    Palettes.LoadPaletteGroup(PalettedID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
                     Palettes.LoadPalette(4, 2, 0x37);
-                    Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_1, Palettes.PaletteGroups.HUDSPR_2);
-                    Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_2, Palettes.PaletteGroups.HUDSPR_3);
+                    Palettes.LoadPaletteGroup(PalettedID.SP_1, Palettes.PaletteGroups.HUDSPR_2);
+                    Palettes.LoadPaletteGroup(PalettedID.SP_2, Palettes.PaletteGroups.HUDSPR_3);
                     break;
                 case 1780:
                     sprites.Add(new StaticHeartSprite(72, 834));
@@ -399,7 +399,7 @@ namespace The_Legend_of_Zelda
         }
         static void Startgame()
         {
-            if (Control.IsPressed(Control.Buttons.START))
+            if (Control.IsPressed(Buttons.START))
             {
                 gamemode = Gamemode.FILESELECT;
                 FileSelectCode.InitFileSelect();

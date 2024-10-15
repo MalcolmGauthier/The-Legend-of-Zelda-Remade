@@ -59,7 +59,7 @@ namespace The_Legend_of_Zelda
             item_collected = false;
             side_rupee.unload_during_transition = true;
             side_rupee.shown = true;
-            room_66_timer = 255;
+            level_7_entrance_timer = 255;
             if (overworld)
             {
                 warp_info = screen_warp_info[return_screen];
@@ -356,7 +356,7 @@ namespace The_Legend_of_Zelda
 
             LinkItemCollection();
 
-            if (warp_info == 4 && !potion_shop_activated[current_save_file] && Control.IsPressed(Control.Buttons.B) && Menu.current_B_item == 0x4c)
+            if (warp_info == 4 && !potion_shop_activated[current_save_file] && Control.IsPressed(Buttons.B) && Menu.current_B_item == 0x4c)
             {
                 potion_shop_activated[current_save_file] = true;
                 Link.can_move = false;
@@ -389,6 +389,7 @@ namespace The_Legend_of_Zelda
             switch (return_screen)
             {
                 case 10 or 33:
+                    // TODO: i think this doesn't work if you try gettign the magical sword...
                     if (!SaveLoad.white_sword[current_save_file])
                     {
                         text_row_1 = new byte[19] {0x16,0xa,0x1c,0x1d,0xe,0x1b,0x24,0x1e,0x1c,0x12,0x17,0x10,0x24,0x12,0x1d,0x24,0xa,0x17,0xd}; // MASTER USING IT AND
@@ -443,84 +444,96 @@ namespace The_Legend_of_Zelda
             }
             return true;
         }
+
         static void LinkItemCollection()
         {
             for (int i = 0; i < items.Length; i++)
             {
-                if (items[i].shown && !item_collected)
+                if (!items[i].shown || item_collected)
                 {
-                    if (items[i].x < Link.x + 16 && items[i].x + 8 > Link.x && items[i].y < Link.y + 12 && items[i].y + 12 > Link.y)
-                    {
-                        switch (warp_info)
-                        {
-                            case 1:
-                                Textures.ppu[0x2cf] = 1;
-                                Textures.ppu[0x2d0] = 0;
-                                SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
-                                break;
-                            case 2:
-                                Textures.ppu[0x2cf] = 3;
-                                Textures.ppu[0x2d0] = 0;
-                                SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
-                                break;
-                            case 3:
-                                Textures.ppu[0x2ce] = 1;
-                                Textures.ppu[0x2cf] = 0;
-                                Textures.ppu[0x2d0] = 0;
-                                SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
-                                break;
-                            case 0xb:
-                                if (return_screen == 10 && SaveLoad.nb_of_hearts[current_save_file] < 5)
-                                    return;
-                                else if (return_screen == 33 && SaveLoad.nb_of_hearts[current_save_file] < 12)
-                                    return;
-                                break;
-                            case 0xf:
-                                SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
-                                break;
-                        }
-
-                        if (GiveItem(i + 1))
-                        {
-                            item_get_timer = 0;
-                            items[i].x = (short)Link.x;
-                            items[i].y = (short)(Link.y - 16);
-                            Link.current_action = Link.Action.ITEM_GET;
-                            Link.can_move = false;
-                            if (warp_info == 0xf && i != 0)
-                            {
-                                Link.current_action = Link.Action.ITEM_HELD_UP;
-                                items[1].x = (short)(Link.x + 0);
-                                items[1].y = (short)(Link.y - 16);
-                                items[2].x = (short)(Link.x + 8);
-                                items[2].y = (short)(Link.y - 16);
-                            }
-                            break;
-                        }
-                        item_collected = true;
-                    }
+                    continue;
                 }
+
+                if (!(items[i].x < Link.x + 16 && items[i].x + 8 > Link.x && items[i].y < Link.y + 12 && items[i].y + 12 > Link.y))
+                {
+                    continue;
+                }
+
+                switch (warp_info)
+                {
+                    case 1:
+                        Textures.ppu[0x2cf] = 1;
+                        Textures.ppu[0x2d0] = 0;
+                        SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        break;
+                    case 2:
+                        Textures.ppu[0x2cf] = 3;
+                        Textures.ppu[0x2d0] = 0;
+                        SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        break;
+                    case 3:
+                        Textures.ppu[0x2ce] = 1;
+                        Textures.ppu[0x2cf] = 0;
+                        Textures.ppu[0x2d0] = 0;
+                        SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        break;
+                    case 0xb:
+                        if (return_screen == 10 && SaveLoad.nb_of_hearts[current_save_file] < 5)
+                            return;
+                        else if (return_screen == 33 && SaveLoad.nb_of_hearts[current_save_file] < 12)
+                            return;
+                        break;
+                    case 0xf:
+                        SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        break;
+                }
+
+                if (GiveItem(i + 1))
+                {
+                    item_get_timer = 0;
+                    items[i].x = (short)Link.x;
+                    items[i].y = (short)(Link.y - 16);
+                    Link.current_action = Link.Action.ITEM_GET;
+                    Link.can_move = false;
+                    if (warp_info == 0xf && i != 0)
+                    {
+                        Link.current_action = Link.Action.ITEM_HELD_UP;
+                        items[1].x = (short)(Link.x + 0);
+                        items[1].y = (short)(Link.y - 16);
+                        items[2].x = (short)(Link.x + 8);
+                        items[2].y = (short)(Link.y - 16);
+                    }
+                    break;
+                }
+
+                item_collected = true;
             }
 
-            if (item_get_timer < 150)
+            if (item_get_timer >= 150)
             {
-                item_get_timer++;
+                return;
+            }
 
-                if (item_get_timer < 100)
-                {
-                    for (int i = 0; i < items.Length; i++)
-                        if (items[i].y == 152)
-                            items[i].shown = (Program.gTimer & 1) == 0;
-                }
+            //item get animation
+            item_get_timer++;
 
-                if (item_get_timer == 128)
-                {
-                    item_get_timer += 100;
-                    for (int i = 0; i < items.Length; i++)
-                        items[i].shown = false;
-                }
+            if (item_get_timer < 100)
+            {
+                for (int i = 0; i < items.Length; i++)
+                    if (items[i].y == 152)
+                        items[i].shown = (Program.gTimer & 1) == 0;
+
+                return;
+            }
+
+            if (item_get_timer == 128)
+            {
+                item_get_timer += 100;
+                for (int i = 0; i < items.Length; i++)
+                    items[i].shown = false;
             }
         }
+
         static bool GiveItem(int chosen_item)
         {
             bool able_to_get_item = false;
@@ -810,6 +823,7 @@ namespace The_Legend_of_Zelda
 
             return able_to_get_item;
         }
+
         static void EraseText()
         {
             for (int i = 0x184; i < 0x324; i += 0x20)
@@ -822,6 +836,7 @@ namespace The_Legend_of_Zelda
             if (Screen.sprites.Contains(side_rupee))
                 Screen.sprites.Remove(side_rupee);
         }
+
         public static void SetWarpReturnPosition()
         {
             switch (return_screen)

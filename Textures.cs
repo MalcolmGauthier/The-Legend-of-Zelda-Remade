@@ -15,15 +15,90 @@ namespace The_Legend_of_Zelda
         DASH,
     }
 
+    public enum SpriteID : byte
+    {
+        LINK_SIDE_L1 = 0,
+        LINK_SIDE_R1 = 2,
+        LINK_SIDE_L2 = 4,
+        LINK_SIDE_R2 = 6,
+        LINK_DOWN_L = 8,
+        LINK_DOWN_R = 10,
+        LINK_UP_L = 12,
+        LINK_UP_R = 14,
+        LINK_SIDE_ATK_L = 16,
+        LINK_SIDE_ATK_R = 18,
+        LINK_DOWN_ATK_L = 20,
+        LINK_DOWN_ATK_R = 22,
+        LINK_UP_ATK_L = 24,
+        LINK_UP_ATK_R = 26,
+        BLANK = 28,
+        SELECTOR = 30,
+        SWORD = 32,
+        BAIT = 34,
+        RECORDER = 36,
+        CANDLE = 38,
+        ARROW = 40,
+        BOW = 42,
+        MAGICAL_KEY = 44,
+        KEY = 46,
+        EXPLOSION_PARTICLE = 48,
+        RUPEE = 50,
+        BOMB = 52,
+        BOOMERANG = 54,
+        BOOMERANG_45 = 56,
+        BOOMERANG_90 = 58,
+        SPARK = 60,
+        DOT = 62,
+        POTION = 64,
+        BOOK_OF_MAGIC = 66,
+        FIREBALL = 68,
+        RING = 70,
+        MAGIC_SWORD = 72,
+        ROD = 74,
+        MAP = 76,
+        POWER_BRACELET = 78,
+        FAIRY_1 = 80,
+        FAIRY_2 = 82,
+        LINK_SIDE_R2_SHIELD = 84,
+        MAGICAL_SHIELD = 86,
+        LINK_DOWN_SHIELD_1 = 88,
+        LINK_DOWN_SHIELD_2 = 90,
+        FIRE_L = 92,
+        FIRE_R = 94,
+        LINK_DOWN_MAG_SHIELD = 96,
+        BIG_SPARK_1 = 98,
+        BIG_SPARK_2 = 100,
+        CLOCK = 102,
+        HEART_CONTAINER = 104,
+        COMPASS = 106,
+        RAFT = 108,
+        TRIFORCE = 110,
+        SMOKE_1 = 112,
+        SMOKE_2 = 114,
+        SMOKE_3 = 116,
+        LADDER = 118,
+        LINK_ITEM_GET = 120,
+        MAGIC_BEAM_UP = 122,
+        MAGIC_BEAM_SIDE_1 = 124,
+        MAGIC_BEAM_SIDE_2 = 126,
+        LINK_SIDE_R1_SHIELD = 128,
+        SWORD_SIDE_1 = 130,
+        SWORD_SIDE_2 = 132,
+        ARROW_SIDE_1 = 134,
+        ARROW_SIDE_2 = 136,
+        ROD_SIDE_1 = 138,
+        ROD_SIDE_2 = 140,
+    }
+
     public static class Textures
     {
-        const int PPU_WIDTH = 32;
-        const int PPU_HEIGHT = 30;
-        const int PPU_SCREENS = 4;
-        const int SCREEN_TILES = PPU_WIDTH * PPU_HEIGHT;
-        const int PIXELS_PER_TILE = 64;
-        const int BYTES_PER_CHR_TILE = 16;
-        const int CHR_TILESET_SIZE = 256;
+        public const int PPU_WIDTH = 32;
+        public const int PPU_HEIGHT = 30;
+        public const int PPU_SCREENS = 4;
+        public const int SCREEN_TILES = PPU_WIDTH * PPU_HEIGHT;
+        public const int PIXELS_PER_TILE = 64;
+        public const int BYTES_PER_CHR_TILE = 16;
+        public const int CHR_TILESET_SIZE = 256;
 
         public static byte[] chr_bg = new byte[CHR_TILESET_SIZE * BYTES_PER_CHR_TILE]; // 4096
         public static byte[] chr_sp = new byte[CHR_TILESET_SIZE * BYTES_PER_CHR_TILE]; // 4096

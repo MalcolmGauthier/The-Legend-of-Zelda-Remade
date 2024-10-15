@@ -8,13 +8,19 @@
         static byte selected_option = 0;
         static byte flash_timer = 0;
         static StaticSprite selector = new StaticSprite(0xf2, 6, 80, 0);
+
         public static void Tick()
         {
             if (select_menu)
+            {
                 Selection();
+            }
             else
+            {
                 DeathCutscene();
+            }
         }
+
         static void DeathCutscene()
         {
             if (death_timer == 0)
@@ -74,10 +80,10 @@
             }
             else if (death_timer == 116)
             {
-                Palettes.LoadPalette(2, 1, 0x6);
+                Palettes.LoadPalette(2, 1, Color.RED);
                 Palettes.LoadPalette(2, 2, 0x17);
                 Palettes.LoadPalette(2, 3, 0x16);
-                Palettes.LoadPalette(3, 1, 0x6);
+                Palettes.LoadPalette(3, 1, Color.RED);
                 Palettes.LoadPalette(3, 2, 0x17);
                 Palettes.LoadPalette(3, 3, 0x16);
             }
@@ -156,65 +162,29 @@
             Link.Tick();
             death_timer++;
         }
+
         static void Selection()
         {
-            if (flash_timer > 0)
+            if (flash_timer > 0 || Control.IsPressed(Buttons.START))
             {
                 Flash();
                 return;
             }
 
-            if (Control.IsPressed(Control.Buttons.SELECT))
+            if (Control.IsPressed(Buttons.SELECT))
             {
                 selected_option++;
-                if (selected_option == 3)
-                    selected_option = 0;
+                selected_option %= 3;
             }
 
             selector.y = 48 + 16 * selected_option;
-
-            if (Control.IsPressed(Control.Buttons.START))
-            {
-                flash_timer = 1;
-            }
         }
+
         static void Flash()
         {
             flash_timer++;
 
-            if (flash_timer > 64)
-            {
-                Screen.sprites.Remove(selector);
-                select_menu = false;
-                if (selected_option == 0) // continue
-                {
-                    if (died_in_dungeon)
-                    {
-                        Program.gamemode = Program.Gamemode.DUNGEON;
-                        // TODO: init dungeon # whatever last in
-                    }
-                    else
-                    {
-                        OverworldCode.current_screen = 119;
-                        Program.gamemode = Program.Gamemode.OVERWORLD;
-                        OverworldCode.Init();
-                    }
-                }
-                else
-                {
-                    if (selected_option == 1)
-                        SaveLoad.SaveFile(SaveLoad.current_save_file); // save
-                    else
-                        SaveLoad.LoadFile(SaveLoad.current_save_file); // retry
-
-                    Program.gamemode = Program.Gamemode.FILESELECT;
-                    FileSelectCode.InitFileSelect();
-                }
-                flash_timer = 0;
-                selector.y = 48;
-                return;
-            }
-            else if (flash_timer % 4 == 0)
+            if (flash_timer % 4 == 0)
             {
                 byte new_palette;
                 if (flash_timer % 8 == 0)
@@ -226,6 +196,47 @@
                     Textures.ppu_plt[0xcc + selected_option * 64 + i] = new_palette;
                 }
             }
+
+            if (flash_timer <= 64)
+            {
+                return;
+            }
+
+            Screen.sprites.Remove(selector);
+            select_menu = false;
+            flash_timer = 0;
+            selector.y = 48;
+
+            if (selected_option == 0) // continue
+            {
+                if (died_in_dungeon)
+                {
+                    Program.gamemode = Program.Gamemode.DUNGEON;
+                    DungeonCode.Init(DungeonCode.current_dungeon);
+                }
+                else
+                {
+                    OverworldCode.current_screen = 119;
+                    Program.gamemode = Program.Gamemode.OVERWORLD;
+                    OverworldCode.Init();
+                }
+
+                return;
+            }
+
+            if (selected_option == 1)
+            {
+                SaveLoad.SaveFile(SaveLoad.current_save_file); // save
+            }
+            else
+            {
+                SaveLoad.LoadFile(SaveLoad.current_save_file); // retry
+            }
+
+            Program.gamemode = Program.Gamemode.FILESELECT;
+            FileSelectCode.InitFileSelect();
+
+            return;
         }
     }
 }

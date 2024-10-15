@@ -29,11 +29,11 @@ namespace The_Legend_of_Zelda
             y_scroll = 0;
             sprites.Clear();
             Sound.PauseMusic();
-            Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_0, Palettes.PaletteGroups.GRAVEYARD_HUD1);
-            Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_1, Palettes.PaletteGroups.HUD2);
-            Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
-            Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_1, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
-            Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_2, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
+            Palettes.LoadPaletteGroup(PalettedID.BG_0, Palettes.PaletteGroups.GRAVEYARD_HUD1);
+            Palettes.LoadPaletteGroup(PalettedID.BG_1, Palettes.PaletteGroups.HUD2);
+            Palettes.LoadPaletteGroup(PalettedID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
+            Palettes.LoadPaletteGroup(PalettedID.SP_1, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
+            Palettes.LoadPaletteGroup(PalettedID.SP_2, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
             Palettes.LoadPalette(7, 1, 0x15);
             Palettes.LoadPalette(2, 0, 0x15);
             Palettes.LoadPalette(2, 1, 0x30);
@@ -171,7 +171,7 @@ namespace The_Legend_of_Zelda
         }
         static void FileSelect()
         {
-            if (Control.IsPressed(Control.Buttons.START))
+            if (Control.IsPressed(Buttons.START))
             {
                 if (selected_option < 3)
                 {
@@ -235,7 +235,7 @@ namespace The_Legend_of_Zelda
                 }
             }
 
-            if (Control.IsPressed(Control.Buttons.SELECT))
+            if (Control.IsPressed(Buttons.SELECT))
             {
                 selected_option++;
                 if (selected_option == 5)
@@ -247,7 +247,7 @@ namespace The_Legend_of_Zelda
         }
         static void EliminationMode()
         {
-            if (Control.IsPressed(Control.Buttons.START))
+            if (Control.IsPressed(Buttons.START))
             {
                 if (selected_option < 3)
                 {
@@ -270,7 +270,7 @@ namespace The_Legend_of_Zelda
                     return;
                 }
             }
-            if (Control.IsPressed(Control.Buttons.SELECT))
+            if (Control.IsPressed(Buttons.SELECT))
             {
                 selected_option++;
                 if (selected_option == 4)
@@ -281,7 +281,7 @@ namespace The_Legend_of_Zelda
         }
         static void RegistrationMode()
         {
-            if (Control.IsPressed(Control.Buttons.START) && (selected_option == 3))
+            if (Control.IsPressed(Buttons.START) && (selected_option == 3))
             {
                 for (byte i = 0; i < 3; i++)
                 {
@@ -303,7 +303,7 @@ namespace The_Legend_of_Zelda
                 InitFileSelect();
                 mode = FileSelectMode.FILESELECT;
             }
-            if (Control.IsPressed(Control.Buttons.SELECT))
+            if (Control.IsPressed(Buttons.SELECT))
             {
                 Textures.ppu_plt[0xce + selected_option * 0x60 + selected_name_letter] = 0;
                 selected_option++;
@@ -346,28 +346,28 @@ namespace The_Legend_of_Zelda
                 Textures.ppu_plt[0x226 + (selected_character % 11) * 2 + ((int)Math.Floor(selected_character / 11.0) * 0x40)] = 0;
             }
 
-            if (Control.IsPressed(Control.Buttons.UP) || Control.IsPressed(Control.Buttons.DOWN) || Control.IsPressed(Control.Buttons.LEFT) || Control.IsPressed(Control.Buttons.RIGHT))
+            if (Control.IsPressed(Buttons.UP) || Control.IsPressed(Buttons.DOWN) || Control.IsPressed(Buttons.LEFT) || Control.IsPressed(Buttons.RIGHT))
             {
                 Textures.ppu_plt[0x226 + (selected_character % 11) * 2 + ((int)Math.Floor(selected_character / 11.0) * 0x40)] = 0;
-                if (Control.IsPressed(Control.Buttons.UP))
+                if (Control.IsPressed(Buttons.UP))
                 {
                     selected_character -= 11;
                     if (selected_character < 0)
                         selected_character += 44;
                 }
-                if (Control.IsPressed(Control.Buttons.DOWN))
+                if (Control.IsPressed(Buttons.DOWN))
                 {
                     selected_character += 11;
                     if (selected_character > 43)
                         selected_character -= 44;
                 }
-                if (Control.IsPressed(Control.Buttons.LEFT))
+                if (Control.IsPressed(Buttons.LEFT))
                 {
                     selected_character--;
                     if (selected_character < 0)
                         selected_character = 43;
                 }
-                if (Control.IsPressed(Control.Buttons.RIGHT))
+                if (Control.IsPressed(Buttons.RIGHT))
                 {
                     selected_character++;
                     if (selected_character > 43)
@@ -377,7 +377,7 @@ namespace The_Legend_of_Zelda
                 Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
             }
 
-            if (Control.IsPressed(Control.Buttons.A))
+            if (Control.IsPressed(Buttons.A))
             {
                 if (selected_option != 3)
                 {
@@ -391,7 +391,7 @@ namespace The_Legend_of_Zelda
                 }
             }
 
-            if (Control.IsPressed(Control.Buttons.B))
+            if (Control.IsPressed(Buttons.B))
             {
                 if (selected_option != 3)
                 {

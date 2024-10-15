@@ -77,7 +77,7 @@
                     SaveLoad.SetTriforceFlag(SaveLoad.current_save_file, DungeonCode.current_dungeon, true);
                     Program.gamemode = Program.Gamemode.OVERWORLD;
                     OverworldCode.Init();
-                    Link.SetBGState(true, true, true);
+                    Link.SetBGState(true);
                     Screen.sprites.Remove(counterpart);
                     Screen.sprites.Remove(this);
                     return;

@@ -96,7 +96,7 @@ namespace The_Legend_of_Zelda
             //{
             //    screen = SDL_CreateTextureFromSurface(render, scroll_surface);
             //    scroll_display = new SDL_Rect() { w = 256, h = 240 };
-            //    if (scroll_direction == ScrollDirection.VERTICAL)
+            //    if (scroll_direction == Direction.VERTICAL)
             //    {
             //        scroll_display.x = 0;
             //        scroll_display.y = screen_display.y + 240;

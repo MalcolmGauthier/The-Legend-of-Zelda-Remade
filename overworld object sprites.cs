@@ -265,7 +265,7 @@ namespace The_Legend_of_Zelda
 
                 if (is_overwolrd)
                 {
-                    Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_3, Palettes.PaletteGroups.OVERWORLD_DARK_ENEMIES);
+                    Palettes.LoadPaletteGroup(PalettedID.SP_3, Palettes.PaletteGroups.OVERWORLD_DARK_ENEMIES);
                 }
 
                 Screen.sprites.Remove(counterpart);

@@ -398,7 +398,7 @@ namespace The_Legend_of_Zelda
 
     //internal class TriforcePieceSprite : Sprite
     //{
-    //    public TriforcePieceSprite(short x, short y, bool xflip = false) : base(0x6e, 5)
+    //    public TriforcePieceSprite(int x, int y, bool xflip = false) : base(0x6e, 5)
     //    {
     //        this.x = x;
     //        this.y = y;
@@ -543,7 +543,7 @@ namespace The_Legend_of_Zelda
     {
         byte explosion_timer = 86;
         StaticSprite[] smoke = new StaticSprite[8];
-        public BombSprite(short x, short y) : base(true, true, 4)
+        public BombSprite(int x, int y) : base(true, true, 4)
         {
             direction = Link.facing_direction;
             tile_index = 0x34;
@@ -723,7 +723,7 @@ namespace The_Legend_of_Zelda
     internal class BaitSprite : Sprite
     {
         short existence_timer = 0;
-        public BaitSprite(short x, short y) : base(0x22, 6)
+        public BaitSprite(int x, int y) : base(0x22, 6)
         {
             this.x = x;
             this.y = y;
@@ -744,7 +744,7 @@ namespace The_Legend_of_Zelda
     internal class MagicBeamSprite : ProjectileSprite
     {
         bool attack_or_fire_flag = false;
-        public MagicBeamSprite(short x, short y, Direction direction, bool is_from_link) : base(is_from_link, false, 2)
+        public MagicBeamSprite(int x, int y, Direction direction, bool is_from_link) : base(is_from_link, false, 2)
         {
             tile_index = 0x7a;
             counterpart.tile_index = 0x7a;
@@ -809,7 +809,7 @@ namespace The_Legend_of_Zelda
         bool link_grabbed = false;
         bool second_arrival = true;
         StaticSprite counterpart = new StaticSprite(0x96, 5, 0, 0);
-        public TornadoSprite(short x, short y) : base(0x94, 5)
+        public TornadoSprite(int x, int y) : base(0x94, 5)
         {
             this.x = x;
             this.y = y;
@@ -918,6 +918,7 @@ namespace The_Legend_of_Zelda
             smoke_timer++;
         }
     }
+
     internal class BoomerangSprite : ProjectileSprite
     {
         byte local_timer = 0;
@@ -926,7 +927,7 @@ namespace The_Legend_of_Zelda
         short x_dist_from_link, y_dist_from_link;
         EightDirection m_direction;
 
-        public BoomerangSprite(short x, short y, bool is_from_link) : base(is_from_link, true, 1)
+        public BoomerangSprite(int x, int y, bool is_from_link) : base(is_from_link, true, 1)
         {
             this.x = x;
             this.y = y;
@@ -936,6 +937,7 @@ namespace The_Legend_of_Zelda
             m_direction = FindBoomerangDirection();
             Link.animation_timer = 0;
         }
+
         public override void ProjSpecificActions()
         {
             if (!(tile_index == 0x3c && !returning))
@@ -984,7 +986,8 @@ namespace The_Legend_of_Zelda
             local_timer++;
 
             if (returning)
-            { // https://www.desmos.com/calculator/esasntj0cm
+            {
+                // https://www.desmos.com/calculator/esasntj0cm
                 x_dist_from_link = (short)((x + 4) - (Link.x + 8));
                 y_dist_from_link = (short)((y + 8) - (Link.y + 8));
                 float angle = MathF.Atan(x_dist_from_link / (y_dist_from_link + 0.01f)); // +0.01f auto converts y_dist_from_link to float AND prevents div by 0 error
@@ -1010,71 +1013,80 @@ namespace The_Legend_of_Zelda
                 }
 
                 if (local_timer == 16)
+                {
                     speed = 3;
+                }
+
+                return;
             }
-            else
+
+            if (m_direction is not (EightDirection.UP or EightDirection.DOWN))
             {
-                if ((int)m_direction > 1)
+                if (m_direction is (EightDirection.UP or EightDirection.LEFT or EightDirection.UPLEFT or EightDirection.DOWNLEFT))
+                    x -= speed;
+                else
+                    x += speed;
+            }
+            if (m_direction is not (EightDirection.LEFT or EightDirection.RIGHT))
+            {
+                if (m_direction is (EightDirection.UP or EightDirection.DOWN))
                 {
-                    if ((int)m_direction % 2 == 0)
-                        x -= speed;
-                    else
-                        x += speed;
+                    y += m_direction == EightDirection.UP ? -speed : speed;
                 }
-                if ((int)m_direction != 2 && (int)m_direction != 3)
+                else if (m_direction is (EightDirection.DOWNLEFT or EightDirection.DOWNRIGHT))
                 {
-                    if ((int)m_direction < 2)
-                        y += (short)(6 * ((int)m_direction - 0.5f)); // if else? no thanks.
-                    else if ((int)m_direction > 5)
-                        y += speed;
-                    else
-                        y -= speed;
+                    y += speed;
                 }
+                else
+                {
+                    y -= speed;
+                }
+            }
 
-                if (tile_index == 0x3c)
-                {
-                    returning = true;
-                    local_timer = 0;
-                    Link.animation_timer += 48;
-                    return;
-                }
+            if (tile_index == 0x3c)
+            {
+                returning = true;
+                local_timer = 0;
+                Link.animation_timer += 48;
+                return;
+            }
 
-                if (CheckIfEdgeHit() || hit_target)
-                {
-                    tile_index = 0x3c;
-                    palette_index = 5;
-                }
+            if (CheckIfEdgeHit() || hit_target)
+            {
+                tile_index = 0x3c;
+                palette_index = 5;
+            }
 
-                if (palette_index == 5) // faster way of checking if is magical boomerang
-                    return;
+            if (palette_index == 5) // faster way of checking if is magical boomerang
+                return;
 
-                if (local_timer == 16)
-                {
-                    speed = 1;
-                }
-                else if (local_timer > 34)
-                {
-                    returning = true;
-                    local_timer = 0;
-                }
+            if (local_timer == 16)
+            {
+                speed = 1;
+            }
+            else if (local_timer > 34)
+            {
+                returning = true;
+                local_timer = 0;
             }
         }
+
         EightDirection FindBoomerangDirection()
         {
-            if (Control.IsHeld(Control.Buttons.UP) && !Control.IsHeld(Control.Buttons.DOWN))
+            if (Control.IsHeld(Buttons.UP) && !Control.IsHeld(Buttons.DOWN))
             {
-                if (Control.IsHeld(Control.Buttons.LEFT) && !Control.IsHeld(Control.Buttons.RIGHT))
+                if (Control.IsHeld(Buttons.LEFT) && !Control.IsHeld(Buttons.RIGHT))
                     return EightDirection.UPLEFT;
-                else if (Control.IsHeld(Control.Buttons.RIGHT) && !Control.IsHeld(Control.Buttons.LEFT))
+                else if (Control.IsHeld(Buttons.RIGHT) && !Control.IsHeld(Buttons.LEFT))
                     return EightDirection.UPRIGHT;
                 else
                     return EightDirection.UP;
             }
-            else if (Control.IsHeld(Control.Buttons.DOWN) && !Control.IsHeld(Control.Buttons.UP))
+            else if (Control.IsHeld(Buttons.DOWN) && !Control.IsHeld(Buttons.UP))
             {
-                if (Control.IsHeld(Control.Buttons.LEFT) && !Control.IsHeld(Control.Buttons.RIGHT))
+                if (Control.IsHeld(Buttons.LEFT) && !Control.IsHeld(Buttons.RIGHT))
                     return EightDirection.DOWNLEFT;
-                else if (Control.IsHeld(Control.Buttons.RIGHT) && !Control.IsHeld(Control.Buttons.LEFT))
+                else if (Control.IsHeld(Buttons.RIGHT) && !Control.IsHeld(Buttons.LEFT))
                     return EightDirection.DOWNRIGHT;
                 else
                     return EightDirection.DOWN;
@@ -1085,6 +1097,7 @@ namespace The_Legend_of_Zelda
             }
         }
     }
+
     internal class ArrowSprite : ProjectileSprite
     {
         public ArrowSprite(int x, int y, Direction direction, bool is_from_link) : base(is_from_link, true, 2)
@@ -1098,6 +1111,7 @@ namespace The_Legend_of_Zelda
             this.direction = direction;
             unload_during_transition = true;
             counterpart.unload_during_transition = true;
+
             if (!is_from_link)
             {
                 palette_index = 6;
@@ -1130,8 +1144,11 @@ namespace The_Legend_of_Zelda
             }
 
             if (!single_wide)
+            {
                 Screen.sprites.Add(counterpart);
+            }
         }
+
         public override void ProjSpecificActions()
         {
             if (tile_index == 0x3c)
@@ -1141,19 +1158,18 @@ namespace The_Legend_of_Zelda
                 {
                     Menu.arrow_out = false;
                     Screen.sprites.Remove(this);
-                    return;
                 }
-            }
-            else
-            {
-                Move();
 
-                if (CheckIfEdgeHit())
-                {
-                    palette_index = 5;
-                    tile_index = 0x3c;
-                    Screen.sprites.Remove(counterpart);
-                }
+                return;
+            }
+
+            Move();
+
+            if (CheckIfEdgeHit())
+            {
+                palette_index = 5;
+                tile_index = 0x3c;
+                Screen.sprites.Remove(counterpart);
             }
         }
     }

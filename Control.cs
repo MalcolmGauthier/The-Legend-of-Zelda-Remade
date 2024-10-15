@@ -1,23 +1,25 @@
 ﻿using static SDL2.SDL;
 namespace The_Legend_of_Zelda
 {
+    internal enum Buttons
+    {
+        UP,
+        LEFT,
+        DOWN,
+        RIGHT,
+        A,
+        B,
+        START,
+        SELECT
+    }
+
     internal static class Control
     {
         static byte held_buttons = 0;
         static byte pressed_buttons = 0;
 
         static bool can_screenshot = true;
-        internal enum Buttons
-        {
-            UP,
-            LEFT,
-            DOWN,
-            RIGHT,
-            A,
-            B,
-            START,
-            SELECT
-        }
+
         static void Push(Buttons button)
         {
             byte index = (byte)(1 << (int)button);

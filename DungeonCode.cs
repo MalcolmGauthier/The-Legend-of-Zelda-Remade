@@ -4,6 +4,75 @@ namespace The_Legend_of_Zelda
 {
     public static class DungeonCode
     {
+        public enum DoorType
+        {
+            NONE,
+            OPEN,
+            KEY,
+            BOMBABLE,
+            CLOSED_ENEMY,
+            CLOSED_PUSH,
+            CLOSED_TRIFORCE,
+            CLOSED_ALWAYS,
+            WALK_THROUGH,
+        }
+
+        enum DungeonEnemies
+        {
+            // common dungeon enemies
+            NONE,
+            GEL,
+            BUBBLE,
+            BUBBLE_BLUE,
+            BUBBLE_RED,
+            KEESE,
+            NPC,
+            RAZOR_TRAP,
+            // TODO: proj statues (hardcoded)
+
+            // dungeons 1, 2, 7
+            STALFOS,
+            GORIYA,
+            GORIYA_HARDER,
+            WALLMASTER,
+            ROPE,
+            ROPE_HARDER,
+
+            // dungeons 3, 5, 8
+            ZOL,
+            GIBDO,
+            DARKNUT,
+            DARKNUT_HARDER,
+            POLSVOICE,
+
+            // dungeons 4, 6, 9
+            // ZOL is also here
+            VIRE,
+            LIKELIKE,
+            WIZROBE,
+            WIZROBE_HARDER,
+            LANMOLA,
+            LANMOLA_HARDER,
+        }
+
+        enum Bosses
+        {
+            AQUAMENTUS,
+            DODONGO,
+            DODONGO_TRIPLE,
+            MANHANDLA,
+            GLEEOK,
+            GLEEOK_TRIPLE,
+            GLEEOK_QUADRUPLE,
+            DIGDOGGER,
+            DIGDOGGER_TRIPLE,
+            GOHMA,
+            GOHMA_HARDER,
+            PATRA,
+            MOLDORM,
+            GANON,
+        }
+
         public static byte current_dungeon;
         public static byte current_screen;
         public static byte nb_enemies_alive = 0;
@@ -19,7 +88,7 @@ namespace The_Legend_of_Zelda
         static bool is_dark = false;
 
         public static DoorType[] door_types = new DoorType[4];
-        static OverworldCode.ScrollDirection scroll_direction;
+        static Direction scroll_direction;
         static FlickeringSprite compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
 
         public static readonly byte[] room_list = {
@@ -128,7 +197,6 @@ namespace The_Legend_of_Zelda
             {0xfa,0xfa,0xfa,0xfa}, // bricks
             {0x6f,0x6f,0x6f,0x6f}  // gray stairs
         };
-
         public static readonly uint[] dungeon_enemy_list = {
             0x55550000, 0xbbccc000, 0x2288aa00, 0x60000000, 0x00000000, 0x00000000, 0xffff0001, 0x00005555, 0x60000000, 0x55555555, 0x70000000, 0x00000000, 0x55550000, 0xbbbbbb00, 0x00000000, 0x55550000,
             0xffff0005, 0xaa228800, 0xbbbbbb00, 0xbbcccaaa, 0xffff0009, 0xaa228800, 0x99999000, 0x60000000, 0xffff0003, 0x00000000, 0x99999000, 0xffff0004, 0x00000000, 0x60000000, 0x55555550, 0x60000000,
@@ -157,84 +225,26 @@ namespace The_Legend_of_Zelda
             211, 214, 221, 225, 262, 275, 284, 289, 295, 300, 308, 309, 310, 313, 320, 341, 342, 347, 348, 368, 
             384, 395, 400, 429, 438, 469, 470, 503
         };
+
         public static bool[] door_statuses = new bool[door_types.Length];
-        public enum DoorType
-        {
-            NONE,
-            OPEN,
-            KEY,
-            BOMBABLE,
-            CLOSED_ENEMY,
-            CLOSED_PUSH,
-            CLOSED_TRIFORCE,
-            CLOSED_ALWAYS,
-            WALK_THROUGH,
-        }
-        enum DungeonEnemies
-        {
-            // common dungeon enemies
-            NONE,
-            GEL,
-            BUBBLE,
-            BUBBLE_BLUE,
-            BUBBLE_RED,
-            KEESE,
-            NPC,
-            RAZOR_TRAP,
-            // TODO: proj statues (hardcoded)
 
-            // dungeons 1, 2, 7
-            STALFOS,
-            GORIYA,
-            GORIYA_HARDER,
-            WALLMASTER,
-            ROPE,
-            ROPE_HARDER,
-
-            // dungeons 3, 5, 8
-            ZOL,
-            GIBDO,
-            DARKNUT,
-            DARKNUT_HARDER,
-            POLSVOICE,
-
-            // dungeons 4, 6, 9
-            // ZOL is also here
-            VIRE,
-            LIKELIKE,
-            WIZROBE,
-            WIZROBE_HARDER,
-            LANMOLA,
-            LANMOLA_HARDER,
-        }
-        enum Bosses
-        {
-            AQUAMENTUS,
-            DODONGO,
-            DODONGO_TRIPLE,
-            MANHANDLA,
-            GLEEOK,
-            GLEEOK_TRIPLE,
-            GLEEOK_QUADRUPLE,
-            DIGDOGGER,
-            DIGDOGGER_TRIPLE,
-            GOHMA,
-            GOHMA_HARDER,
-            PATRA,
-            MOLDORM,
-            GANON,
-        }
         public static void Init(byte dungeon)
         {
             Link.knockback_timer = 0;
             Link.iframes_timer = 0;
             Link.facing_direction = Direction.UP;
+
             Menu.InitHUD();
-            Textures.ppu[0x48] = (byte)(dungeon + 1);
+            Textures.ppu[0x48] = (byte)(dungeon + 1); // set number in hud "LEVEL-X"
+
             current_dungeon = dungeon;
             current_screen = starting_screens[current_dungeon];
+
             if (SaveLoad.GetMapFlag(SaveLoad.current_save_file, current_dungeon))
+            {
                 Menu.DrawHudMap();
+            }
+
             LoadPalette();
             Textures.LoadNewRomData(Textures.ROMData.CHR_DUNGEON);
 
@@ -335,8 +345,8 @@ namespace The_Legend_of_Zelda
         {
             if (underground_room)
             {
-                Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_2, Palettes.PaletteGroups.DUNGEON8_9);
-                Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_3, Palettes.PaletteGroups.DUNGEON8_9);
+                Palettes.LoadPaletteGroup(PalettedID.BG_2, Palettes.PaletteGroups.DUNGEON8_9);
+                Palettes.LoadPaletteGroup(PalettedID.BG_3, Palettes.PaletteGroups.DUNGEON8_9);
                 return;
             }
 
@@ -362,9 +372,9 @@ namespace The_Legend_of_Zelda
                     chosen_palette = Palettes.PaletteGroups.DUNGEON8_9;
                     break;
             }
-            Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_2, chosen_palette);
-            Palettes.LoadPaletteGroup(Palettes.PaletteID.BG_3, chosen_palette);
-            Palettes.LoadPaletteGroup(Palettes.PaletteID.SP_3, chosen_palette);
+            Palettes.LoadPaletteGroup(PalettedID.BG_2, chosen_palette);
+            Palettes.LoadPaletteGroup(PalettedID.BG_3, chosen_palette);
+            Palettes.LoadPaletteGroup(PalettedID.SP_3, chosen_palette);
 
             if (current_dungeon + 1 is 2 or 3 or 5 or 9)
                 Palettes.LoadPalette(3, 1, 0x16);
@@ -489,29 +499,29 @@ namespace The_Legend_of_Zelda
 
             if (scroll_animation_timer > 500)
             {
-                if (Link.y < 64 && (Control.IsHeld(Control.Buttons.UP)))
+                if (Link.y < 64 && (Control.IsHeld(Buttons.UP)))
                 {
                     scroll_destination = (byte)(current_screen - 16);
                     scroll_animation_timer = 0;
-                    scroll_direction = OverworldCode.ScrollDirection.UP;
+                    scroll_direction = Direction.UP;
                 }
-                else if (Link.y > 223 && (Control.IsHeld(Control.Buttons.DOWN)))
+                else if (Link.y > 223 && (Control.IsHeld(Buttons.DOWN)))
                 {
                     scroll_destination = (byte)(current_screen + 16);
                     scroll_animation_timer = 0;
-                    scroll_direction = OverworldCode.ScrollDirection.DOWN;
+                    scroll_direction = Direction.DOWN;
                 }
-                else if (Link.x < 1 && Control.IsHeld(Control.Buttons.LEFT))
+                else if (Link.x < 1 && Control.IsHeld(Buttons.LEFT))
                 {
                     scroll_destination = (byte)(current_screen - 1);
                     scroll_animation_timer = 0;
-                    scroll_direction = OverworldCode.ScrollDirection.LEFT;
+                    scroll_direction = Direction.LEFT;
                 }
-                else if (Link.x > 239 && (Control.IsHeld(Control.Buttons.RIGHT) || tornado_out))
+                else if (Link.x > 239 && (Control.IsHeld(Buttons.RIGHT) || tornado_out))
                 {
                     scroll_destination = (byte)(current_screen + 1);
                     scroll_animation_timer = 0;
-                    scroll_direction = OverworldCode.ScrollDirection.RIGHT;
+                    scroll_direction = Direction.RIGHT;
                 }
             }
             else
@@ -523,7 +533,7 @@ namespace The_Legend_of_Zelda
                     UnloadSpritesRoomTransition();
                     ResetLinkPowerUps();
 
-                    if (room_list[current_screen] == 1 && scroll_direction == OverworldCode.ScrollDirection.DOWN)
+                    if (room_list[current_screen] == 1 && scroll_direction == Direction.DOWN)
                     {
                         Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
                         Program.gamemode = Program.Gamemode.OVERWORLD;
@@ -543,11 +553,11 @@ namespace The_Legend_of_Zelda
                         dark_room_animation_timer = 22;
                     }
 
-                    if (scroll_direction == OverworldCode.ScrollDirection.DOWN)
+                    if (scroll_direction == Direction.DOWN)
                     {
                         Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 1);
                     }
-                    else if (scroll_direction == OverworldCode.ScrollDirection.UP)
+                    else if (scroll_direction == Direction.UP)
                     {
                         Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, current_screen, 1);
                         Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 0);
@@ -561,11 +571,11 @@ namespace The_Legend_of_Zelda
                     Link.can_move = false;
                 }
 
-                if (scroll_direction == OverworldCode.ScrollDirection.UP || scroll_direction == OverworldCode.ScrollDirection.DOWN)
+                if (scroll_direction == Direction.UP || scroll_direction == Direction.DOWN)
                 {
                     if ((Program.gTimer % 4) == 0)
                     {
-                        if (scroll_direction == OverworldCode.ScrollDirection.UP)
+                        if (scroll_direction == Direction.UP)
                         {
                             y_scroll -= 8;
                             if (Program.gTimer % 3 == 0)
@@ -588,7 +598,7 @@ namespace The_Legend_of_Zelda
                 }
                 else
                 {
-                    if (scroll_direction == OverworldCode.ScrollDirection.LEFT)
+                    if (scroll_direction == Direction.LEFT)
                     {
                         x_scroll -= 2;
                         if (Program.gTimer % 4 == 0)
@@ -627,11 +637,11 @@ namespace The_Legend_of_Zelda
                 y_scroll = 0;
                 Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 0);
                 current_screen = scroll_destination;
-                if (scroll_direction == OverworldCode.ScrollDirection.UP)
+                if (scroll_direction == Direction.UP)
                     Link.SetPos(new_y: 223);
-                else if (scroll_direction == OverworldCode.ScrollDirection.DOWN)
+                else if (scroll_direction == Direction.DOWN)
                     Link.SetPos(new_y: 65);
-                else if (scroll_direction == OverworldCode.ScrollDirection.LEFT)
+                else if (scroll_direction == Direction.LEFT)
                     Link.SetPos(new_x: 239);
                 else
                     Link.SetPos(new_x: 1);
