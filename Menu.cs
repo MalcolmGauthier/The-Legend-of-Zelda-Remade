@@ -186,7 +186,7 @@ namespace The_Legend_of_Zelda
             sprites.Add(hud_sword);
             sprites.Add(hud_B_item);
 
-            rupie_count_display = rupy_count[current_save_file];
+            rupie_count_display = rupy_count;
 
             Textures.DrawHUDBG();
         }
@@ -208,19 +208,19 @@ namespace The_Legend_of_Zelda
                 return;
             }
 
-            if (magical_sword[current_save_file])
+            if (magical_sword)
             {
                 hud_sword.shown = true;
                 hud_sword.tile_index = 0x48;
                 hud_sword.palette_index = 6;
             }
-            else if (white_sword[current_save_file])
+            else if (white_sword)
             {
                 hud_sword.shown = true;
                 hud_sword.tile_index = 0x20;
                 hud_sword.palette_index = 5;
             }
-            else if (wooden_sword[current_save_file])
+            else if (wooden_sword)
             {
                 hud_sword.shown = true;
                 hud_sword.tile_index = 0x20;
@@ -231,14 +231,14 @@ namespace The_Legend_of_Zelda
 
             DisplayBItem();
 
-            if (bomb_count[current_save_file] > bomb_limit[current_save_file])
-                bomb_count[current_save_file] = bomb_limit[current_save_file];
+            if (bomb_count > bomb_limit)
+                bomb_count = bomb_limit;
 
-            if (current_B_item == 0x34 && bomb_count[current_save_file] == 0)
+            if (current_B_item == 0x34 && bomb_count == 0)
             {
                 AutoSwitchBItem(1);
             }
-            else if (current_B_item == 0x22 && !bait[current_save_file])
+            else if (current_B_item == 0x22 && !bait)
             {
                 AutoSwitchBItem(5);
             }
@@ -261,13 +261,13 @@ namespace The_Legend_of_Zelda
             }
 
             skip_showing_items:
-            if (rupie_count_display != rupy_count[current_save_file] && (Program.gTimer & 1) == 0)
+            if (rupie_count_display != rupy_count && (Program.gTimer & 1) == 0)
             {
-                if (rupie_count_display > rupy_count[current_save_file])
+                if (rupie_count_display > rupy_count)
                 {
                     rupie_count_display--;
                 }
-                else if (rupie_count_display < rupy_count[current_save_file])
+                else if (rupie_count_display < rupy_count)
                 {
                     rupie_count_display++;
                 }
@@ -291,7 +291,7 @@ namespace The_Legend_of_Zelda
                 Textures.ppu[0x6e] = 0x24;
             }
 
-            if (magical_key[current_save_file])
+            if (magical_key)
             {
                 Textures.ppu[0xac] = 0x21;
                 Textures.ppu[0xad] = 0xa;
@@ -299,7 +299,7 @@ namespace The_Legend_of_Zelda
             }
             else
             {
-                byte keys = key_count[current_save_file];
+                byte keys = key_count;
                 if (keys >= 100)
                     Textures.ppu[0xac] = (byte)Math.Floor(keys / 100.0);
                 else
@@ -317,7 +317,7 @@ namespace The_Legend_of_Zelda
                 }
             }
 
-            byte bombs = bomb_count[current_save_file];
+            byte bombs = bomb_count;
             Textures.ppu[0xcc] = 0x21;
             if (bombs >= 10)
             {
@@ -330,7 +330,7 @@ namespace The_Legend_of_Zelda
                 Textures.ppu[0xce] = 0x24;
             }
 
-            for (int i = 0; i < nb_of_hearts[current_save_file]; i++)
+            for (int i = 0; i < nb_of_hearts; i++)
             {
                 if (Link.hp >= i + 1)
                     Textures.ppu[0xd6 + i + ((i >> 3) * -40)] = 0xf2;
@@ -352,26 +352,26 @@ namespace The_Legend_of_Zelda
                     switch (current_B_item)
                     {
                         case 0x26:
-                            if (red_candle[current_save_file])
+                            if (red_candle)
                                 hud_B_item.palette_index = 6;
                             else
                                 hud_B_item.palette_index = 5;
                             break;
                         case 0x28:
-                            if (silver_arrow[current_save_file])
+                            if (silver_arrow)
                                 hud_B_item.palette_index = 5;
                             else
                                 hud_B_item.palette_index = 4;
                             break;
 
                         case 0x36:
-                            if (magical_boomerang[current_save_file])
+                            if (magical_boomerang)
                                 hud_B_item.palette_index = 5;
                             else
                                 hud_B_item.palette_index = 4;
                             break;
                         case 0x40:
-                            if (red_potion[current_save_file])
+                            if (red_potion)
                                 hud_B_item.palette_index = 6;
                             else
                                 hud_B_item.palette_index = 5;

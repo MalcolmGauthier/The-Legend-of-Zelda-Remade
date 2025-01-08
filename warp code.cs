@@ -1,11 +1,39 @@
 ﻿using static The_Legend_of_Zelda.OverworldCode;
-using static The_Legend_of_Zelda.SaveLoad;
-using static The_Legend_of_Zelda.Link;
 namespace The_Legend_of_Zelda
 {
     public static class WarpCode
     {
-        public static byte warp_info;
+        public enum NPC
+        {
+            NONE,
+            OLD_MAN,
+            OLD_WOMAN,
+            SHOPKEEPER,
+            GOBLIN,
+            ZELDA
+        }
+
+        public enum WarpType
+        {
+            DOOR_REPAIR_CHARGE,
+            SECRET_10,
+            SECRET_30,
+            SECRET_100,
+            MEDICINE,
+            GAMBLING,
+            TAKE_ANY_ROAD,
+            SHOP_1,
+            SHOP_2,
+            SHOP_3,
+            SHOP_4,
+            SWORD_UPGRADE,
+            PAID_INFO,
+            FREE_INFO,
+            DUNGEON,
+            HEALTH_UPGRADE
+        }
+
+        public static WarpType warp_info;
         static byte text_counter = 0;
         static byte item_get_timer = 200;
 
@@ -39,19 +67,12 @@ namespace The_Legend_of_Zelda
         static readonly byte[] dungeon_locations = {
             55, 60, 116, 69, 11, 34, 66, 109, 5
         };
-        public enum NPC
-        {
-            NONE,
-            OLD_MAN,
-            OLD_WOMAN,
-            SHOPKEEPER,
-            GOBLIN,
-            ZELDA
-        }
+
         public static void Init(bool overworld)
         {
             for (int i = 0; i < items.Length; i++)
-                items[i] = new StaticSprite(0x00, 4, (short)(92 + (i * 32)), 152);
+                items[i] = new StaticSprite(0x00, 4, 92 + (i * 32), 152);
+
             text_row_1 = new byte[0];
             text_row_2 = new byte[0];
             text_counter = 0;
@@ -60,291 +81,273 @@ namespace The_Legend_of_Zelda
             side_rupee.unload_during_transition = true;
             side_rupee.shown = true;
             level_7_entrance_timer = 255;
-            if (overworld)
+
+            if (!overworld)
+                return;
+
+            warp_info = (WarpType)screen_warp_info[return_screen];
+            text_counter = 0;
+
+            for (int i = 0; i < items.Length; i++)
+                items[i].shown = false;
+
+            switch (warp_info)
             {
-                warp_info = screen_warp_info[return_screen];
-                text_counter = 0;
-
-                for (int i = 0; i < items.Length; i++)
-                    items[i].shown = false;
-
-                switch (warp_info)
-                {
-                    case 0 or 1 or 2 or 3:
-                        if (!SaveLoad.GetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen)))
+                case WarpType.DOOR_REPAIR_CHARGE or WarpType.SECRET_10 or WarpType.SECRET_30 or WarpType.SECRET_100:
+                    if (!SaveLoad.GetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen)))
+                    {
+                        if (warp_info == 0)
                         {
-                            if (warp_info == 0)
-                            {
-                                current_npc = NPC.OLD_MAN;
-                                SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
-                                text_row_1 = new byte[19] { 0x19, 0xa, 0x22, 0x24, 0x16, 0xe, 0x24, 0xf, 0x18, 0x1b, 0x24, 0x1d, 0x11, 0xe, 0x24, 0xd, 0x18, 0x18, 0x1b }; // PAY ME FOR THE DOOR
-                                text_row_2 = new byte[14] { 0x1b, 0xe, 0x19, 0xa, 0x12, 0x1b, 0x24, 0xc, 0x11, 0xa, 0x1b, 0x10, 0xe, 0x2c }; // REPAIR CHARGE.
-                            }
-                            else
-                            {
-                                current_npc = NPC.GOBLIN;
-                                text_row_1 = new byte[13] { 0x12, 0x1d, 0x2a, 0x1c, 0x24, 0xa, 0x24, 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d }; // IT'S A SECRET
-                                text_row_2 = new byte[13] { 0x1d, 0x18, 0x24, 0xe, 0x1f, 0xe, 0x1b, 0x22, 0xb, 0x18, 0xd, 0x22, 0x2c }; // TO EVERYBODY.
-
-                                items[1] = new FlickeringSprite(0x32, 6, 124, 152, 8, 0x32, second_palette_index: 5);
-                                items[1].shown = true;
-                                Screen.sprites.Add(items[1]);
-                            }
+                            current_npc = NPC.OLD_MAN;
+                            SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                            text_row_1 = new byte[19] { 0x19, 0xa, 0x22, 0x24, 0x16, 0xe, 0x24, 0xf, 0x18, 0x1b, 0x24, 0x1d, 0x11, 0xe, 0x24, 0xd, 0x18, 0x18, 0x1b }; // PAY ME FOR THE DOOR
+                            text_row_2 = new byte[14] { 0x1b, 0xe, 0x19, 0xa, 0x12, 0x1b, 0x24, 0xc, 0x11, 0xa, 0x1b, 0x10, 0xe, 0x2c }; // REPAIR CHARGE.
                         }
-                        break;
-                    case 4:
-                        current_npc = NPC.OLD_WOMAN;
-                        if (SaveLoad.potion_shop_activated[current_save_file])
+                        else
                         {
-                            text_row_1 = new byte[19] {0xb,0x1e,0x22,0x24,0x16,0xe,0xd,0x12,0xc,0x12,0x17,0xe,0x24,0xb,0xe,0xf,0x18,0x1b,0xe}; // BUY MEDICINE BEFORE
-                            text_row_2 = new byte[19] {0x22,0x18,0x1e,0x24,0x10,0x18,0x2c,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24}; // YOU GO.
+                            current_npc = NPC.GOBLIN;
+                            text_row_1 = new byte[13] { 0x12, 0x1d, 0x2a, 0x1c, 0x24, 0xa, 0x24, 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d }; // IT'S A SECRET
+                            text_row_2 = new byte[13] { 0x1d, 0x18, 0x24, 0xe, 0x1f, 0xe, 0x1b, 0x22, 0xb, 0x18, 0xd, 0x22, 0x2c }; // TO EVERYBODY.
 
-                            for (int i = 0; i < items.Length; i+=2)
-                            {
-                                items[i].tile_index = 0x40;
-                                items[i].palette_index = (byte)(5 + (i >> 1));
-                                items[i].shown = true;
-                                Screen.sprites.Add(items[i]);
-                            }
-
-                            Screen.sprites.Add(side_rupee);
-
-                            Textures.ppu[0x2c8] = 0x21;
-                            Textures.ppu[0x2cb] = 4;
-                            Textures.ppu[0x2cc] = 0;
-                            Textures.ppu[0x2d3] = 6;
-                            Textures.ppu[0x2d4] = 8;
+                            items[1] = new FlickeringSprite(0x32, 6, 124, 152, 8, 0x32, second_palette_index: 5);
+                            items[1].shown = true;
+                            Screen.sprites.Add(items[1]);
                         }
-                        break;
-                    case 5:
-                        current_npc = NPC.OLD_MAN;
-                        text_row_1 = new byte[17] {0x15,0xe,0x1d,0x2a,0x1c,0x24,0x19,0x15,0xa,0x22,0x24,0x16,0x18,0x17,0xe,0x22,0x24}; // LET'S PLAY MONEY 
-                        text_row_2 = new byte[17] {0x16,0xa,0x14,0x12,0x17,0x10,0x24,0x10,0xa,0x16,0xe,0x2c,0x24,0x24,0x24,0x24,0x24}; // MAKING GAME.    
+                    }
+                    break;
+                case WarpType.MEDICINE:
+                    current_npc = NPC.OLD_WOMAN;
+                    if (SaveLoad.potion_shop_activated)
+                    {
+                        text_row_1 = new byte[19] {0xb,0x1e,0x22,0x24,0x16,0xe,0xd,0x12,0xc,0x12,0x17,0xe,0x24,0xb,0xe,0xf,0x18,0x1b,0xe}; // BUY MEDICINE BEFORE
+                        text_row_2 = new byte[19] {0x22,0x18,0x1e,0x24,0x10,0x18,0x2c,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24}; // YOU GO.
 
-                        Screen.sprites.Add(side_rupee);
-                        Textures.ppu[0x2c8] = 0x21;
-
-                        for (int i = 0; i < items.Length; i++)
+                        for (int i = 0; i < items.Length; i += 2)
                         {
-                            items[i] = new FlickeringSprite(0x32, 6, (short)(92 + (i * 32)), 152, 8, 0x32, second_palette_index: 5);
+                            items[i].tile_index = 0x40;
+                            items[i].palette_index = (byte)(5 + (i / 2));
+                            items[i].shown = true;
                             Screen.sprites.Add(items[i]);
                         }
 
-                        for (int i = 0; i < 3; i++)
-                        {
-                            Textures.ppu[0x2ca + i * 4] = 0x62;
-                            Textures.ppu[0x2cb + i * 4] = 1;
-                            Textures.ppu[0x2cc + i * 4] = 0;
-                        }
-                        break;
-                    case 6:
-                        current_npc = NPC.OLD_MAN;
-                        text_row_1 = new byte[23] {0x1d,0xa,0x14,0xe,0x24,0xa,0x17,0x22,0x24,0x1b,0x18,0xa,0xd,0x24,0x22,0x18,0x1e,0x24,0x20,0xa,0x17,0x1d,0x2c}; // TAKE ANY ROAD YOU WANT.
-                        Screen.meta_tiles[101].tile_index = 0x15;
-                        Screen.meta_tiles[104].tile_index = 0x15;
-                        Screen.meta_tiles[107].tile_index = 0x15;
-                        for (int i = 0; i < 3; i++)
-                        {
-                            Textures.ppu[0x28a + i * 6] = 0x70;
-                            Textures.ppu[0x2aa + i * 6] = 0x71;
-                            Textures.ppu[0x28b + i * 6] = 0x72;
-                            Textures.ppu[0x2ab + i * 6] = 0x73;
-                            Textures.ppu_plt[0x28a + i * 6] = 0;
-                            Textures.ppu_plt[0x2aa + i * 6] = 0;
-                            Textures.ppu_plt[0x28b + i * 6] = 0;
-                            Textures.ppu_plt[0x2ab + i * 6] = 0;
-                        }
-                        break;
-                    case 7 or 8 or 9 or 0xa:
-                        current_npc = NPC.SHOPKEEPER;
                         Screen.sprites.Add(side_rupee);
+
                         Textures.ppu[0x2c8] = 0x21;
+                        Textures.ppu[0x2cb] = 4;
+                        Textures.ppu[0x2cc] = 0;
+                        Textures.ppu[0x2d3] = 6;
+                        Textures.ppu[0x2d4] = 8;
+                    }
+                    break;
+                case WarpType.GAMBLING:
+                    current_npc = NPC.OLD_MAN;
+                    text_row_1 = new byte[17] {0x15,0xe,0x1d,0x2a,0x1c,0x24,0x19,0x15,0xa,0x22,0x24,0x16,0x18,0x17,0xe,0x22,0x24}; // LET'S PLAY MONEY 
+                    text_row_2 = new byte[17] {0x16,0xa,0x14,0x12,0x17,0x10,0x24,0x10,0xa,0x16,0xe,0x2c,0x24,0x24,0x24,0x24,0x24}; // MAKING GAME.    
 
-                        if ((warp_info & 1) == 0)
-                        {
-                            text_row_1 = new byte[12] {0xb,0x18,0x22,0x28,0x24,0x1d,0x11,0x12,0x1c,0x24,0x12,0x1c}; // BOY, THIS IS
-                            text_row_2 = new byte[17] {0x1b,0xe,0xa,0x15,0x15,0x22,0x24,0xe,0x21,0x19,0xe,0x17,0x1c,0x12,0x1f,0xe,0x29}; // REALLY EXPENSIVE!
-                        }
-                        else
-                        {
-                            text_row_1 = new byte[22] {0xb,0x1e,0x22,0x24,0x1c,0x18,0x16,0xe,0x1d,0x11,0x12,0x17,0x2a,0x24,0x20,0x12,0x15,0x15,0x24,0x22,0xa,0x29}; // BUY SOMETHIN' WILL YA!
-                        }
+                    Screen.sprites.Add(side_rupee);
+                    Textures.ppu[0x2c8] = 0x21;
 
-                        if (warp_info != 0xa)
-                        {
-                            items[0].tile_index = 0x56;
-                            items[0].palette_index = 4;
-                        }
-                        else
-                        {
-                            items[0].tile_index = 0x2e;
-                            items[0].palette_index = 6;
-                        }
-                        switch (warp_info)
-                        {
-                            case 7:
-                                items[1].tile_index = 0x2e;
-                                items[1].palette_index = 6;
-                                break;
-                            case 8:
-                                items[1].tile_index = 0x22;
-                                items[1].palette_index = 6;
-                                break;
-                            case 9:
-                                items[1].tile_index = 0x34;
-                                items[1].palette_index = 5;
-                                break;
-                            case 0xa:
-                                items[1].tile_index = 0x46;
-                                items[1].palette_index = 5;
-                                break;
-                        }
-                        switch (warp_info)
-                        {
-                            case 7:
-                                items[2].tile_index = 0x26;
-                                items[2].palette_index = 5;
-                                break;
-                            case 8:
-                                items[2] = new FlickeringSprite(0x1c, 6, 156, 152, 8, 0x1c, second_palette_index: 5);
-                                break;
-                            case 9:
-                                items[2].tile_index = 0x28;
-                                items[2].palette_index = 4;
-                                break;
-                            case 0xa:
-                                items[2].tile_index = 0x22;
-                                items[2].palette_index = 6;
-                                break;
-                        }
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        items[i] = new FlickeringSprite(0x32, 6, (short)(92 + (i * 32)), 152, 8, 0x32, second_palette_index: 5);
+                        Screen.sprites.Add(items[i]);
+                    }
 
-                        for (int i = 0; i < 3; i++)
-                        {
-                            Textures.ppu[0x2cc + i * 4] = 0;
-                        }
-                        if (warp_info == 7)
-                        {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Textures.ppu[0x2ca + i * 4] = 0x62;
+                        Textures.ppu[0x2cb + i * 4] = 1;
+                        Textures.ppu[0x2cc + i * 4] = 0;
+                    }
+                    break;
+                case WarpType.TAKE_ANY_ROAD:
+                    current_npc = NPC.OLD_MAN;
+                    text_row_1 = new byte[23] {0x1d,0xa,0x14,0xe,0x24,0xa,0x17,0x22,0x24,0x1b,0x18,0xa,0xd,0x24,0x22,0x18,0x1e,0x24,0x20,0xa,0x17,0x1d,0x2c}; // TAKE ANY ROAD YOU WANT.
+                    Screen.meta_tiles[101].tile_index = 0x15;
+                    Screen.meta_tiles[104].tile_index = 0x15;
+                    Screen.meta_tiles[107].tile_index = 0x15;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Textures.ppu[0x28a + i * 6] = 0x70;
+                        Textures.ppu[0x2aa + i * 6] = 0x71;
+                        Textures.ppu[0x28b + i * 6] = 0x72;
+                        Textures.ppu[0x2ab + i * 6] = 0x73;
+                        Textures.ppu_plt[0x28a + i * 6] = 0;
+                        Textures.ppu_plt[0x2aa + i * 6] = 0;
+                        Textures.ppu_plt[0x28b + i * 6] = 0;
+                        Textures.ppu_plt[0x2ab + i * 6] = 0;
+                    }
+                    break;
+                case WarpType.SHOP_1 or WarpType.SHOP_2 or WarpType.SHOP_3 or WarpType.SHOP_4:
+                    current_npc = NPC.SHOPKEEPER;
+                    Screen.sprites.Add(side_rupee);
+                    Textures.ppu[0x2c8] = 0x21;
+
+                    if (warp_info is (WarpType.SHOP_2 or WarpType.SHOP_4))
+                    {
+                        text_row_1 = new byte[12] {0xb,0x18,0x22,0x28,0x24,0x1d,0x11,0x12,0x1c,0x24,0x12,0x1c}; // BOY, THIS IS
+                        text_row_2 = new byte[17] {0x1b,0xe,0xa,0x15,0x15,0x22,0x24,0xe,0x21,0x19,0xe,0x17,0x1c,0x12,0x1f,0xe,0x29}; // REALLY EXPENSIVE!
+                    }
+                    else
+                    {
+                        text_row_1 = new byte[22] {0xb,0x1e,0x22,0x24,0x1c,0x18,0x16,0xe,0x1d,0x11,0x12,0x17,0x2a,0x24,0x20,0x12,0x15,0x15,0x24,0x22,0xa,0x29}; // BUY SOMETHIN' WILL YA!
+                    }
+
+                    if (warp_info == WarpType.SHOP_4)
+                    {
+                        items[0].tile_index = 0x2e;
+                        items[0].palette_index = 6;
+                    }
+                    else
+                    {
+                        items[0].tile_index = 0x56;
+                        items[0].palette_index = 4;
+                    }
+                    switch (warp_info)
+                    {
+                        case WarpType.SHOP_1:
+                            items[1].tile_index = 0x2e;
+                            items[1].palette_index = 6;
+                            items[2].tile_index = 0x26;
+                            items[2].palette_index = 5;
+
                             Textures.ppu[0x2ca] = 1;
                             Textures.ppu[0x2cb] = 6;
                             Textures.ppu[0x2ce] = 1;
                             Textures.ppu[0x2cf] = 0;
                             Textures.ppu[0x2d3] = 6;
-                        }
-                        else if (warp_info == 8)
-                        {
+                            break;
+                        case WarpType.SHOP_2:
+                            items[1].tile_index = 0x22;
+                            items[1].palette_index = 6;
+                            items[2] = new FlickeringSprite(0x1c, 6, 156, 152, 8, 0x1c, second_palette_index: 5);
+
                             Textures.ppu[0x2cb] = 9;
                             Textures.ppu[0x2ce] = 1;
                             Textures.ppu[0x2cf] = 0;
                             Textures.ppu[0x2d3] = 1;
-                        }
-                        else if (warp_info == 9)
-                        {
+                            break;
+                        case WarpType.SHOP_3:
+                            items[1].tile_index = 0x34;
+                            items[1].palette_index = 5;
+                            items[2].tile_index = 0x28;
+                            items[2].palette_index = 4;
+
                             Textures.ppu[0x2ca] = 1;
                             Textures.ppu[0x2cb] = 3;
                             Textures.ppu[0x2cf] = 2;
                             Textures.ppu[0x2d3] = 8;
-                        }
-                        else
-                        {
+                            break;
+                        case WarpType.SHOP_4:
+                            items[1].tile_index = 0x46;
+                            items[1].palette_index = 5;
+                            items[2].tile_index = 0x22;
+                            items[2].palette_index = 6;
+
                             Textures.ppu[0x2cb] = 8;
                             Textures.ppu[0x2ce] = 2;
                             Textures.ppu[0x2cf] = 5;
                             Textures.ppu[0x2d3] = 6;
-                        }
+                            break;
+                    }
 
-                        for (int i = 0; i < items.Length; i ++)
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Textures.ppu[0x2cc + i * 4] = 0;
+                    }
+
+                    for (int i = 0; i < items.Length; i ++)
+                    {
+                        items[i].shown = true;
+                        Screen.sprites.Add(items[i]);
+                    }
+                    break;
+                case WarpType.SWORD_UPGRADE:
+                    if (!CheckIfItemGotten())
+                    {
+                        current_npc = NPC.OLD_MAN;
+                    }
+                    break;
+                case WarpType.PAID_INFO:
+                    current_npc = NPC.OLD_WOMAN;
+                    text_row_1 = new byte[22] {0x24,0x19,0xa,0x22,0x24,0x16,0xe,0x24,0xa,0x17,0xd,0x24,0x12,0x2a,0x15,0x15,0x24,0x1d,0xa,0x15,0x14,0x2c}; //  PAY ME AND I'LL TALK.
+                    Screen.sprites.Add(side_rupee);
+                    Textures.ppu[0x2c8] = 0x21;
+
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        items[i] = new FlickeringSprite(0x32, 6, (short)(92 + (i * 32)), 152, 8, 0x32, second_palette_index: 5);
+                        Screen.sprites.Add(items[i]);
+                    }
+
+                    if (return_screen == 112)
+                    {
+                        for (int i = 0; i < 3; i++)
                         {
-                            items[i].shown = true;
-                            Screen.sprites.Add(items[i]);
+                            Textures.ppu[0x2ca + i * 4] = 0x62;
+                            Textures.ppu[0x2cc + i * 4] = 0;
                         }
-                        break;
-                    case 0xb:
-                        if (!CheckIfItemGotten())
+                        Textures.ppu[0x2cb] = 1;
+                        Textures.ppu[0x2cf] = 3;
+                        Textures.ppu[0x2d3] = 5;
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 3; i++)
                         {
-                            current_npc = NPC.OLD_MAN;
+                            Textures.ppu[0x2cb + i * 3 + (i / 2)] = 0x62;
+                            Textures.ppu[0x2cc + i * 4] = 0;
                         }
-                        break;
-                    case 0xc:
+                        Textures.ppu[0x2cc] = 5;
+                        Textures.ppu[0x2cf] = 1;
+                        Textures.ppu[0x2d3] = 2;
+                    }
+                    break;
+                case WarpType.FREE_INFO:
+                    if (return_screen == 117)
+                    {
                         current_npc = NPC.OLD_WOMAN;
-                        text_row_1 = new byte[22] {0x24,0x19,0xa,0x22,0x24,0x16,0xe,0x24,0xa,0x17,0xd,0x24,0x12,0x2a,0x15,0x15,0x24,0x1d,0xa,0x15,0x14,0x2c}; //  PAY ME AND I'LL TALK.
-                        Screen.sprites.Add(side_rupee);
-                        Textures.ppu[0x2c8] = 0x21;
-
-                        for (int i = 0; i < items.Length; i++)
-                        {
-                            items[i] = new FlickeringSprite(0x32, 6, (short)(92 + (i * 32)), 152, 8, 0x32, second_palette_index: 5);
-                            Screen.sprites.Add(items[i]);
-                        }
-
-                        if (return_screen == 112)
-                        {
-                            for (int i = 0; i < 3; i++)
-                            {
-                                Textures.ppu[0x2ca + i * 4] = 0x62;
-                                Textures.ppu[0x2cc + i * 4] = 0;
-                            }
-                            Textures.ppu[0x2cb] = 1;
-                            Textures.ppu[0x2cf] = 3;
-                            Textures.ppu[0x2d3] = 5;
-                        }
-                        else
-                        {
-                            for (int i = 0; i < 3; i++)
-                            {
-                                Textures.ppu[0x2cb + i * 3 + (i >> 1)] = 0x62;
-                                Textures.ppu[0x2cc + i * 4] = 0;
-                            }
-                            Textures.ppu[0x2cc] = 5;
-                            Textures.ppu[0x2cf] = 1;
-                            Textures.ppu[0x2d3] = 2;
-                        }
+                        text_row_1 = new byte[16] {0x16,0xe,0xe,0x1d,0x24,0x1d,0x11,0xe,0x24,0x18,0x15,0xd,0x24,0x16,0xa,0x17}; // MEET THE OLD MAN
+                        text_row_2 = new byte[13] {0xa,0x1d,0x24,0x1d,0x11,0xe,0x24,0x10,0x1b,0xa,0x1f,0xe,0x2c}; // AT THE GRAVE.
+                    }
+                    else
+                    {
+                        current_npc = NPC.OLD_MAN;
+                        text_row_1 = new byte[21] {0x1c,0xe,0xc,0x1b,0xe,0x1d,0x24,0x12,0x1c,0x24,0x12,0x17,0x24,0x1d,0x11,0xe,0x24,0x1d,0x1b,0xe,0xe}; // SECRET IS IN THE TREE
+                        text_row_2 = new byte[16] {0xa,0x1d,0x24,0x1d,0x11,0xe,0x24,0xd,0xe,0xa,0xd,0x2f,0xe,0x17,0xd,0x2c}; // AT THE DEAD-END.
+                    }
+                    break;
+                case WarpType.DUNGEON:
+                    Program.gamemode = Program.Gamemode.DUNGEON;
+                    DungeonCode.Init((byte)Array.IndexOf(dungeon_locations, return_screen));
+                    return;
+                case WarpType.HEALTH_UPGRADE:
+                    if (CheckIfItemGotten())
                         break;
-                    case 0xd:
-                        if (return_screen == 117)
-                        {
-                            current_npc = NPC.OLD_WOMAN;
-                            text_row_1 = new byte[16] {0x16,0xe,0xe,0x1d,0x24,0x1d,0x11,0xe,0x24,0x18,0x15,0xd,0x24,0x16,0xa,0x17}; // MEET THE OLD MAN
-                            text_row_2 = new byte[13] {0xa,0x1d,0x24,0x1d,0x11,0xe,0x24,0x10,0x1b,0xa,0x1f,0xe,0x2c}; // AT THE GRAVE.
-                        }
-                        else
-                        {
-                            current_npc = NPC.OLD_MAN;
-                            text_row_1 = new byte[21] {0x1c,0xe,0xc,0x1b,0xe,0x1d,0x24,0x12,0x1c,0x24,0x12,0x17,0x24,0x1d,0x11,0xe,0x24,0x1d,0x1b,0xe,0xe}; // SECRET IS IN THE TREE
-                            text_row_2 = new byte[16] {0xa,0x1d,0x24,0x1d,0x11,0xe,0x24,0xd,0xe,0xa,0xd,0x2f,0xe,0x17,0xd,0x2c}; // AT THE DEAD-END.
-                        }
-                        break;
-                    case 0xe:
-                        Program.gamemode = Program.Gamemode.DUNGEON;
-                        DungeonCode.Init((byte)Array.IndexOf(dungeon_locations, return_screen));
-                        return;
-                    case 0xf:
-                        if (!CheckIfItemGotten())
-                        {
-                            current_npc = NPC.OLD_MAN;
-                            items[1].x = 152;
-                            items[2].x = 159;
-                            items[2].xflip = true;
-                            for (int i = 0; i < items.Length; i++)
-                            {
-                                items[i].tile_index = 0x68;
-                                items[i].palette_index = 6;
-                                items[i].shown = true;
-                                Screen.sprites.Add(items[i]);
-                            }
-                            items[0].tile_index = 0x40;
-                            text_row_1 = new byte[22] {0x1d,0xa,0x14,0xe,0x24,0xa,0x17,0x22,0x24,0x18,0x17,0xe,0x24,0x22,0x18,0x1e,0x24,0x20,0xa,0x17,0x1d,0x2c}; // TAKE ANY ONE YOU WANT.
-                        }
-                        break;
-                }
-                starting_byte_1 = 0x1b0 - (text_row_1.Length >> 1);
-                starting_byte_2 = 0x1d0 - (text_row_2.Length >> 1);
 
-                for (int i = 0; i < items.Length; i++)
-                    items[i].unload_during_transition = true;
-
-                cave_npc = new CaveNPC(current_npc);
-                Screen.sprites.Add(cave_npc);
+                    current_npc = NPC.OLD_MAN;
+                    items[1].x = 152;
+                    items[2].x = 159;
+                    items[2].xflip = true;
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        items[i].tile_index = 0x68;
+                        items[i].palette_index = 6;
+                        items[i].shown = true;
+                        Screen.sprites.Add(items[i]);
+                    }
+                    items[0].tile_index = 0x40;
+                    text_row_1 = new byte[22] {0x1d,0xa,0x14,0xe,0x24,0xa,0x17,0x22,0x24,0x18,0x17,0xe,0x24,0x22,0x18,0x1e,0x24,0x20,0xa,0x17,0x1d,0x2c}; // TAKE ANY ONE YOU WANT.
+                    break;
             }
+            starting_byte_1 = 0x1b0 - (text_row_1.Length / 2);
+            starting_byte_2 = 0x1d0 - (text_row_2.Length / 2);
+
+            for (int i = 0; i < items.Length; i++)
+                items[i].unload_during_transition = true;
+
+            cave_npc = new CaveNPC(current_npc);
+            Screen.sprites.Add(cave_npc);
         }
 
         public static void Tick()
@@ -357,9 +360,9 @@ namespace The_Legend_of_Zelda
 
             LinkItemCollection();
 
-            if (warp_info == 4 && !potion_shop_activated[current_save_file] && Control.IsPressed(Buttons.B) && Menu.current_B_item == SpriteID.MAP)
+            if (warp_info == 4 && !SaveLoad.potion_shop_activated && Control.IsPressed(Buttons.B) && Menu.current_B_item == SpriteID.MAP)
             {
-                potion_shop_activated[current_save_file] = true;
+                SaveLoad.potion_shop_activated = true;
                 Link.can_move = false;
                 Screen.sprites.Remove(cave_npc);
                 Init(true);
@@ -368,31 +371,34 @@ namespace The_Legend_of_Zelda
 
         static void TextTick()
         {
-            if (Program.gTimer % 6 == 0 && fire_appeared)
+            if (Program.gTimer % 6 != 0 || !fire_appeared)
+                return;
+
+            if (text_counter < text_row_1.Length)
             {
-                if (text_counter < text_row_1.Length)
-                {
-                    Sound.PlaySFX(Sound.SoundEffects.TEXT, true);
-                    Textures.ppu[starting_byte_1 + text_counter] = text_row_1[text_counter];
-                    text_counter++;
-                }
-                else if (text_counter < text_row_1.Length + text_row_2.Length)
-                {
-                    Sound.PlaySFX(Sound.SoundEffects.TEXT, true);
-                    Textures.ppu[starting_byte_2 + text_counter - text_row_1.Length] = text_row_2[text_counter - text_row_1.Length];
-                    text_counter++;
-                    if (text_counter == text_row_1.Length + text_row_2.Length && warp_info == 0)
-                        AddRupees(-20);
-                }
+                Sound.PlaySFX(Sound.SoundEffects.TEXT, true);
+                Textures.ppu[starting_byte_1 + text_counter] = text_row_1[text_counter];
+                text_counter++;
+            }
+            else if (text_counter < text_row_1.Length + text_row_2.Length)
+            {
+                Sound.PlaySFX(Sound.SoundEffects.TEXT, true);
+                Textures.ppu[starting_byte_2 + text_counter - text_row_1.Length] = text_row_2[text_counter - text_row_1.Length];
+                text_counter++;
+
+                // make sure that link can't escape the fine
+                if (text_counter == text_row_1.Length + text_row_2.Length && warp_info == WarpType.DOOR_REPAIR_CHARGE)
+                    Link.AddRupees(-20);
             }
         }
+
         static bool CheckIfItemGotten()
         {
             switch (return_screen)
             {
                 case 10 or 33:
                     // TODO: i think this doesn't work if you try gettign the magical sword...
-                    if (!SaveLoad.white_sword[current_save_file])
+                    if (!SaveLoad.white_sword)
                     {
                         text_row_1 = new byte[19] {0x16,0xa,0x1c,0x1d,0xe,0x1b,0x24,0x1e,0x1c,0x12,0x17,0x10,0x24,0x12,0x1d,0x24,0xa,0x17,0xd}; // MASTER USING IT AND
                         text_row_2 = new byte[19] {0x24,0x22,0x18,0x1e,0x24,0xc,0xa,0x17,0x24,0x11,0xa,0x1f,0xe,0x24,0x1d,0x11,0x12,0x1c,0x2c}; //  YOU CAN HAVE THIS.
@@ -414,7 +420,7 @@ namespace The_Legend_of_Zelda
                     }
                     break;
                 case 14:
-                    if (!SaveLoad.letter[current_save_file])
+                    if (!SaveLoad.letter)
                     {
                         text_row_1 = new byte[16] {0x1c,0x11,0x18,0x20,0x24,0x1d,0x11,0x12,0x1c,0x24,0x1d,0x18,0x24,0x1d,0x11,0xe}; // SHOW THIS TO THE
                         text_row_2 = new byte[10] {0x18,0x15,0xd,0x24,0x20,0x18,0x16,0xa,0x17,0x2c}; // OLD WOMAN.
@@ -428,9 +434,9 @@ namespace The_Legend_of_Zelda
                     }
                     break;
                 case 44 or 47 or 71 or 123:
-                    return SaveLoad.GetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen));
+                    return SaveLoad.GetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen));
                 case 119:
-                    if (!SaveLoad.wooden_sword[current_save_file])
+                    if (!SaveLoad.wooden_sword)
                     {
                         text_row_1 = new byte[20] {0x12,0x1d,0x2a,0x1c,0x24,0xd,0xa,0x17,0x10,0xe,0x1b,0x18,0x1e,0x1c,0x24,0x1d,0x18,0x24,0x10,0x18}; // IT'S DANGEROUS TO GO
                         text_row_2 = new byte[17] {0xa,0x15,0x18,0x17,0xe,0x29,0x24,0x1d,0xa,0x14,0xe,0x24,0x1d,0x11,0x12,0x1c,0x2c}; // ALONE! TAKE THIS.
@@ -451,42 +457,41 @@ namespace The_Legend_of_Zelda
         {
             for (int i = 0; i < items.Length; i++)
             {
-                if (!items[i].shown || item_collected)
-                {
+                if (item_collected)
+                    break;
+
+                if (!items[i].shown)
                     continue;
-                }
 
                 if (!(items[i].x < Link.x + 16 && items[i].x + 8 > Link.x && items[i].y < Link.y + 12 && items[i].y + 12 > Link.y))
-                {
                     continue;
-                }
 
                 switch (warp_info)
                 {
-                    case 1:
+                    case WarpType.SECRET_10:
                         Textures.ppu[0x2cf] = 1;
                         Textures.ppu[0x2d0] = 0;
-                        SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
                         break;
-                    case 2:
+                    case WarpType.SECRET_30:
                         Textures.ppu[0x2cf] = 3;
                         Textures.ppu[0x2d0] = 0;
-                        SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
                         break;
-                    case 3:
+                    case WarpType.SECRET_100:
                         Textures.ppu[0x2ce] = 1;
                         Textures.ppu[0x2cf] = 0;
                         Textures.ppu[0x2d0] = 0;
-                        SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
                         break;
-                    case 0xb:
-                        if (return_screen == 10 && SaveLoad.nb_of_hearts[current_save_file] < 5)
+                    case WarpType.SWORD_UPGRADE:
+                        if (return_screen == 10 && SaveLoad.nb_of_hearts < 5)
                             return;
-                        else if (return_screen == 33 && SaveLoad.nb_of_hearts[current_save_file] < 12)
+                        else if (return_screen == 33 && SaveLoad.nb_of_hearts < 12)
                             return;
                         break;
-                    case 0xf:
-                        SaveLoad.SetGiftFlag(current_save_file, (byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                    case WarpType.HEALTH_UPGRADE:
+                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
                         break;
                 }
 
@@ -497,7 +502,8 @@ namespace The_Legend_of_Zelda
                     items[i].y = (short)(Link.y - 16);
                     Link.current_action = Link.Action.ITEM_GET;
                     Link.can_move = false;
-                    if (warp_info == 0xf && i != 0)
+                    //TODO: why is heart container not a full sprite with a counterpart?
+                    if (warp_info == WarpType.HEALTH_UPGRADE && i != 0)
                     {
                         Link.current_action = Link.Action.ITEM_HELD_UP;
                         items[1].x = (short)(Link.x + 0);
@@ -523,7 +529,7 @@ namespace The_Legend_of_Zelda
             {
                 for (int i = 0; i < items.Length; i++)
                     if (items[i].y == 152)
-                        items[i].shown = (Program.gTimer & 1) == 0;
+                        items[i].shown = (Program.gTimer % 2) == 0;
 
                 return;
             }
@@ -538,223 +544,226 @@ namespace The_Legend_of_Zelda
 
         static bool GiveItem(int chosen_item)
         {
+            // set to true if link is able to collect the item
             bool able_to_get_item = false;
 
             switch (warp_info)
             {
-                case 1:
-                    AddRupees(10);
+                case WarpType.SECRET_10:
+                    Link.AddRupees(10);
                     break;
-                case 2:
-                    AddRupees(30);
+                case WarpType.SECRET_30:
+                    Link.AddRupees(30);
                     break;
-                case 3:
-                    AddRupees(100);
+                case WarpType.SECRET_100:
+                    Link.AddRupees(100);
                     break;
-                case 4:
+                case WarpType.MEDICINE:
                     if (chosen_item == 1)
                     {
-                        if (AddRupees(-40, false))
+                        if (Link.AddRupees(-40, false))
                         {
-                            SaveLoad.blue_potion[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 40;
+                            SaveLoad.blue_potion = true;
+                            SaveLoad.rupy_count -= 40;
                             able_to_get_item = true;
                         }
                     }
                     else
                     {
-                        if (AddRupees(-68, false))
+                        if (Link.AddRupees(-68, false))
                         {
-                            SaveLoad.red_potion[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 68;
+                            SaveLoad.red_potion = true;
+                            SaveLoad.rupy_count -= 68;
                             able_to_get_item = true;
                         }
                     }
                     break;
-                case 5:
-                    if (AddRupees(-10, false))
+                case WarpType.GAMBLING:
+                    if (!Link.AddRupees(-10, false))
+                        break;
+
+                    int[] rupee_values = new int[3];
+                    int winner_rupee = Program.RNG.Next(0, 3);
+                    // winning prize is either 20 or 50
+                    rupee_values[winner_rupee] = 20 + 30 * Program.RNG.Next(0, 2);
+                    // losing prize is either -10 or -40
+                    // however, at least one of the losing prizes needs to be -10
+                    int small_loss_index = Program.RNG.Next(0, 2);
+                    rupee_values[(winner_rupee + small_loss_index + 1) % 3] = -10;
+                    // ^1 flips 0 to 1 and vice versa
+                    rupee_values[(winner_rupee + (small_loss_index ^ 1) + 1) % 3] = -10 - 30 * Program.RNG.Next(0, 2);
+
+                    Link.AddRupees(rupee_values[chosen_item - 1]);
+
+                    for (int i = 0; i < 3; i++)
                     {
-                        int[] rupee_values = new int[3];
-                        int winner_rupee = Program.RNG.Next(0, 3);
-                        rupee_values[winner_rupee] = 20 + 30 * Program.RNG.Next(0, 2);
-                        rupee_values[(winner_rupee + 1) % 3] = -10 - 30 * Program.RNG.Next(0, 2);
-                        if (rupee_values[(winner_rupee + 1) % 3] == -10)
-                            rupee_values[(winner_rupee + 2) % 3] = -10 - 30 * Program.RNG.Next(0, 2);
+                        if (rupee_values[i] > 0)
+                            Textures.ppu[0x2ca + i * 4] = 0x64; // +
                         else
-                            rupee_values[(winner_rupee + 2) % 3] = -10;
+                            Textures.ppu[0x2ca + i * 4] = 0x62; // -
 
-                        AddRupees(rupee_values[chosen_item - 1]);
-
-                        for (int i = 0; i < 3; i++)
-                        {
-                            if (rupee_values[i] > 0)
-                                Textures.ppu[0x2ca + i * 4] = 0x64;
-                            else
-                                Textures.ppu[0x2ca + i * 4] = 0x62;
-
-                            Textures.ppu[0x2cb + i * 4] = (byte)Math.Abs(rupee_values[i] / 10);
-                        }
-                        //able_to_get_item = true;
+                        Textures.ppu[0x2cb + i * 4] = (byte)Math.Abs(rupee_values[i] / 10);
+                        //Textures.ppu[0x2cb + i * 4 + 1] = 0;
                     }
                     break;
-                case 7:
+                case WarpType.SHOP_1:
                     if (chosen_item == 1)
                     {
-                        if (AddRupees(-160, false))
+                        if (Link.AddRupees(-160, false))
                         {
-                            SaveLoad.magical_shield[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 160;
+                            SaveLoad.magical_shield = true;
+                            SaveLoad.rupy_count -= 160;
                             able_to_get_item = true;
                         }
                     }
                     else if (chosen_item == 2)
                     {
-                        if (AddRupees(-100, false))
+                        if (Link.AddRupees(-100, false))
                         {
-                            SaveLoad.key_count[current_save_file]++;
-                            SaveLoad.rupy_count[current_save_file] -= 100;
+                            SaveLoad.key_count++;
+                            SaveLoad.rupy_count -= 100;
                             able_to_get_item = true;
                         }
                     }
                     else
                     {
-                        if (AddRupees(-60, false))
+                        if (Link.AddRupees(-60, false))
                         {
-                            SaveLoad.blue_candle[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 60;
+                            SaveLoad.blue_candle = true;
+                            SaveLoad.rupy_count -= 60;
                             able_to_get_item = true;
                         }
                     }
                     break;
-                case 8:
+                case WarpType.SHOP_2:
                     if (chosen_item == 1)
                     {
-                        if (AddRupees(-90, false))
+                        if (Link.AddRupees(-90, false))
                         {
-                            SaveLoad.magical_shield[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 90;
+                            SaveLoad.magical_shield = true;
+                            SaveLoad.rupy_count -= 90;
                             able_to_get_item = true;
                         }
                     }
                     else if (chosen_item == 2)
                     {
-                        if (AddRupees(-100, false))
+                        if (Link.AddRupees(-100, false))
                         {
-                            SaveLoad.bait[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 100;
+                            SaveLoad.bait = true;
+                            SaveLoad.rupy_count -= 100;
                             able_to_get_item = true;
                         }
                     }
                     else
                     {
-                        if (AddRupees(-10, false))
+                        if (Link.AddRupees(-10, false))
                         {
                             Link.hp += 1f;
-                            SaveLoad.rupy_count[current_save_file] -= 10;
+                            SaveLoad.rupy_count -= 10;
                             able_to_get_item = true;
                         }
                     }
                     break;
-                case 9:
+                case WarpType.SHOP_3:
                     if (chosen_item == 1)
                     {
-                        if (AddRupees(-130, false))
+                        if (Link.AddRupees(-130, false))
                         {
-                            SaveLoad.magical_shield[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 130;
+                            SaveLoad.magical_shield = true;
+                            SaveLoad.rupy_count -= 130;
                             able_to_get_item = true;
                         }
                     }
                     else if (chosen_item == 2)
                     {
-                        if (AddRupees(-20, false))
+                        if (Link.AddRupees(-20, false))
                         {
-                            SaveLoad.bomb_count[current_save_file] += 4;
-                            SaveLoad.rupy_count[current_save_file] -= 20;
+                            SaveLoad.bomb_count += 4;
+                            SaveLoad.rupy_count -= 20;
                             able_to_get_item = true;
                         }
                     }
                     else
                     {
-                        if (AddRupees(-80, false))
+                        if (Link.AddRupees(-80, false))
                         {
-                            SaveLoad.arrow[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 80;
+                            SaveLoad.arrow = true;
+                            SaveLoad.rupy_count -= 80;
                             able_to_get_item = true;
                         }
                     }
                     break;
-                case 0xa:
+                case WarpType.SHOP_4:
                     if (chosen_item == 1)
                     {
-                        if (AddRupees(-80, false))
+                        if (Link.AddRupees(-80, false))
                         {
-                            SaveLoad.key_count[current_save_file]++;
-                            SaveLoad.rupy_count[current_save_file] -= 80;
+                            SaveLoad.key_count++;
+                            SaveLoad.rupy_count -= 80;
                             able_to_get_item = true;
                         }
                     }
                     else if (chosen_item == 2)
                     {
-                        if (AddRupees(-250, false))
+                        if (Link.AddRupees(-250, false))
                         {
-                            SaveLoad.blue_ring[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 250;
+                            SaveLoad.blue_ring = true;
+                            SaveLoad.rupy_count -= 250;
                             able_to_get_item = true;
                         }
                     }
                     else
                     {
-                        if (AddRupees(-60, false))
+                        if (Link.AddRupees(-60, false))
                         {
-                            SaveLoad.bait[current_save_file] = true;
-                            SaveLoad.rupy_count[current_save_file] -= 60;
+                            SaveLoad.bait = true;
+                            SaveLoad.rupy_count -= 60;
                             able_to_get_item = true;
                         }
                     }
                     break;
-                case 0xb:
+                case WarpType.SWORD_UPGRADE:
                     switch (return_screen)
                     {
                         case 10:
-                            SaveLoad.white_sword[current_save_file] = true;
+                            SaveLoad.white_sword = true;
                             break;
                         case 14:
-                            SaveLoad.letter[current_save_file] = true;
+                            SaveLoad.letter = true;
                             break;
                         case 33:
-                            SaveLoad.magical_sword[current_save_file] = true;
+                            SaveLoad.magical_sword = true;
                             break;
                         case 119:
-                            SaveLoad.wooden_sword[current_save_file] = true;
+                            SaveLoad.wooden_sword = true;
                             break;
                     }
                     able_to_get_item = true;
                     break;
-                case 0xc:
+                case WarpType.PAID_INFO:
                     if (return_screen == 112)
                     {
-                        if (chosen_item == 1 && AddRupees(-10, false))
+                        if (chosen_item == 1 && Link.AddRupees(-10, false))
                         {
-                            AddRupees(-10);
+                            Link.AddRupees(-10);
                             text_counter = 0;
                             EraseText();
                             text_row_1 = new byte[17] {0x1d,0x11,0x12,0x1c,0x24,0xa,0x12,0x17,0x2a,0x1d,0x24,0xe,0x17,0x18,0x1e,0x10,0x11}; // THIS AIN'T ENOUGH
                             text_row_2 = new byte[8] {0x1d,0x18,0x24,0x1d,0xa,0x15,0x14,0x2c}; // TO TALK.
                             side_rupee.shown = false;
                         }
-                        else if (chosen_item == 2 && AddRupees(-30, false))
+                        else if (chosen_item == 2 && Link.AddRupees(-30, false))
                         {
-                            AddRupees(-30);
+                            Link.AddRupees(-30);
                             text_counter = 0;
                             EraseText();
                             text_row_1 = new byte[24] {0x10,0x18,0x24,0x17,0x18,0x1b,0x1d,0x11,0x28,0x20,0xe,0x1c,0x1d,0x28,0x1c,0x18,0x1e,0x1d,0x11,0x28,0x20,0xe,0x1c,0x1d}; // GO NORTH,WEST,SOUTH,WEST
                             text_row_2 = new byte[22] {0x1d,0x18,0x24,0x1d,0x11,0xe,0x24,0xf,0x18,0x1b,0xe,0x1c,0x1d,0x24,0x18,0xf,0x24,0x16,0xa,0x23,0xe,0x2c}; // TO THE FOREST OF MAZE.
                             side_rupee.shown = false;
                         }
-                        else if (chosen_item == 3 && AddRupees(-50, false))
+                        else if (chosen_item == 3 && Link.AddRupees(-50, false))
                         {
-                            AddRupees(-50);
+                            Link.AddRupees(-50);
                             text_counter = 0;
                             EraseText();
                             text_row_1 = new byte[18] {0x24,0xb,0x18,0x22,0x28,0x24,0x22,0x18,0x1e,0x2a,0x1b,0xe,0x24,0x1b,0x12,0xc,0x11,0x29}; //  BOY, YOU'RE RICH!
@@ -763,27 +772,27 @@ namespace The_Legend_of_Zelda
                     }
                     else
                     {
-                        if (chosen_item == 1 && AddRupees(-5, false))
+                        if (chosen_item == 1 && Link.AddRupees(-5, false))
                         {
-                            AddRupees(-5);
+                            Link.AddRupees(-5);
                             text_counter = 0;
                             EraseText();
                             text_row_1 = new byte[17] {0x1d,0x11,0x12,0x1c,0x24,0xa,0x12,0x17,0x2a,0x1d,0x24,0xe,0x17,0x18,0x1e,0x10,0x11}; // THIS AIN'T ENOUGH
                             text_row_2 = new byte[8] {0x1d,0x18,0x24,0x1d,0xa,0x15,0x14,0x2c}; // TO TALK.
                             side_rupee.shown = false;
                         }
-                        else if (chosen_item == 2 && AddRupees(-10, false))
+                        else if (chosen_item == 2 && Link.AddRupees(-10, false))
                         {
-                            AddRupees(-10);
+                            Link.AddRupees(-10);
                             text_counter = 0;
                             EraseText();
                             text_row_1 = new byte[17] {0x1d,0x11,0x12,0x1c,0x24,0xa,0x12,0x17,0x2a,0x1d,0x24,0xe,0x17,0x18,0x1e,0x10,0x11}; // THIS AIN'T ENOUGH
                             text_row_2 = new byte[8] {0x1d,0x18,0x24,0x1d,0xa,0x15,0x14,0x2c}; // TO TALK.
                             side_rupee.shown = false;
                         }
-                        else if (chosen_item == 3 && AddRupees(-20, false))
+                        else if (chosen_item == 3 && Link.AddRupees(-20, false))
                         {
-                            AddRupees(-20);
+                            Link.AddRupees(-20);
                             text_counter = 0;
                             EraseText();
                             text_row_1 = new byte[10] {0x10,0x18,0x24,0x1e,0x19,0x28,0x24,0x1e,0x19,0x28}; // GO UP, UP,
@@ -791,17 +800,17 @@ namespace The_Legend_of_Zelda
                             side_rupee.shown = false;
                         }
                     }
-                    starting_byte_1 = 0x1b0 - (text_row_1.Length >> 1);
-                    starting_byte_2 = 0x1d0 - (text_row_2.Length >> 1);
+                    starting_byte_1 = 0x1b0 - (text_row_1.Length / 2);
+                    starting_byte_2 = 0x1d0 - (text_row_2.Length / 2);
                     break;
-                case 0x0f:
+                case WarpType.HEALTH_UPGRADE:
                     if (chosen_item == 1)
                     {
-                        SaveLoad.red_potion[current_save_file] = true;
+                        SaveLoad.red_potion = true;
                     }
                     else
                     {
-                        SaveLoad.nb_of_hearts[current_save_file]++;
+                        SaveLoad.nb_of_hearts++;
                         Link.hp += 1;
                     }
                     able_to_get_item = true;
@@ -814,11 +823,11 @@ namespace The_Legend_of_Zelda
                 AutoSwitchBItem(Menu.selected_menu_index, false);
                 Menu.MoveCursor();
                 //TODO: ??? why doesn't movecursor handle this case?
-                if (Menu.current_B_item == SpriteID.BOOMERANG && !boomerang[current_save_file] && !magical_boomerang[current_save_file])
+                if (Menu.current_B_item == SpriteID.BOOMERANG && !SaveLoad.boomerang && !SaveLoad.magical_boomerang)
                     Menu.current_B_item = 0;
             }
 
-            if (warp_info != 1 && warp_info != 2 && warp_info != 3 && able_to_get_item)
+            if ((warp_info is not (WarpType.SECRET_10 or WarpType.SECRET_30 or WarpType.SECRET_100)) && able_to_get_item)
             {
                 cave_npc.flash_timer = 0;
                 EraseText();
@@ -829,15 +838,15 @@ namespace The_Legend_of_Zelda
 
         static void EraseText()
         {
-            for (int i = 0x184; i < 0x324; i += 0x20)
+            for (int i = 0x184; i < 0x324; i += Textures.PPU_WIDTH)
             {
                 for (int j = 0; j < 24; j++)
                 {
                     Textures.ppu[i + j] = 0x24;
                 }
             }
-            if (Screen.sprites.Contains(side_rupee))
-                Screen.sprites.Remove(side_rupee);
+            
+            Screen.sprites.Remove(side_rupee);
         }
 
         public static void SetWarpReturnPosition()
