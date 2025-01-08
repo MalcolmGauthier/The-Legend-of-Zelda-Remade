@@ -3,73 +3,73 @@ namespace The_Legend_of_Zelda
 {
     public enum Color : byte
     {
-        DARK_GRAY,
-        DARK_BLUE,
-        BLUE,
-        DARK_INDIGO,
-        PURPLE,
-        MAGENTA,
-        RED,
-        BROWN,
-        DARK_YELLOW,
-        DARK_GREEN,
-        GREEN,
-        FOREST_GREEN,
-        AQUA,
-        NULL_DO_NOT_USE,
-        BLACK_0E,
-        BLACK_0F,
+        _00_DARK_GRAY,
+        _01_DARK_BLUE,
+        _02_BLUE,
+        _03_DARK_INDIGO,
+        _04_PURPLE,
+        _05_MAGENTA,
+        _06_RED,
+        _07_BROWN,
+        _08_DARK_YELLOW,
+        _09_DARK_GREEN,
+        _0A_GREEN,
+        _0B_FOREST_GREEN,
+        _0C_AQUA,
+        _0D_NULL_DO_NOT_USE,
+        _0E_BLACK,
+        _0F_BLACK,
 
-        GRAY,
-        SEMI_LIGHT_BLUE,
-        SMEI_DARK_BLUE,
-        INDIGO,
-        SEMI_DARK_PURPLE,
-        ROSE,
-        RED_ORANGE,
-        DARK_GOLD,
-        OLIVE,
-        SEMI_DARK_GREEN,
-        SEMI_LIGHT_GREEN,
-        EVERGREEN,
-        DARK_CYAN,
-        BLACK,
-        BLACK_1E,
-        BLACK_1F,
+        _10_GRAY,
+        _11_SEMI_LIGHT_BLUE,
+        _12_SMEI_DARK_BLUE,
+        _13_INDIGO,
+        _14_SEMI_DARK_PURPLE,
+        _15_ROSE,
+        _16_RED_ORANGE,
+        _17_DARK_GOLD,
+        _18_OLIVE,
+        _19_SEMI_DARK_GREEN,
+        _1A_SEMI_LIGHT_GREEN,
+        _1B_EVERGREEN,
+        _1C_DARK_CYAN,
+        _1D_BLACK,
+        _1E_BLACK,
+        _1F_BLACK,
 
-        WHITE,
-        LIGHT_BLUE,
-        LIGHT_INDIGO,
-        LIGHT_PURPLE,
-        PINK,
-        LIGHT_RED,
-        LIGHT_ORANGE,
-        GOLD,
-        LIGHT_OLIVE,
-        LIGHT_GREEN,
-        LIME,
-        TURQUOISE,
-        CYAN,
-        DARKER_GRAY,
-        BLACK_2E,
-        BLACK_2F,
+        _20_WHITE,
+        _21_LIGHT_BLUE,
+        _22_LIGHT_INDIGO,
+        _23_LIGHT_PURPLE,
+        _24_PINK,
+        _25_LIGHT_RED,
+        _26_LIGHT_ORANGE,
+        _27_GOLD,
+        _28_LIGHT_OLIVE,
+        _29_LIGHT_GREEN,
+        _2A_LIME,
+        _2B_TURQUOISE,
+        _2C_CYAN,
+        _2D_DARKER_GRAY,
+        _2E_BLACK,
+        _2F_BLACK,
 
-        WHITE_30,
-        LIGHTER_BLUE,
-        LIGHTER_INDIGO,
-        LIGHTER_PURPLE,
-        LIGHTER_PINK,
-        LIGHTER_RED,
-        LIGHTER_ORANGE,
-        BEIGE,
-        LIGHT_YELLOW,
-        LIGHTER_GREEN,
-        LIGHT_LIME,
-        LIGHT_TURQUOISE,
-        LIGHT_CYAN,
-        LIGHT_GRAY_3D,
-        BLACK_3E,
-        BLACK_3F
+        _30_WHITE,
+        _31_LIGHTER_BLUE,
+        _32_LIGHTER_INDIGO,
+        _33_LIGHTER_PURPLE,
+        _34_LIGHTER_PINK,
+        _35_LIGHTER_RED,
+        _36_LIGHTER_ORANGE,
+        _37_BEIGE,
+        _38_LIGHT_YELLOW,
+        _39_LIGHTER_GREEN,
+        _3A_LIGHT_LIME,
+        _3B_LIGHT_TURQUOISE,
+        _3C_LIGHT_CYAN,
+        _3D_LIGHT_GRAY,
+        _3E_BLACK,
+        _3F_BLACK
     }
 
     public enum PaletteID
@@ -116,8 +116,8 @@ namespace The_Legend_of_Zelda
 
         public static byte[] active_palette_list = new byte[COLORS_IN_PALETTE * NUM_PALETTES];
 
-        public static byte background_color = (byte)Color.BLACK;
-        static byte old_bg_color = (byte)Color.BLACK;
+        public static Color background_color = Color._1D_BLACK;
+        static Color old_bg_color = Color._1D_BLACK;
 
         static byte[,] palette_list = new byte[20, 3]
         {
@@ -230,7 +230,7 @@ namespace The_Legend_of_Zelda
         }
         public static void LoadPaletteGroup(PaletteID active_plt_index, PaletteGroups palette_group)
         {
-            active_palette_list[(int)active_plt_index * COLORS_IN_PALETTE] = background_color;
+            active_palette_list[(int)active_plt_index * COLORS_IN_PALETTE] = (byte)background_color;
             for (int i = 1; i < COLORS_IN_PALETTE; i++)
             {
                 active_palette_list[(int)active_plt_index * COLORS_IN_PALETTE + i] = palette_list[(byte)palette_group, i - 1];
@@ -266,7 +266,7 @@ namespace The_Legend_of_Zelda
             {
                 old_bg_color = background_color;
                 for (int i = 0; i < active_palette_list.Length / COLORS_IN_PALETTE; i++)
-                    active_palette_list[i * COLORS_IN_PALETTE] = background_color;
+                    active_palette_list[i * COLORS_IN_PALETTE] = (byte)background_color;
             }
         }
     }

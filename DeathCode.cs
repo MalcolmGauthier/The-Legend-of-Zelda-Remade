@@ -80,10 +80,10 @@
             }
             else if (death_timer == 116)
             {
-                Palettes.LoadPalette(2, 1, Color.RED);
+                Palettes.LoadPalette(2, 1, Color._06_RED);
                 Palettes.LoadPalette(2, 2, 0x17);
                 Palettes.LoadPalette(2, 3, 0x16);
-                Palettes.LoadPalette(3, 1, Color.RED);
+                Palettes.LoadPalette(3, 1, Color._06_RED);
                 Palettes.LoadPalette(3, 2, 0x17);
                 Palettes.LoadPalette(3, 3, 0x16);
             }

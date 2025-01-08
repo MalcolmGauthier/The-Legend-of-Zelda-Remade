@@ -273,6 +273,7 @@ namespace The_Legend_of_Zelda
             OverworldCode.stair_warp_flag = false;
             map_dot.shown = false;
         }
+
         public static void Tick()
         {
             if (opening_animation_timer <= 80)
@@ -282,11 +283,15 @@ namespace The_Legend_of_Zelda
             }
 
             DrawHUD();
+
             if (link_walk_animation_timer > 0)
                 LinkWalkAnimation();
+
             Link.Tick();
+
             if (scroll_animation_timer > 500)
                 DoorCode();
+
             CheckForWarp();
             Menu.Tick();
 
@@ -301,6 +306,7 @@ namespace The_Legend_of_Zelda
                     DarkeningAnimation();
             }
         }
+
         static void OpeningAnimation()
         {
             if (opening_animation_timer == 80)
@@ -328,61 +334,66 @@ namespace The_Legend_of_Zelda
             int num_rows_to_erase = 16 - opening_animation_timer / 5;
             for (int i = 0; i < num_rows_to_erase; i++)
             {
-                for (int j = 0; j < 22; j++)
+                for (int j = 0; j < 22 * Textures.PPU_WIDTH; j += Textures.PPU_WIDTH)
                 {
-                    Textures.ppu[0x100 + j * 0x20 + i] = 0x24;
-                }
-            }
-            for (int i = 0; i < num_rows_to_erase; i++)
-            {
-                for (int j = 0; j < 22; j++)
-                {
-                    Textures.ppu[0x11f + j * 0x20 - i] = 0x24;
+                    Textures.ppu[0x100 + j + i] = 0x24;
+                    Textures.ppu[0x11f + j - i] = 0x24;
                 }
             }
         }
+
         public static void LoadPalette(bool underground_room = false)
         {
+            // the side-view rooms are gray, no matter the dungeon palette
             if (underground_room)
             {
-                Palettes.LoadPaletteGroup(PalettedID.BG_2, Palettes.PaletteGroups.DUNGEON8_9);
-                Palettes.LoadPaletteGroup(PalettedID.BG_3, Palettes.PaletteGroups.DUNGEON8_9);
+                Palettes.LoadPaletteGroup(PaletteID.BG_2, Palettes.PaletteGroups.DUNGEON8_9);
+                Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.DUNGEON8_9);
                 return;
             }
 
-            Palettes.PaletteGroups chosen_palette = Palettes.PaletteGroups.BLACK;
+            Palettes.PaletteGroups chosen_palette;
             switch (current_dungeon + 1)
             {
                 case 1:
                     chosen_palette = Palettes.PaletteGroups.DUNGEON1;
                     break;
+
                 case 2:
                     chosen_palette = Palettes.PaletteGroups.DUNGEON2;
                     break;
+
                 case 3:
                     chosen_palette = Palettes.PaletteGroups.DUNGEON3;
                     break;
+
                 case 4 or 6:
                     chosen_palette = Palettes.PaletteGroups.DUNGEON4_6;
                     break;
+
                 case 5 or 7:
                     chosen_palette = Palettes.PaletteGroups.DUNGEON5_7;
                     break;
+
                 case 8 or 9:
+                default:
                     chosen_palette = Palettes.PaletteGroups.DUNGEON8_9;
                     break;
             }
-            Palettes.LoadPaletteGroup(PalettedID.BG_2, chosen_palette);
-            Palettes.LoadPaletteGroup(PalettedID.BG_3, chosen_palette);
-            Palettes.LoadPaletteGroup(PalettedID.SP_3, chosen_palette);
+            Palettes.LoadPaletteGroup(PaletteID.BG_2, chosen_palette);
+            Palettes.LoadPaletteGroup(PaletteID.BG_3, chosen_palette);
+            Palettes.LoadPaletteGroup(PaletteID.SP_3, chosen_palette);
 
-            if (current_dungeon + 1 is 2 or 3 or 5 or 9)
-                Palettes.LoadPalette(3, 1, 0x16);
+            // dungeons 2, 3, 5 and 9 have red water (lava)
+            if ((current_dungeon + 1) is 2 or 3 or 5 or 9)
+                Palettes.LoadPalette(3, 1, Color._16_RED_ORANGE);
             else
-                Palettes.LoadPalette(3, 1, 0x12);
+                Palettes.LoadPalette(3, 1, Color._12_SMEI_DARK_BLUE);
         }
+
         public static DoorType GetDoorType(byte room_id, Direction door_direction)
-        { // door_types must be cleared before use
+        {
+            // door_types must be cleared before use
             if (door_types[(int)door_direction] != DoorType.NONE)
                 return door_types[(int)door_direction];
 
@@ -477,6 +488,8 @@ namespace The_Legend_of_Zelda
                     return DoorType.NONE;
             }
         }
+
+        // get connection ID of connection between two rooms, found with direction relative to room id
         public static int getConnectionID(byte room_id, Direction door_direction)
         {
             int connection_id = 2 * room_id;
@@ -492,8 +505,10 @@ namespace The_Legend_of_Zelda
             else
                 return connection_id;
         }
+
         static void Scroll()
         {
+            // no scrolling in the side view rooms!
             if (room_list[current_screen] >= 0x2a)
                 return;
 
@@ -523,112 +538,112 @@ namespace The_Legend_of_Zelda
                     scroll_animation_timer = 0;
                     scroll_direction = Direction.RIGHT;
                 }
+
+                return;
+            }
+
+            if (scroll_animation_timer == 0)
+            {
+                Link.Show(false);
+                can_open_menu = false;
+                UnloadSpritesRoomTransition();
+                ResetLinkPowerUps();
+
+                if (room_list[current_screen] == 1 && scroll_direction == Direction.DOWN)
+                {
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
+                    Program.gamemode = Program.Gamemode.OVERWORLD;
+                    OverworldCode.black_square_stairs_return_flag = true;
+                    Link.Show(false);
+                    Link.SetPos(-16, -16);
+                    OverworldCode.Init();
+                    OverworldCode.current_screen = OverworldCode.return_screen;
+                    scroll_animation_timer = 1000;
+                    return;
+                }
+
+                LinkWalkAnimation();
+                if (GetRoomDarkness(scroll_destination) && !is_dark)
+                {
+                    is_dark = true;
+                    dark_room_animation_timer = 22;
+                }
+
+                if (scroll_direction == Direction.DOWN)
+                {
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 1);
+                }
+                else if (scroll_direction == Direction.UP)
+                {
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, current_screen, 1);
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 0);
+                    y_scroll = 176;
+                    Link.SetPos(new_y: 240);
+                }
+                else
+                {
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 2);
+                }
+                Link.can_move = false;
+            }
+
+            if (scroll_direction == Direction.UP || scroll_direction == Direction.DOWN)
+            {
+                if ((Program.gTimer % 4) == 0)
+                {
+                    if (scroll_direction == Direction.UP)
+                    {
+                        y_scroll -= 8;
+                        if (Program.gTimer % 3 == 0)
+                            Link.SetPos(new_y: Link.y - 2);
+                    }
+                    else
+                    {
+                        y_scroll += 8;
+                        if (Program.gTimer % 3 == 0)
+                            Link.SetPos(new_y: Link.y + 2);
+                        if (Link.y < 65)
+                            Link.SetPos(new_y: 65);
+                    }
+                }
+
+                if (scroll_animation_timer == 88)
+                {
+                    EndScroll();
+                }
             }
             else
             {
-                if (scroll_animation_timer == 0)
+                if (scroll_direction == Direction.LEFT)
                 {
-                    Link.Show(false);
-                    can_open_menu = false;
-                    UnloadSpritesRoomTransition();
-                    ResetLinkPowerUps();
-
-                    if (room_list[current_screen] == 1 && scroll_direction == Direction.DOWN)
-                    {
-                        Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
-                        Program.gamemode = Program.Gamemode.OVERWORLD;
-                        OverworldCode.black_square_stairs_return_flag = true;
-                        Link.Show(false);
-                        Link.SetPos(-16, -16);
-                        OverworldCode.Init();
-                        OverworldCode.current_screen = OverworldCode.return_screen;
-                        scroll_animation_timer = 1000;
-                        return;
-                    }
-
-                    LinkWalkAnimation();
-                    if (GetRoomDarkness(scroll_destination) && !is_dark)
-                    {
-                        is_dark = true;
-                        dark_room_animation_timer = 22;
-                    }
-
-                    if (scroll_direction == Direction.DOWN)
-                    {
-                        Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 1);
-                    }
-                    else if (scroll_direction == Direction.UP)
-                    {
-                        Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, current_screen, 1);
-                        Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 0);
-                        y_scroll = 176;
-                        Link.SetPos(new_y: 240);
-                    }
-                    else
-                    {
-                        Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 2);
-                    }
-                    Link.can_move = false;
-                }
-
-                if (scroll_direction == Direction.UP || scroll_direction == Direction.DOWN)
-                {
-                    if ((Program.gTimer % 4) == 0)
-                    {
-                        if (scroll_direction == Direction.UP)
-                        {
-                            y_scroll -= 8;
-                            if (Program.gTimer % 3 == 0)
-                                Link.SetPos(new_y: Link.y - 2);
-                        }
-                        else
-                        {
-                            y_scroll += 8;
-                            if (Program.gTimer % 3 == 0)
-                                Link.SetPos(new_y: Link.y + 2);
-                            if (Link.y < 65)
-                                Link.SetPos(new_y: 65);
-                        }
-                    }
-
-                    if (scroll_animation_timer == 88)
-                    {
-                        EndScroll();
-                    }
+                    x_scroll -= 2;
+                    if (Program.gTimer % 4 == 0)
+                        Link.SetPos(new_x: Link.x - 2);
+                    if (Link.x > 239)
+                        Link.SetPos(new_x: 239);
                 }
                 else
                 {
-                    if (scroll_direction == Direction.LEFT)
-                    {
-                        x_scroll -= 2;
-                        if (Program.gTimer % 4 == 0)
-                            Link.SetPos(new_x: Link.x - 2);
-                        if (Link.x > 239)
-                            Link.SetPos(new_x: 239);
-                    }
-                    else
-                    {
-                        x_scroll += 2;
-                        if (Program.gTimer % 2 == 0)
-                            Link.SetPos(new_x: Link.x + 1);
-                        if (Link.x < 1)
-                            Link.SetPos(new_x: 1);
-                    }
-
-                    if (scroll_animation_timer == 128)
-                    {
-                        EndScroll();
-                    }
+                    x_scroll += 2;
+                    if (Program.gTimer % 2 == 0)
+                        Link.SetPos(new_x: Link.x + 1);
+                    if (Link.x < 1)
+                        Link.SetPos(new_x: 1);
                 }
 
-                if ((int)scroll_direction < 2)
-                    Link.current_action = (Link.Action)scroll_direction + 2;
-                else
-                    Link.current_action = (Link.Action)scroll_direction - 2;
-
-                scroll_animation_timer++;
-                Link.animation_timer++;
+                if (scroll_animation_timer == 128)
+                {
+                    EndScroll();
+                }
             }
+
+            if ((int)scroll_direction < 2)
+                Link.current_action = (Link.Action)scroll_direction + 2;
+            else
+                Link.current_action = (Link.Action)scroll_direction - 2;
+
+            scroll_animation_timer++;
+            Link.animation_timer++;
 
             void EndScroll()
             {
@@ -651,8 +666,19 @@ namespace The_Legend_of_Zelda
                 LinkWalkAnimation();
             }
         }
+
+        // plays the room darkening animation, either forwards or backwards depending on dark room enter or exit
         static void DarkeningAnimation()
         {
+            // often for this animation you're just lowering a palette color one level down, so this function takes a list of indices and lowers them by 16
+            // this function also makes it so we don't have to care about what color the dungeon uses
+            static void reducePalettes(byte[] to_reduce)
+            {
+                foreach (byte i in to_reduce)
+                    if (Palettes.active_palette_list[i] > 15)
+                        Palettes.active_palette_list[i] -= 16;
+            }
+
             if (dark_room_animation_timer > 0)
                 dark_room_animation_timer--;
             else if (dark_room_animation_timer < 0)
@@ -663,161 +689,164 @@ namespace The_Legend_of_Zelda
             switch (dark_room_animation_timer)
             {
                 case 21:
-                    foreach (byte i in list_21)
-                        if (Palettes.active_palette_list[i] > 15)
-                            Palettes.active_palette_list[i] -= 16;
+                    reducePalettes(list_21);
                     break;
+
                 case 11:
-                    foreach (byte i in list_11)
-                        if (Palettes.active_palette_list[i] > 15)
-                            Palettes.active_palette_list[i] -= 16;
-                    Palettes.LoadPalette(2, 1, 0xf);
+                    reducePalettes(list_11);
+                    Palettes.LoadPalette(2, 1, Color._0F_BLACK);
                     break;
+
                 case 1:
-                    Palettes.LoadPalette(2, 2, 0xf);
-                    Palettes.LoadPalette(3, 1, 0xf);
-                    Palettes.LoadPalette(3, 2, 0xf);
-                    Palettes.LoadPalette(3, 3, 0xf);
+                    Palettes.LoadPalette(2, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(3, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(3, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(3, 3, Color._0F_BLACK);
                     break;
+
                 case -21:
                     LoadPalette();
-                    foreach (byte i in list_21)
-                        if (Palettes.active_palette_list[i] > 15)
-                            Palettes.active_palette_list[i] -= 16;
-                    foreach (byte i in list_11)
-                        if (Palettes.active_palette_list[i] > 15)
-                            Palettes.active_palette_list[i] -= 16;
-                    Palettes.LoadPalette(2, 1, 0xf);
+                    reducePalettes(list_21);
+                    reducePalettes(list_11);
+                    Palettes.LoadPalette(2, 1, Color._0F_BLACK);
                     break;
+
                 case -11:
                     LoadPalette();
-                    foreach (byte i in list_21)
-                        if (Palettes.active_palette_list[i] > 15)
-                            Palettes.active_palette_list[i] -= 16;
+                    reducePalettes(list_21);
                     break;
+
                 case -1:
                     LoadPalette();
                     break;
             }
         }
+
+        // spawn ennemies and or bosses in a simillar way to overworld
         static void SpawnEnemies()
         {
             uint enemies = dungeon_enemy_list[current_screen];
+            // the first 16 bits of the enemy code being FFFF is a signal to load the boss of that room instead, whose id is the 16 next bits.
+            // yes, this means a dungeon room can't have 8 of the enemy of ID 15, because 0xFFFFFFFF spawns ganon.
+            // otherwise you can just insert the non-15 id enemy into one of the first 4 slots.
             if ((enemies & 0xFFFF0000) == 0xFFFF0000)
             {
+                // if boss killed, it's gone
                 if (SaveLoad.GetBossKillsFlag(SaveLoad.current_save_file, (byte)Array.IndexOf(rooms_with_boses, current_screen)))
+                    return;
+
+                switch ((Bosses)(enemies & 0xFFFF))
                 {
-                    switch ((Bosses)(enemies & 0xFFFF))
-                    {
-                        case Bosses.AQUAMENTUS:
-                            //new Aquamentus();
-                            break;
-                        case Bosses.DODONGO_TRIPLE:
-                            //new Dodongo();
-                            //new Dodongo();
-                        case Bosses.DODONGO:
-                            //new Dodongo();
-                            break;
-                        case Bosses.MANHANDLA:
-                            //new Manhandla();
-                            break;
-                        case Bosses.GLEEOK:
-                            //new Gleeok(2);
-                            break;
-                        case Bosses.GLEEOK_TRIPLE:
-                            //new Gleeok(3);
-                            break;
-                        case Bosses.GLEEOK_QUADRUPLE:
-                            //new Gleeok(4);
-                            break;
-                        case Bosses.DIGDOGGER:
-                            //new Digdogger(false);
-                            break;
-                        case Bosses.DIGDOGGER_TRIPLE:
-                            //new Digdogger(true);
-                            break;
-                        case Bosses.GOHMA:
-                            //new Gohma(false);
-                            break;
-                        case Bosses.GOHMA_HARDER:
-                            //new Gohma(true);
-                            break;
-                        case Bosses.PATRA:
-                            //new Patra();
-                            break;
-                        case Bosses.MOLDORM:
-                            //new Moldorm();
-                            break;
-                        case Bosses.GANON:
-                            //new Ganon();
-                            break;
-                    }
+                    case Bosses.AQUAMENTUS:
+                        //new Aquamentus();
+                        break;
+                    case Bosses.DODONGO_TRIPLE:
+                        //new Dodongo();
+                        //new Dodongo();
+                        //new Dodongo();
+                    case Bosses.DODONGO:
+                        //new Dodongo();
+                        break;
+                    case Bosses.MANHANDLA:
+                        //new Manhandla();
+                        break;
+                    case Bosses.GLEEOK:
+                        //new Gleeok(2);
+                        break;
+                    case Bosses.GLEEOK_TRIPLE:
+                        //new Gleeok(3);
+                        break;
+                    case Bosses.GLEEOK_QUADRUPLE:
+                        //new Gleeok(4);
+                        break;
+                    case Bosses.DIGDOGGER:
+                        //new Digdogger(false);
+                        break;
+                    case Bosses.DIGDOGGER_TRIPLE:
+                        //new Digdogger(true);
+                        break;
+                    case Bosses.GOHMA:
+                        //new Gohma(false);
+                        break;
+                    case Bosses.GOHMA_HARDER:
+                        //new Gohma(true);
+                        break;
+                    case Bosses.PATRA:
+                        //new Patra();
+                        break;
+                    case Bosses.MOLDORM:
+                        //new Moldorm();
+                        break;
+                    case Bosses.GANON:
+                        //new Ganon();
+                        break;
                 }
+
+                return;
             }
-            else
+
+            uint enemy_selector = 0xF0000000;
+            for (int i = 0; i < 8; i++)
             {
-                uint enemy_selector = 0xF0000000;
-                for (int i = 0; i < 8; i++)
+                uint enemy_id = (enemies & enemy_selector) >> ((7 - i) * 4);
+                if (enemy_id < 8)
                 {
-                    uint enemy_id = (enemies & enemy_selector) >> ((7 - i) * 4);
-                    if (enemy_id < 8)
+                    switch ((DungeonEnemies)enemy_id)
                     {
-                        switch ((DungeonEnemies)enemy_id)
-                        {
-                            case DungeonEnemies.NONE:
-                                break;
-                            case DungeonEnemies.GEL:
-                                //new Gel();
-                                break;
-                            case DungeonEnemies.BUBBLE:
-                                //new Bubble(Bubble.NORMAL);
-                                break;
-                            case DungeonEnemies.BUBBLE_BLUE:
-                                //new Bubble(Bubble.BLUE);
-                                break;
-                            case DungeonEnemies.BUBBLE_RED:
-                                //new Bubble(Bubble.RED);
-                                break;
-                            case DungeonEnemies.KEESE:
-                                //new Keese();
-                                break;
-                            case DungeonEnemies.NPC:
-                                // :/
-                                break;
-                            case DungeonEnemies.RAZOR_TRAP:
-                                //new RazorTrap();
-                                break;
-                        }
+                        case DungeonEnemies.NONE:
+                            break;
+                        case DungeonEnemies.GEL:
+                            //new Gel();
+                            break;
+                        case DungeonEnemies.BUBBLE:
+                            //new Bubble(Bubble.NORMAL);
+                            break;
+                        case DungeonEnemies.BUBBLE_BLUE:
+                            //new Bubble(Bubble.BLUE);
+                            break;
+                        case DungeonEnemies.BUBBLE_RED:
+                            //new Bubble(Bubble.RED);
+                            break;
+                        case DungeonEnemies.KEESE:
+                            //new Keese();
+                            break;
+                        case DungeonEnemies.NPC:
+                            // :/
+                            break;
+                        case DungeonEnemies.RAZOR_TRAP:
+                            //new RazorTrap();
+                            break;
                     }
-                    else
-                    {
-                        if (current_dungeon is 1 or 2 or 7)
-                        {
-                            switch (enemy_id)
-                            {
-                                case 0:
-                                    break;
-                            }
-                        }
-                        else if (current_dungeon is 3 or 5 or 8)
-                        {
-                            switch (enemy_id)
-                            {
-                                case 0:
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            switch (enemy_id)
-                            {
-                                case 0:
-                                    break;
-                            }
-                        }
-                    }
-                    enemy_selector >>= 4;
+
+                    continue;
                 }
+
+                if (current_dungeon is 1 or 2 or 7)
+                {
+                    switch (enemy_id)
+                    {
+                        case 0:
+                            break;
+                    }
+                }
+                else if (current_dungeon is 3 or 5 or 8)
+                {
+                    switch (enemy_id)
+                    {
+                        case 0:
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (enemy_id)
+                    {
+                        case 0:
+                            break;
+                    }
+                }
+
+                enemy_selector >>= 4;
             }
         }
         static void SpawnItems()
@@ -864,17 +893,19 @@ namespace The_Legend_of_Zelda
         public static void DrawDoors(byte room, byte screen_index, bool redraw = false)
         {
             int screen_index_offset = screen_index * 0x3c0;
-            if (screen_index == 1)
-                screen_index_offset -= 256;
+
             byte[] door_data = {
                 0xf6,0xf6,0xf6,0xf6,0x78,0x78,0x78,0x78,0x79,0x24,0x24,0x7b,0x7a,0x77,0x75,0x7c,
                 0x7e,0x76,0x74,0x80,0x7f,0x24,0x24,0x81,0x7d,0x7d,0x7d,0x7d,0xf6,0xf6,0xf6,0xf6,
                 0xf6,0x82,0x83,0x85,0xf6,0x82,0x24,0x76,0xf6,0x82,0x24,0x77,0xf6,0x82,0x84,0x86,
                 0x88,0x8a,0x87,0xf6,0x74,0x24,0x87,0xf6,0x75,0x24,0x87,0xf6,0x89,0x8b,0x87,0xf6
             };
-            short[] door_ppu_locations = {
-                0x10e, 0x34e, 0x220, 0x23c
-            };
+            short[] door_ppu_locations = { 0x10e, 0x34e, 0x220, 0x23c };
+            byte[] ppu_location_differences = { 65, 1, 34, 32 };
+
+            if (screen_index == 1)
+                screen_index_offset -= 256;
+
             if (!redraw)
             {
                 Array.Clear(door_types);
@@ -896,7 +927,8 @@ namespace The_Legend_of_Zelda
                 {
                     continue;
                 }
-                else if (door_types[i] is DoorType.BOMBABLE or DoorType.WALK_THROUGH)
+                
+                if (door_types[i] is DoorType.BOMBABLE or DoorType.WALK_THROUGH)
                 {
                     //meta_tiles[door_metatiles[i]].special = true;
                     if (door_types[i] == DoorType.BOMBABLE &&
@@ -908,7 +940,6 @@ namespace The_Legend_of_Zelda
                             0x90, 0x24, 0x91, 0x24,
                             0x24, 0x92, 0x24, 0x93
                         };
-                        byte[] ppu_location_differences = { 65, 1, 34, 32 };
 
                         int ppu_location = door_ppu_locations[i] + ppu_location_differences[i];
                         Textures.ppu[ppu_location + screen_index_offset] = bomb_hole_texture_data[i * 4];
@@ -921,38 +952,37 @@ namespace The_Legend_of_Zelda
                     {
                         MakeDoorWalkable(i, true);
                     }
+
+                    continue;
+                }
+
+                for (int height = 0; height < 4; height++)
+                    for (int width = 0; width < 4; width++)
+                        Textures.ppu[door_ppu_locations[i] + height * 32 + width + screen_index_offset] = door_data[height * 4 + width + i * 16];
+
+                byte[] texture_locations = { 0x98, 0x9c, 0xa0, 0xa4, 0xa8, 0xa8, 0xac, 0xac };
+                int ppu_location = door_ppu_locations[i] + ppu_location_differences[i];
+
+
+                if (door_types[i] == DoorType.OPEN)
+                {
+                    MakeDoorWalkable(i);
+                    continue;
+                }
+                else if (door_types[i] == DoorType.KEY)
+                {
+                    Textures.ppu[ppu_location + screen_index_offset] = texture_locations[i];
+                    Textures.ppu[ppu_location + 1 + screen_index_offset] = (byte)(texture_locations[i] + 2);
+                    Textures.ppu[ppu_location + 32 + screen_index_offset] = (byte)(texture_locations[i] + 1);
+                    Textures.ppu[ppu_location + 33 + screen_index_offset] = (byte)(texture_locations[i] + 3);
+                    MakeDoorWalkable(i, locked_key_door: true);
                 }
                 else
                 {
-                    for (int height = 0; height < 4; height++)
-                        for (int width = 0; width < 4; width++)
-                            Textures.ppu[door_ppu_locations[i] + height * 32 + width + screen_index_offset] = door_data[height * 4 + width + i * 16];
-
-                    byte[] ppu_location_differences = { 65, 1, 34, 32 };
-                    byte[] texture_locations = { 0x98, 0x9c, 0xa0, 0xa4, 0xa8, 0xa8, 0xac, 0xac };
-                    int ppu_location = door_ppu_locations[i] + ppu_location_differences[i];
-
-
-                    if (door_types[i] == DoorType.OPEN)
-                    {
-                        MakeDoorWalkable(i);
-                        continue;
-                    }
-                    else if (door_types[i] == DoorType.KEY)
-                    {
-                        Textures.ppu[ppu_location + screen_index_offset] = texture_locations[i];
-                        Textures.ppu[ppu_location + 1 + screen_index_offset] = (byte)(texture_locations[i] + 2);
-                        Textures.ppu[ppu_location + 32 + screen_index_offset] = (byte)(texture_locations[i] + 1);
-                        Textures.ppu[ppu_location + 33 + screen_index_offset] = (byte)(texture_locations[i] + 3);
-                        MakeDoorWalkable(i, locked_key_door: true);
-                    }
-                    else
-                    {
-                        Textures.ppu[ppu_location + screen_index_offset] = texture_locations[i + 4];
-                        Textures.ppu[ppu_location + 1 + screen_index_offset] = (byte)(texture_locations[i + 4] + 2);
-                        Textures.ppu[ppu_location + 32 + screen_index_offset] = (byte)(texture_locations[i + 4] + 1);
-                        Textures.ppu[ppu_location + 33 + screen_index_offset] = (byte)(texture_locations[i + 4] + 3);
-                    }
+                    Textures.ppu[ppu_location + screen_index_offset] = texture_locations[i + 4];
+                    Textures.ppu[ppu_location + 1 + screen_index_offset] = (byte)(texture_locations[i + 4] + 2);
+                    Textures.ppu[ppu_location + 32 + screen_index_offset] = (byte)(texture_locations[i + 4] + 1);
+                    Textures.ppu[ppu_location + 33 + screen_index_offset] = (byte)(texture_locations[i + 4] + 3);
                 }
             }
 

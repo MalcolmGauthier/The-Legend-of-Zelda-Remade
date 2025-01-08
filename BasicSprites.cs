@@ -15,11 +15,20 @@ namespace The_Legend_of_Zelda
             this.xflip = xflip;
             this.yflip = yflip;
         }
+        public StaticSprite(SpriteID tile_index, PaletteID palette_index, int x, int y, bool xflip = false, bool yflip = false) : base((byte)tile_index, (byte)palette_index)
+        {
+            this.x = x;
+            this.y = y;
+            this.xflip = xflip;
+            this.yflip = yflip;
+        }
+
         public override void Action()
         {
             return;
         }
     }
+
     internal class FlickeringSprite : Sprite
     {
         byte frames_per_flicker;

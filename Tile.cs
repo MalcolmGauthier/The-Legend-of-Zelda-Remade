@@ -1,7 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
-using The_Legend_of_Zelda;
-using static SDL2.SDL;
+﻿using static SDL2.SDL;
 using static The_Legend_of_Zelda.Textures;
 namespace The_Legend_of_Zelda
 {
@@ -50,13 +47,22 @@ namespace The_Legend_of_Zelda
             byte[] texture_pixels = LoadBGTexture(tile_index);
 
             int vram_id = id % 1920;
+            // if location on screen 3 or 4, add 1 screen to x pos
             int offset = id < 1920 ? 0 : 256;
+
+            int tile_x_pos = (vram_id % 32) * 8;
+            int tile_y_pos = (vram_id / 32) * 8;
 
             for (int i = 0; i < 8; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    vram[((i + ((vram_id >> 5) << 3)) << 9) + j + ((vram_id & 31) << 3) + offset] = (byte)(texture_pixels[(i << 3) + j] + (ppu_plt[id] << 2));
+                    vram
+                    [
+                        ((i + tile_y_pos) * 512) +
+                        tile_x_pos + j + offset
+
+                    ] = (byte)(texture_pixels[(i * 8) + j] + (ppu_plt[id] * 4));
                 }
             }
         }

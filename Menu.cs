@@ -25,7 +25,7 @@ namespace The_Legend_of_Zelda
         public static FlickeringSprite menu_selection_right = new FlickeringSprite(0x1e, 5, 136, 359, 8, 0x1e, second_palette_index: 6, xflip: true);
         static StaticSprite[] menu_sprites = new StaticSprite[17];
 
-        public static byte[] menu_item_list = {
+        public static SpriteID[] menu_item_list = {
             0x36, 0x34, 0x28, 0x26, 0x24, 0x22, 0x40, 0x4a
         };
         public static readonly ushort[,] hud_dungeon_maps = {
@@ -535,7 +535,7 @@ namespace The_Legend_of_Zelda
             sbyte index = (sbyte)Array.IndexOf(menu_item_list, current_B_item);
             if (index < 0)
             {
-                if (current_B_item == 0x4c)
+                if (current_B_item == SpriteID.MAP)
                     index = 6;
                 else
                     index = 0;
@@ -547,9 +547,9 @@ namespace The_Legend_of_Zelda
             menu_selection_right.x = 136 + (selected_menu_index & 3) * 24;
             menu_selection_right.y = 359 + (selected_menu_index >> 2) * 16;
 
-            byte switch_to = menu_item_list[selected_menu_index];
-            if (switch_to == 0x40 && !blue_potion[current_save_file] && !red_potion[current_save_file])
-                switch_to = 0x4c;
+            SpriteID switch_to = menu_item_list[selected_menu_index];
+            if (switch_to == SpriteID.POTION && !blue_potion[current_save_file] && !red_potion[current_save_file])
+                switch_to = SpriteID.MAP;
 
             current_B_item = switch_to;
         }

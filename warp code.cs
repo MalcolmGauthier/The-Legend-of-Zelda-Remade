@@ -346,6 +346,7 @@ namespace The_Legend_of_Zelda
                 Screen.sprites.Add(cave_npc);
             }
         }
+
         public static void Tick()
         {
             if (!Link.can_move)
@@ -356,7 +357,7 @@ namespace The_Legend_of_Zelda
 
             LinkItemCollection();
 
-            if (warp_info == 4 && !potion_shop_activated[current_save_file] && Control.IsPressed(Buttons.B) && Menu.current_B_item == 0x4c)
+            if (warp_info == 4 && !potion_shop_activated[current_save_file] && Control.IsPressed(Buttons.B) && Menu.current_B_item == SpriteID.MAP)
             {
                 potion_shop_activated[current_save_file] = true;
                 Link.can_move = false;
@@ -364,6 +365,7 @@ namespace The_Legend_of_Zelda
                 Init(true);
             }
         }
+
         static void TextTick()
         {
             if (Program.gTimer % 6 == 0 && fire_appeared)
@@ -811,7 +813,8 @@ namespace The_Legend_of_Zelda
                 AutoSwitchBItem(Menu.selected_menu_index, true);
                 AutoSwitchBItem(Menu.selected_menu_index, false);
                 Menu.MoveCursor();
-                if (Menu.current_B_item == 0x36 && !boomerang[current_save_file] && !magical_boomerang[current_save_file])
+                //TODO: ??? why doesn't movecursor handle this case?
+                if (Menu.current_B_item == SpriteID.BOOMERANG && !boomerang[current_save_file] && !magical_boomerang[current_save_file])
                     Menu.current_B_item = 0;
             }
 

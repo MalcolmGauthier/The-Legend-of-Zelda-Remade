@@ -22,72 +22,72 @@ namespace The_Legend_of_Zelda
         LINK_SIDE_L2 = 4,
         LINK_SIDE_R2 = 6,
         LINK_DOWN_L = 8,
-        LINK_DOWN_R = 10,
-        LINK_UP_L = 12,
-        LINK_UP_R = 14,
-        LINK_SIDE_ATK_L = 16,
-        LINK_SIDE_ATK_R = 18,
-        LINK_DOWN_ATK_L = 20,
-        LINK_DOWN_ATK_R = 22,
-        LINK_UP_ATK_L = 24,
-        LINK_UP_ATK_R = 26,
-        BLANK = 28,
-        SELECTOR = 30,
-        SWORD = 32,
-        BAIT = 34,
-        RECORDER = 36,
-        CANDLE = 38,
-        ARROW = 40,
-        BOW = 42,
-        MAGICAL_KEY = 44,
-        KEY = 46,
-        EXPLOSION_PARTICLE = 48,
-        RUPEE = 50,
-        BOMB = 52,
-        BOOMERANG = 54,
-        BOOMERANG_45 = 56,
-        BOOMERANG_90 = 58,
-        SPARK = 60,
-        DOT = 62,
-        POTION = 64,
-        BOOK_OF_MAGIC = 66,
-        FIREBALL = 68,
-        RING = 70,
-        MAGIC_SWORD = 72,
-        ROD = 74,
-        MAP = 76,
-        POWER_BRACELET = 78,
-        FAIRY_1 = 80,
-        FAIRY_2 = 82,
-        LINK_SIDE_R2_SHIELD = 84,
-        MAGICAL_SHIELD = 86,
-        LINK_DOWN_SHIELD_1 = 88,
-        LINK_DOWN_SHIELD_2 = 90,
-        FIRE_L = 92,
-        FIRE_R = 94,
-        LINK_DOWN_MAG_SHIELD = 96,
-        BIG_SPARK_1 = 98,
-        BIG_SPARK_2 = 100,
-        CLOCK = 102,
-        HEART_CONTAINER = 104,
-        COMPASS = 106,
-        RAFT = 108,
-        TRIFORCE = 110,
-        SMOKE_1 = 112,
-        SMOKE_2 = 114,
-        SMOKE_3 = 116,
-        LADDER = 118,
-        LINK_ITEM_GET = 120,
-        MAGIC_BEAM_UP = 122,
-        MAGIC_BEAM_SIDE_1 = 124,
-        MAGIC_BEAM_SIDE_2 = 126,
-        LINK_SIDE_R1_SHIELD = 128,
-        SWORD_SIDE_1 = 130,
-        SWORD_SIDE_2 = 132,
-        ARROW_SIDE_1 = 134,
-        ARROW_SIDE_2 = 136,
-        ROD_SIDE_1 = 138,
-        ROD_SIDE_2 = 140,
+        LINK_DOWN_R = 0xa,
+        LINK_UP_L = 0xc,
+        LINK_UP_R = 0xe,
+        LINK_SIDE_ATK_L = 0x10,
+        LINK_SIDE_ATK_R = 0x12,
+        LINK_DOWN_ATK_L = 0x14,
+        LINK_DOWN_ATK_R = 0x16,
+        LINK_UP_ATK_L = 0x18,
+        LINK_UP_ATK_R = 0x1a,
+        BLANK = 0x1c,
+        SELECTOR = 0x1e,
+        SWORD = 0x20,
+        BAIT = 0x22,
+        RECORDER = 0x24,
+        CANDLE = 0x26,
+        ARROW = 0x28,
+        BOW = 0x2a,
+        MAGICAL_KEY = 0x2c,
+        KEY = 0x2e,
+        EXPLOSION_PARTICLE = 0x30,
+        RUPEE = 0x32,
+        BOMB = 0x34,
+        BOOMERANG = 0x36,
+        BOOMERANG_45 = 0x38,
+        BOOMERANG_90 = 0x3a,
+        SPARK = 0x3c,
+        DOT = 0x3e,
+        POTION = 0x40,
+        BOOK_OF_MAGIC = 0x42,
+        FIREBALL = 0x44,
+        RING = 0x46,
+        MAGIC_SWORD = 0x48,
+        ROD = 0x4a,
+        MAP = 0x4c,
+        POWER_BRACELET = 0x4e,
+        FAIRY_1 = 0x50,
+        FAIRY_2 = 0x52,
+        LINK_SIDE_R2_SHIELD = 0x54,
+        MAGICAL_SHIELD = 0x56,
+        LINK_DOWN_SHIELD_1 = 0x58,
+        LINK_DOWN_SHIELD_2 = 0x5a,
+        FIRE_L = 0x5c,
+        FIRE_R = 0x5e,
+        LINK_DOWN_MAG_SHIELD = 0x60,
+        BIG_SPARK_1 = 0x62,
+        BIG_SPARK_2 = 0x64,
+        CLOCK = 0x66,
+        HEART_CONTAINER = 0x68,
+        COMPASS = 0x6a,
+        RAFT = 0x6c,
+        TRIFORCE = 0x6e,
+        SMOKE_1 = 0x70,
+        SMOKE_2 = 0x72,
+        SMOKE_3 = 0x74,
+        LADDER = 0x76,
+        LINK_ITEM_GET = 0x78,
+        MAGIC_BEAM_UP = 0x7a,
+        MAGIC_BEAM_SIDE_1 = 0x7c,
+        MAGIC_BEAM_SIDE_2 = 0x7e,
+        LINK_SIDE_R1_SHIELD = 0x80,
+        SWORD_SIDE_1 = 0x82,
+        SWORD_SIDE_2 = 0x84,
+        ARROW_SIDE_1 = 0x86,
+        ARROW_SIDE_2 = 0x88,
+        ROD_SIDE_1 = 0x8a,
+        ROD_SIDE_2 = 0x8c,
     }
 
     public static class Textures
@@ -123,6 +123,8 @@ namespace The_Legend_of_Zelda
             SPR_DUNGEON_BOSS_1257,
             SPR_DUNGEON_BOSS_3468,
             SPR_DUNGEON_BOSS_9
+            // a tile bank for the splash screen exists, but because the only way to load the splash screen is to 
+            // start the game, it does not need to be an option for loading, as it will just be the default starting value
         }
 
         public static void Init()
@@ -221,7 +223,6 @@ namespace The_Legend_of_Zelda
             switch (group)
             {
                 case PPUDataGroup.OVERWORLD:
-                    Menu.blue_candle_limit_reached = false;
                     using (Stream stream = File.OpenRead(@"Data\TILES_OVERWORLD.bin"))
                     {
                         BinaryReader reader = new BinaryReader(stream);
@@ -264,6 +265,7 @@ namespace The_Legend_of_Zelda
                     using (Stream stream = File.OpenRead(@"Data\TILES_DUNGEON.bin"))
                     {
                         BinaryReader reader = new BinaryReader(stream);
+                        // IF TOP DOWN
                         if (DungeonCode.room_list[page] < 0x2a)
                         {
                             int screen_1_exception = 0;
@@ -299,11 +301,12 @@ namespace The_Legend_of_Zelda
                                         Screen.meta_tiles[i * 16 + j].tile_index = 10;
                                 }
                             }
-                            byte[] metatiles_to_reset = { 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 };
-                            foreach (byte i in metatiles_to_reset)
+                            //byte[] metatiles_to_reset = { 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 };
+                            foreach (byte i in new byte[]{ 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 })
                                 Screen.meta_tiles[i].tile_index = 1;
                             DungeonCode.DrawDoors(page, screen_index);
                         }
+                        // IF SIDE VIEW
                         else
                         {
                             stream.Seek(0x2c0 + (DungeonCode.room_list[page] - 0x2a) * 176, SeekOrigin.Begin);
@@ -338,10 +341,10 @@ namespace The_Legend_of_Zelda
                         for (int i = 0; i < ppu_plt.Length / 16; i++)
                         {
                             a = reader.ReadByte();
-                            ppu_plt[i * 4 + screen_index * 960] = (byte)((a & 0b11000000) >> 6);
+                            ppu_plt[i * 4 + 0 + screen_index * 960] = (byte)((a & 0b11000000) >> 6);
                             ppu_plt[i * 4 + 1 + screen_index * 960] = (byte)((a & 0b00110000) >> 4);
                             ppu_plt[i * 4 + 2 + screen_index * 960] = (byte)((a & 0b00001100) >> 2);
-                            ppu_plt[i * 4 + 3 + screen_index * 960] = (byte)(a & 0b00000011);
+                            ppu_plt[i * 4 + 3 + screen_index * 960] = (byte)((a & 0b00000011) >> 0);
                         }
                     }
                     break;

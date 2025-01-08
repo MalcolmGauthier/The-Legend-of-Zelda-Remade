@@ -1,159 +1,211 @@
 ﻿using static The_Legend_of_Zelda.Screen;
-using static The_Legend_of_Zelda.SaveLoad;
 namespace The_Legend_of_Zelda
 {
     internal static class FileSelectCode
     {
-        public static FileSelectMode mode = FileSelectMode.FILESELECT;
-        static byte selected_option = 0;
-        static sbyte selected_character = 0;
-        static byte selected_name_letter = 0;
-        static readonly byte[] selection_heart_positions = new byte[5] { 92, 116, 140, 168, 184 };
-        static readonly byte[] register_name_text = new byte[18] { 0x1b, 0xe, 0x10, 0x12, 0x1c, 0x1d, 0xe, 0x1b, 0x24, 0x22, 0x18, 0x1e, 0x1b, 0x24, 0x17, 0xa, 0x18, 0xe };
-        static readonly byte[] elimination_mode_text = new byte[17] { 0xe, 0x15, 0x12, 0x16, 0x12, 0x17, 0xa, 0x1d, 0x12, 0x18, 0x17, 0x24, 0x24, 0x16, 0x18, 0xd, 0xe };
-        static byte[,] file_new_names = new byte[3, 8]
-        {
-            {0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24},
-            {0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24},
-            {0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24}
-        };
-        public enum FileSelectMode
+        private enum FileSelectMode
         {
             FILESELECT,
             REGISTERYOURNAME,
             ELIMINATIONMODE
         }
+
+        // order is critical. do not rearrange
+        private enum Selection
+        {
+            FILE_1,
+            FILE_2,
+            FILE_3,
+            REGISTER_OR_END,
+            ELIMINATE
+        }
+
+        const byte EMPTY_LETTER = 0x24;
+        const byte NAME_LENGTH = 8;
+
+        static FileSelectMode mode = FileSelectMode.FILESELECT;
+        static Selection selected_option = 0;
+        static sbyte selected_character = 0;
+        static byte selected_name_letter = 0;
+        static StaticSprite cursor = new(SpriteID.BLANK, PaletteID.SP_3, 40, 92);
+        static StaticSprite[] link_icons = new StaticSprite[6];
+        static StaticSprite[] quest_2_swords = new StaticSprite[3];
+
+        static readonly byte[] selection_heart_positions = new byte[5] { 92, 116, 140, 168, 184 };
+        static readonly byte[] register_name_text = new byte[18] 
+            { 0x1b, 0xe, 0x10, 0x12, 0x1c, 0x1d, 0xe, 0x1b, 0x24, 0x22, 0x18, 0x1e, 0x1b, 0x24, 0x17, 0xa, 0x18, 0xe }; // "REGISTER YOUR NAME"
+        static readonly byte[] register_end_text = new byte[15]
+            { 0x1b, 0xe, 0x10, 0x12, 0x1c, 0x1d, 0xe, 0x1b, 0x24, 0x24, 0x24, 0x24, 0xe, 0x17, 0xd }; // "REGISTER    END"
+        static readonly byte[] elimination_mode_text = new byte[17]
+            { 0xe, 0x15, 0x12, 0x16, 0x12, 0x17, 0xa, 0x1d, 0x12, 0x18, 0x17, 0x24, 0x24, 0x16, 0x18, 0xd, 0xe }; // "ELIMINATION  MODE"
+        static readonly byte[] elimination_end_text = new byte[15]
+            { 0xe, 0x15, 0x12, 0x16, 0x12, 0x17, 0xa, 0x1d, 0x12, 0x18, 0x17, 0x24, 0xe, 0x17, 0xd }; // "ELIMINATION END"
+        static byte[,] file_new_names = new byte[3, NAME_LENGTH]
+        {
+            {0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24},
+            {0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24},
+            {0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24}
+        };
+
         public static void InitFileSelect()
         {
-            Palettes.background_color = 0x0f;
+            Palettes.background_color = Color._0F_BLACK;
             y_scroll = 0;
             sprites.Clear();
             Sound.PauseMusic();
-            Palettes.LoadPaletteGroup(PalettedID.BG_0, Palettes.PaletteGroups.GRAVEYARD_HUD1);
-            Palettes.LoadPaletteGroup(PalettedID.BG_1, Palettes.PaletteGroups.HUD2);
-            Palettes.LoadPaletteGroup(PalettedID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
-            Palettes.LoadPaletteGroup(PalettedID.SP_1, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
-            Palettes.LoadPaletteGroup(PalettedID.SP_2, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
-            Palettes.LoadPalette(7, 1, 0x15);
-            Palettes.LoadPalette(2, 0, 0x15);
-            Palettes.LoadPalette(2, 1, 0x30);
-            Palettes.LoadPalette(3, 0, 0x0f);
-            Palettes.LoadPalette(3, 1, 0x15);
-            Palettes.LoadPalette(3, 2, 0x27);
-            Palettes.LoadPalette(3, 3, 0x30);
+
+            Palettes.LoadPaletteGroup(PaletteID.BG_0, Palettes.PaletteGroups.GRAVEYARD_HUD1);
+            Palettes.LoadPaletteGroup(PaletteID.BG_1, Palettes.PaletteGroups.HUD2);
+            // each save file icon uses a seperate palette to indicate its ring status, default is green
+            Palettes.LoadPaletteGroup(PaletteID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
+            Palettes.LoadPaletteGroup(PaletteID.SP_1, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
+            Palettes.LoadPaletteGroup(PaletteID.SP_2, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
+            Palettes.LoadPalette(7, 1, Color._15_ROSE);
+            Palettes.LoadPalette(2, 0, Color._15_ROSE);
+            Palettes.LoadPalette(2, 1, Color._30_WHITE);
+            Palettes.LoadPalette(3, 0, Color._0F_BLACK);
+            Palettes.LoadPalette(3, 1, Color._15_ROSE);
+            Palettes.LoadPalette(3, 2, Color._27_GOLD);
+            Palettes.LoadPalette(3, 3, Color._30_WHITE);
+
             Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 9, 0);
             for (byte i = 0; i < 3; i++)
             {
-                LoadFile(i);
+                SaveLoad.LoadFile(i);
                 DrawFileInfo(i);
-            }
-            Palettes.LoadPalette(7, 1, 0x15);
-            sprites.Add(new StaticSprite(0x1c, 7, 40, 92));
-            for (int i = 0; i < 3; i++)
-            {
-                if (second_quest[i])
+                if (SaveLoad.second_quest[i])
                 {
-                    sprites.Add(new StaticSprite(0x20, 3, 60, (short)(86 + i * 24)));
+                    sprites.Add(quest_2_swords[i] = new StaticSprite(SpriteID.SWORD, PaletteID.BG_3, 60, (short)(86 + i * 24)));
+                    // in the real game, the swords aren't on background layer but are instead just lower priority than link icons,
+                    // but i don't two loops in this already ugly function, so this does the same thing. + there's no background to worry about
+                    quest_2_swords[i].background = true;
                 }
             }
-            sprites.Add(new StaticSprite(0x08, 4, 48, 88));
-            sprites.Add(new StaticSprite(0x0a, 4, 56, 88));
-            sprites.Add(new StaticSprite(0x08, 5, 48, 112));
-            sprites.Add(new StaticSprite(0x0a, 5, 56, 112));
-            sprites.Add(new StaticSprite(0x08, 6, 48, 136));
-            sprites.Add(new StaticSprite(0x0a, 6, 56, 136));
+
+            sprites.Add(cursor = new StaticSprite(SpriteID.BLANK, PaletteID.SP_3, 40, 92));
+
+            for (int i = 0; i < link_icons.Length; i++)
+            {
+                SpriteID sprite = i % 2 == 0 ? SpriteID.LINK_DOWN_L : SpriteID.LINK_DOWN_R;
+                PaletteID palette = (PaletteID)(i / 2 + 4);
+                int x = i % 2 == 0 ? 48 : 56;
+                int y = (i / 2) * 24 + 88;
+
+                sprites.Add(link_icons[i] = new StaticSprite(sprite, palette, x, y));
+            }
+
             selected_option = 0;
-            SkipOverEmptyFiles();
+            SkipOverFiles();
         }
+
+        // initialization code for when switching to name registration mode
         static void InitRegisterName()
         {
-            Palettes.LoadPalette(7, 1, 0x15);
+            // color needs to be set back to pink when returning from elimination mode
+            Palettes.LoadPalette(7, 1, Color._15_ROSE);
             Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 10, 0);
+
+            // write text to screen
             for (int i = 0; i < register_name_text.Length; i++)
             {
                 Textures.ppu[0x68 + i] = register_name_text[i];
-                if (i < 8)
-                    Textures.ppu[0x1ea + i] = register_name_text[i];
             }
-            for (int i = 1; i < 7; i++)
+            for (int i = 0; i < register_end_text.Length; i++)
             {
-                sprites[i].x = (short)(80 + (((i - 1) % 2) * 8));
-                sprites[i].y = (short)(48 + 24 * (int)Math.Floor((i - 1) / 2.0));
+                Textures.ppu[0x1ea + i] = register_end_text[i];
             }
+
+            // move link icons
+            for (int i = 0; i < link_icons.Length; i++)
+            {
+                link_icons[i].x = 80 + ((i % 2) * 8);
+                link_icons[i].y = 48 + 24 * (i / 2);
+            }
+
+            // write file names
             for (int i = 0; i < 3; i++)
             {
-                if (!save_file_exists[i])
+                if (!SaveLoad.save_file_exists[i])
                     continue;
-                for (int j = 0; j < 8; j++)
+
+                for (int j = 0; j < NAME_LENGTH; j++)
                 {
-                    Textures.ppu[0xce + i * 0x60 + j] = file_name[i, j];
+                    Textures.ppu[0xce + i * 0x60 + j] = SaveLoad.file_name[i, j];
                 }
             }
-            sprites[0].x = 67;
-            sprites[0].y = 48;
-            selected_option = 0;
+
+            cursor.x = 67;
+            cursor.y = 48;
+            selected_option = Selection.FILE_1;
             selected_character = 0;
-            SkipOverEmptyFiles(true);
-            if (selected_option != 3)
-            {
-                if (file_new_names[selected_option, 7] != 0x24)
-                {
-                    selected_name_letter = 0;
-                }
-                else
-                {
-                    for (int i = 0; i < 7; i++)
-                    {
-                        selected_name_letter--;
-                        if (selected_name_letter == 255)
-                        {
-                            selected_name_letter = 0;
-                            break;
-                        }
-                        if (file_new_names[selected_option, selected_name_letter] != 0x24)
-                        {
-                            selected_name_letter++;
-                            break;
-                        }
-                    }
-                }
-            }
+            SkipOverFiles(true);
+
+            selected_name_letter = 0;
+
+            // calling skipoverfiles(true) when all files exist will set cursor to first menu option
+            // if every file exists, return
+            // why would selected_name_letter ever need to be non 0 on registration init? even if we're not selecting a file, it doesn't matter.
+            // make sure that removing this code is fine.
+
+            //if (selected_option == Selection.REGISTER_OR_END)
+            //    return;
+
+            // ??? when would this ever be true? if we're here, it's because selected option is on an empty file, and yet this checks for a full name
+            //if (file_new_names[(byte)selected_option, 7] != EMPTY_LETTER)
+            //{
+            //    selected_name_letter = 0;
+            //    return;
+            //}
+
+            //for (int i = 0; i < 7; i++)
+            //{
+            //    selected_name_letter--;
+            //    if (selected_name_letter == 255)
+            //    {
+            //        selected_name_letter = 0;
+            //        break;
+            //    }
+            //    if (file_new_names[(byte)selected_option, selected_name_letter] != EMPTY_LETTER)
+            //    {
+            //        selected_name_letter++;
+            //        break;
+            //    }
+            //}
         }
+
+        // draw the info for the files on loading file select mode
         static void DrawFileInfo(byte file_index)
         {
-            if (!save_file_exists[file_index])
+            if (!SaveLoad.save_file_exists[file_index])
                 return;
 
-            if (red_ring[file_index])
-                Palettes.LoadPalette((byte)(4 + file_index), 1, 0x16);
-            else if (blue_ring[file_index])
-                Palettes.LoadPalette((byte)(4 + file_index), 1, 0x32);
+            // link icon color (ring status)
+            if (SaveLoad.red_ring[file_index])
+                Palettes.LoadPalette((byte)(PaletteID.SP_0 + file_index), 1, Color._16_RED_ORANGE);
+            else if (SaveLoad.blue_ring[file_index])
+                Palettes.LoadPalette((byte)(PaletteID.SP_0 + file_index), 1, Color._32_LIGHTER_INDIGO);
 
-            for (int i = 0; i < 8; i++)
+            // file name
+            for (int i = 0; i < NAME_LENGTH; i++)
             {
-                Textures.ppu[0x169 + file_index * 0x60 + i] = file_name[file_index, i];
+                Textures.ppu[0x169 + file_index * 0x60 + i] = SaveLoad.file_name[file_index, i];
             }
 
-            if (death_count[file_index] >= 100)
-                Textures.ppu[0x189 + file_index * 0x60] = (byte)Math.Floor(death_count[file_index] / 100.0);
-            if (death_count[file_index] >= 10)
-                Textures.ppu[0x18a + file_index * 0x60] = (byte)(Math.Floor(death_count[file_index] / 10.0) % 10);
-            Textures.ppu[0x18b + file_index * 0x60] = (byte)(death_count[file_index] % 10);
+            // death count
+            if (SaveLoad.death_count[file_index] >= 100)
+                Textures.ppu[0x189 + file_index * 0x60] = (byte)Math.Floor(SaveLoad.death_count[file_index] / 100.0);
+            if (SaveLoad.death_count[file_index] >= 10)
+                Textures.ppu[0x18a + file_index * 0x60] = (byte)(Math.Floor(SaveLoad.death_count[file_index] / 10.0) % 10);
+            Textures.ppu[0x18b + file_index * 0x60] = (byte)(SaveLoad.death_count[file_index] % 10);
 
-            if (nb_of_hearts[file_index] > 8)
+            // max hearts
+            for (int i = 0; i < SaveLoad.nb_of_hearts[file_index]; i++)
             {
-                for (int i = 0; i < nb_of_hearts[file_index] - 8; i++)
-                {
-                    Textures.ppu[0x172 + file_index * 0x60 + i] = 0xf2;
-                }
-            }
-            for (int i = 0; i < nb_of_hearts[file_index]; i++)
-            {
+                int ppu_index = i >= 8 ? 0x172 - 8 : 0x192;
                 Textures.ppu[0x192 + file_index * 0x60 + i] = 0xf2;
-                if (i == 7)
-                    break;
             }
         }
+
         public static void Tick()
         {
             switch (mode)
@@ -169,186 +221,202 @@ namespace The_Legend_of_Zelda
                     break;
             }
         }
+
         static void FileSelect()
         {
             if (Control.IsPressed(Buttons.START))
             {
-                if (selected_option < 3)
+                if (selected_option <= Selection.FILE_3)
                 {
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
                     sprites.Clear();
                     Program.gamemode = Program.Gamemode.OVERWORLD;
-                    current_save_file = selected_option;
+                    SaveLoad.current_save_file = (byte)selected_option;
                     Link.Init();
                     OverworldCode.Init();
                     return;
                 }
-                else if (selected_option == 3)
+
+                // this happens for either regis mode or elim mode, so this happens before checking which was chosen
+                foreach (StaticSprite s in quest_2_swords)
+                    sprites.Remove(s);
+
+                if (selected_option == Selection.REGISTER_OR_END)
                 {
-                    for (int i = 0; i < 3; i++)
-                    {
-                        if (second_quest[i])
-                        {
-                            sprites.RemoveAt(1);
-                        }
-                    }
                     InitRegisterName();
                     mode = FileSelectMode.REGISTERYOURNAME;
                     return;
                 }
-                else
+
+                // elimination mode chosen
+                Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 10, 0);
+                Palettes.LoadPalette(7, 1, Color._30_WHITE);
+                for (int i = 0; i < link_icons.Length; i++)
                 {
-                    for (int i = 0; i < 3; i++)
-                    {
-                        if (second_quest[i])
-                        {
-                            sprites.RemoveAt(1);
-                        }
-                    }
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 10, 0);
-                    Palettes.LoadPalette(7, 1, 0x30);
-                    for (int i = 1; i < 7; i++)
-                    {
-                        sprites[i].x = (short)(80 + (((i - 1) % 2) * 8));
-                        sprites[i].y = (short)(48 + 24 * (int)Math.Floor((i - 1) / 2.0));
-                    }
-                    sprites[0].x = 67;
-                    sprites[0].y = 48;
-                    selected_option = 0;
-                    for (int i = 0; i < elimination_mode_text.Length; i++)
-                    {
-                        Textures.ppu[0x68 + i] = elimination_mode_text[i];
-                        if (i < 11)
-                            Textures.ppu[0x1ea + i] = elimination_mode_text[i];
-                    }
-                    for (int i = 0; i < 3; i++)
-                    {
-                        if (!save_file_exists[i])
-                            continue;
-                        for (int j = 0; j < 8; j++)
-                        {
-                            Textures.ppu[0xce + i * 0x60 + j] = file_name[i, j];
-                        }
-                    }
-                    mode = FileSelectMode.ELIMINATIONMODE;
-                    return;
+                    link_icons[i].x = 80 + ((i % 2) * 8);
+                    link_icons[i].y = 48 + 24 * (i / 2);
                 }
+
+                cursor.x = 67;
+                cursor.y = 48;
+                selected_option = Selection.FILE_1;
+
+                // write elimination mode text
+                for (int i = 0; i < elimination_mode_text.Length; i++)
+                {
+                    Textures.ppu[0x68 + i] = elimination_mode_text[i];
+                }
+                for (int i = 0; i < elimination_end_text.Length; i++)
+                {
+                    Textures.ppu[0x1ea + i] = elimination_end_text[i];
+                }
+
+                // write file names to screen
+                for (int i = 0; i < 3; i++)
+                {
+                    if (!SaveLoad.save_file_exists[i])
+                        continue;
+
+                    for (int j = 0; j < NAME_LENGTH; j++)
+                    {
+                        Textures.ppu[0xce + i * 0x60 + j] = SaveLoad.file_name[i, j];
+                    }
+                }
+
+                mode = FileSelectMode.ELIMINATIONMODE;
+                return;
             }
 
+            // select last, meaning pressing start and select at same time means start takes priority.
+            // to change this, move this if statement to the top
             if (Control.IsPressed(Buttons.SELECT))
             {
+                // this might not be legal c#, check back later
                 selected_option++;
-                if (selected_option == 5)
-                    selected_option = 0;
-                SkipOverEmptyFiles();
+                if (selected_option > Selection.ELIMINATE)
+                    selected_option = Selection.FILE_1;
+                SkipOverFiles();
                 Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
             }
-            sprites[0].y = selection_heart_positions[selected_option];
+
+            cursor.y = selection_heart_positions[(byte)selected_option];
         }
+
         static void EliminationMode()
         {
             if (Control.IsPressed(Buttons.START))
             {
-                if (selected_option < 3)
-                {
-                    save_file_exists[selected_option] = false;
-                    for (int i = 0; i < 8; i++)
-                    {
-                        Textures.ppu[0xce + selected_option * 0x60 + i] = 0x24;
-                        file_name[selected_option, i] = 0x24;
-                        file_new_names[selected_option, i] = 0x24;
-                    }
-                    save_file_exists[selected_option] = false;
-                    second_quest[selected_option] = false;
-                    DeleteData(selected_option);
-                    Sound.PlaySFX(Sound.SoundEffects.HURT);
-                }
-                else
+                if (selected_option == Selection.REGISTER_OR_END)
                 {
                     mode = FileSelectMode.REGISTERYOURNAME;
                     InitRegisterName();
                     return;
                 }
-            }
-            if (Control.IsPressed(Buttons.SELECT))
-            {
-                selected_option++;
-                if (selected_option == 4)
-                    selected_option = 0;
-                Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
-            }
-            sprites[0].y = (short)(48 + selected_option * 24);
-        }
-        static void RegistrationMode()
-        {
-            if (Control.IsPressed(Buttons.START) && (selected_option == 3))
-            {
-                for (byte i = 0; i < 3; i++)
+
+                // delete save file
+                SaveLoad.save_file_exists[(byte)selected_option] = false;
+                for (int i = 0; i < NAME_LENGTH; i++)
                 {
-                    if (!save_file_exists[i])
-                    {
-                        for (int j = 0; j < 8; j++)
-                        {
-                            if (file_new_names[i, j] != 0x24)
-                            {
-                                CreateFile(i);
-                                SaveFile(i);
-                                break;
-                            }
-                        }
-                    }
+                    Textures.ppu[0xce + (byte)selected_option * 0x60 + i] = EMPTY_LETTER;
+                    SaveLoad.file_name[(byte)selected_option, i] = EMPTY_LETTER;
+                    file_new_names[(byte)selected_option, i] = EMPTY_LETTER;
                 }
-                Textures.ppu_plt[0x226 + (selected_character % 11) * 2 + ((int)Math.Floor(selected_character / 11.0) * 0x40)] = 0;
-                Textures.ppu_plt[0xce + selected_option * 0x60 + selected_name_letter] = 0;
-                InitFileSelect();
-                mode = FileSelectMode.FILESELECT;
-            }
-            if (Control.IsPressed(Buttons.SELECT))
-            {
-                Textures.ppu_plt[0xce + selected_option * 0x60 + selected_name_letter] = 0;
-                selected_option++;
-                if (selected_option == 4)
-                    selected_option = 0;
-                selected_name_letter = 7;
-                if (selected_option != 3)
-                {
-                    if (file_new_names[selected_option, 7] != 0x24)
-                    {
-                        selected_name_letter = 0;
-                    }
-                    else
-                    {
-                        for (int i = 0; i < 7; i++)
-                        {
-                            selected_name_letter--;
-                            if (file_new_names[selected_option, selected_name_letter] != 0x24)
-                            {
-                                selected_name_letter++;
-                                break;
-                            }
-                        }
-                    }
-                }
-                SkipOverEmptyFiles(true);
-                Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
-            }
-            sprites[0].y = (short)(48 + selected_option * 24);
-            if (Program.gTimer % 16 == 0)
-            {
-                if (selected_option != 3)
-                    Textures.ppu_plt[0xce + selected_option * 0x60 + selected_name_letter] = 2;
-                Textures.ppu_plt[0x226 + (selected_character % 11) * 2 + ((int)Math.Floor(selected_character / 11.0) * 0x40)] = 2;
-            }
-            else if (Program.gTimer % 16 == 8)
-            {
-                if (selected_option != 3)
-                    Textures.ppu_plt[0xce + selected_option * 0x60 + selected_name_letter] = 0;
-                Textures.ppu_plt[0x226 + (selected_character % 11) * 2 + ((int)Math.Floor(selected_character / 11.0) * 0x40)] = 0;
+                SaveLoad.DeleteData((byte)selected_option);
+                Sound.PlaySFX(Sound.SoundEffects.HURT);
             }
 
+            if (Control.IsPressed(Buttons.SELECT))
+            {
+                selected_option++;
+                if (selected_option == Selection.ELIMINATE)
+                    selected_option = Selection.FILE_1;
+
+                Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
+            }
+
+            cursor.y = 48 + (byte)selected_option * 24;
+        }
+
+        static void RegistrationMode()
+        {
+            // end registration mode
+            if (Control.IsPressed(Buttons.START) && (selected_option == Selection.REGISTER_OR_END))
+            {
+                // for each file that did not exist (and thus had no name) but now DOES have a name, create it
+                for (byte i = 0; i < 3; i++)
+                {
+                    if (SaveLoad.save_file_exists[i])
+                        continue;
+
+                    for (int j = 0; j < NAME_LENGTH; j++)
+                    {
+                        if (file_new_names[i, j] != EMPTY_LETTER)
+                        {
+                            CreateFile(i);
+                            break;
+                        }
+                    }
+                }
+
+                // set blinking areas to black
+                SetRegistrationChrBackground(selected_character, 0);
+                Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = 0;
+                InitFileSelect();
+                mode = FileSelectMode.FILESELECT;
+                return;
+            }
+
+            // move cursor
+            if (Control.IsPressed(Buttons.SELECT))
+            {
+                Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = 0;
+                selected_option++;
+                if (selected_option > Selection.REGISTER_OR_END)
+                    selected_option = Selection.FILE_1;
+
+                SkipOverFiles(true);
+                Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
+
+                // code below only applies to making the cursor go onto one of the files
+                if (selected_option == Selection.REGISTER_OR_END)
+                    return;
+
+                // this algorithm sets the cursor to be 1 after the last non-blank character in the name, but sets the cursor to 0 if the last character is non-blank.
+                // this checks letter by letter going from last to first, and when it finds a non-blank letter, it increments the counter by one and does mod 8.
+                // the mod 8 makes it so that a full name will select the first character, and setting the value to -1 beforehand makes it so that if the name
+                // is completely empty, the loop won't do anything and the increment will overflow the value to 0, which is where we want it to be.
+                selected_name_letter = byte.MaxValue;
+                for (byte i = NAME_LENGTH; i >= 0; i--)
+                {
+                    if (file_new_names[(int)selected_option, i] == EMPTY_LETTER)
+                        continue;
+
+                    selected_name_letter = i;
+                    break;
+                }
+                selected_name_letter++;
+                selected_name_letter %= NAME_LENGTH;
+
+                return;
+            }
+
+            cursor.y = 48 + (byte)selected_option * 24;
+
+            if (Program.gTimer % 8 == 0)
+            {
+                // cast needed to prevent error. why tf does c# throw an error about implicitly casting 0 or 2 to a byte??
+                byte new_plt = Program.gTimer % 16 == 0 ? (byte)2 : (byte)0;
+
+                if (selected_option != Selection.REGISTER_OR_END)
+                    Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = new_plt;
+
+                SetRegistrationChrBackground(selected_character, (sbyte)new_plt);
+            }
+
+            // move character selector
             if (Control.IsPressed(Buttons.UP) || Control.IsPressed(Buttons.DOWN) || Control.IsPressed(Buttons.LEFT) || Control.IsPressed(Buttons.RIGHT))
             {
-                Textures.ppu_plt[0x226 + (selected_character % 11) * 2 + ((int)Math.Floor(selected_character / 11.0) * 0x40)] = 0;
+                SetRegistrationChrBackground(selected_character, 0);
                 if (Control.IsPressed(Buttons.UP))
                 {
                     selected_character -= 11;
@@ -373,117 +441,75 @@ namespace The_Legend_of_Zelda
                     if (selected_character > 43)
                         selected_character = 0;
                 }
-                Textures.ppu_plt[0x226 + (selected_character % 11) * 2 + ((int)Math.Floor(selected_character / 11.0) * 0x40)] = 2;
+                SetRegistrationChrBackground(selected_character, 2);
                 Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
             }
 
-            if (Control.IsPressed(Buttons.A))
+            if ((Control.IsPressed(Buttons.A) || Control.IsPressed(Buttons.B)) && selected_option != Selection.REGISTER_OR_END)
             {
-                if (selected_option != 3)
-                {
-                    Textures.ppu_plt[0xce + selected_option * 0x60 + selected_name_letter] = 0;
-                    byte selected_letter = Textures.ppu[0x226 + (selected_character % 11) * 2 + ((int)Math.Floor(selected_character / 11.0) * 0x40)];
-                    Textures.ppu[0xce + selected_option * 0x60 + selected_name_letter] = selected_letter;
-                    file_new_names[selected_option, selected_name_letter] = selected_letter;
-                    selected_name_letter++;
-                    if (selected_name_letter > 7)
-                        selected_name_letter = 0;
-                }
-            }
+                Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = 0;
 
-            if (Control.IsPressed(Buttons.B))
-            {
-                if (selected_option != 3)
+                if (Control.IsPressed(Buttons.A))
                 {
-                    Textures.ppu_plt[0xce + selected_option * 0x60 + selected_name_letter] = 0;
-                    selected_name_letter++;
-                    if (selected_name_letter > 7)
-                        selected_name_letter = 0;
+                    byte selected_letter = SetRegistrationChrBackground(selected_character, -1);
+                    Textures.ppu[0xce + (byte)selected_option * 0x60 + selected_name_letter] = selected_letter;
+                    file_new_names[(byte)selected_option, selected_name_letter] = selected_letter;
                 }
+
+                selected_name_letter++;
+                selected_name_letter %= NAME_LENGTH;
             }
         }
-        static void SkipOverEmptyFiles(bool opposite = false)
+
+        // this function moves the cursor (selected_option) to the next file that exists. (or that doesn't exist, if the condition is set to true)
+        // if none of the files meet this condition, the cursor goes to the menu below the files
+        static void SkipOverFiles(bool skip_over_existing_files = false)
         {
-            if (opposite)
+            for (Selection i = 0; i <= Selection.FILE_3; i++)
             {
-                if ((selected_option == 0) && (save_file_exists[0]))
+                if ((selected_option == i) && (SaveLoad.save_file_exists[(int)i] == skip_over_existing_files))
+                {
                     selected_option++;
-                if ((selected_option == 1) && (save_file_exists[1]))
-                    selected_option++;
-                if ((selected_option == 2) && (save_file_exists[2]))
-                    selected_option++;
-            }
-            else
-            {
-                if ((selected_option == 0) && (!save_file_exists[0]))
-                    selected_option++;
-                if ((selected_option == 1) && (!save_file_exists[1]))
-                    selected_option++;
-                if ((selected_option == 2) && (!save_file_exists[2]))
-                    selected_option++;
+                    continue;
+                }
+
+                break;
             }
         }
+
         static void CreateFile(byte file_index)
         {
-            save_file_exists[file_index] = true;
-            for (int i = 0; i < 8; i++)
+            SaveLoad.DeleteData(file_index);
+
+            SaveLoad.save_file_exists[file_index] = true;
+            for (int i = 0; i < NAME_LENGTH; i++)
             {
-                file_name[file_index, i] = file_new_names[file_index, i];
+                SaveLoad.file_name[file_index, i] = file_new_names[file_index, i];
             }
 
-            byte[] second_quest_test = new byte[8] { 0x23, 0xe, 0x15, 0xd, 0xa, 0x24, 0x24, 0x24 };
-            for (int i = 0; i < 8; i++)
+            // if file name is exactly "ZELDA   ", then second quest is activated
+            byte[] second_quest_test = new byte[8] { 0x23, 0xe, 0x15, 0xd, 0xa, 0x24, 0x24, 0x24 }; //"ZELDA   "
+            byte index = 0;
+            foreach (byte b in second_quest_test)
             {
-                if (file_name[file_index, i] == second_quest_test[i])
-                {
-                    if (i == 7)
-                    {
-                        second_quest[file_index] = true;
-                    }
-                }
-                else
-                {
-                    second_quest[file_index] = false;
+                if (SaveLoad.file_name[file_index, index] != b)
                     break;
-                }
+
+                index++;
+                if (index == second_quest_test.Length)
+                    SaveLoad.second_quest[file_index] = true;
             }
 
-            arrow[file_index] = false;
-            bait[file_index] = false;
-            blue_candle[file_index] = false;
-            blue_potion[file_index] = false;
-            blue_ring[file_index] = false;
-            bomb_count[file_index] = 0;
-            bomb_limit[file_index] = 8;
-            book_of_magic[file_index] = false;
-            boomerang[file_index] = false;
-            bow[file_index] = false;
-            death_count[file_index] = 0;
-            key_count[file_index] = 0;
-            ladder[file_index] = false;
-            letter[file_index] = false;
-            magical_boomerang[file_index] = false;
-            magical_key[file_index] = false;
-            magical_rod[file_index] = false;
-            magical_sword[file_index] = false;
-            nb_of_hearts[file_index] = 3;
-            power_bracelet[file_index] = false;
-            raft[file_index] = false;
-            recorder[file_index] = false;
-            red_candle[file_index] = false;
-            red_potion[file_index] = false;
-            red_ring[file_index] = false;
-            silver_arrow[file_index] = false;
-            triforce_of_power[file_index] = false;
-            triforce_pieces[file_index] = 0;
-            white_sword[file_index] = false;
-            wooden_sword[file_index] = false;
-            bombed_holes_flags[file_index] = 0;
-            boss_kills_flags[file_index] = 0;
-            compass_flags[file_index] = 0;
-            gift_flags[file_index] = 0;
-            map_flags[file_index] = 0;
-            opened_key_doors_flags[file_index] = 0;
+            SaveLoad.SaveFile(file_index);
+        }
+
+        // sets character's background to certain palette. returns character at index, so set palette to invalid value to not change palette.
+        static byte SetRegistrationChrBackground(sbyte selected_character, sbyte palette)
+        {
+            int index = 0x226 + (selected_character % 11) * 2 + (selected_character / 11 * 0x40);
+            if (palette >= 0 && palette <= 7)
+                Textures.ppu_plt[index] = (byte)palette;
+            return Textures.ppu[index];
         }
     }
 }

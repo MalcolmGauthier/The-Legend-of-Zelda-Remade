@@ -394,10 +394,6 @@ namespace The_Legend_of_Zelda
 
                     if (self.shown)
                     {
-                        if (facing_direction == Direction.DOWN || facing_direction == Direction.RIGHT)
-                            OverworldCode.add_to_recorder_counter = 1;
-                        else
-                            OverworldCode.add_to_recorder_counter = -1;
                         OverworldCode.ChangeRecorderDestination(true);
                     }
 

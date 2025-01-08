@@ -1482,12 +1482,14 @@ namespace The_Legend_of_Zelda
 
         public override void ItemSpecificActions()
         {
-            if (collected)
-            {
-                // TODO play bomb get sound
-                SaveLoad.bomb_count[SaveLoad.current_save_file] += 4;
-                Screen.sprites.Remove(this);
-            }
+            if (!collected)
+                return;
+
+            // TODO play bomb get sound
+            SaveLoad.bomb_count[SaveLoad.current_save_file] += 4;
+            if (SaveLoad.bomb_count[SaveLoad.current_save_file] > SaveLoad.bomb_limit[SaveLoad.current_save_file])
+                SaveLoad.bomb_count[SaveLoad.current_save_file] = SaveLoad.bomb_limit[SaveLoad.current_save_file];
+            Screen.sprites.Remove(this);
         }
     }
 }
