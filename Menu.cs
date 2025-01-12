@@ -12,7 +12,7 @@ namespace The_Legend_of_Zelda
         public static bool blue_candle_limit_reached = false;
         public static bool draw_hud_objects = false;
 
-        public static sbyte selected_menu_index = 0;
+        public static int selected_menu_index = 0;
         public static SpriteID current_B_item = 0;
         public static byte fire_out = 0;
         static byte rupie_count_display = 0;
@@ -26,7 +26,7 @@ namespace The_Legend_of_Zelda
         static StaticSprite[] menu_sprites = new StaticSprite[17];
 
         public static SpriteID[] menu_item_list = {
-            0x36, 0x34, 0x28, 0x26, 0x24, 0x22, 0x40, 0x4a
+            SpriteID.BOOMERANG, SpriteID.BOMB, SpriteID.ARROW, SpriteID.CANDLE, SpriteID.RECORDER, SpriteID.BAIT, SpriteID.POTION, SpriteID.ROD
         };
         public static readonly ushort[,] hud_dungeon_maps = {
             {0b0000000000000000,
@@ -149,7 +149,7 @@ namespace The_Legend_of_Zelda
                 hud_B_item.y -= 328;
                 hud_B_item.shown = false;
                 y_scroll++;
-                if (current_B_item == 0x36 && !sprites.Contains(menu_sprites[8]))
+                if (current_B_item == menu_item_list[0] && !(boomerang || magical_boomerang))
                     current_B_item = 0;
                 RemoveMenu();
             }
@@ -175,12 +175,9 @@ namespace The_Legend_of_Zelda
 
         public static void InitHUD()
         {
-            if (sprites.Contains(map_dot))
-                sprites.Remove(map_dot);
-            if (sprites.Contains(hud_sword))
-                sprites.Remove(hud_sword);
-            if (sprites.Contains(hud_B_item))
-                sprites.Remove(hud_B_item);
+            sprites.Remove(map_dot);
+            sprites.Remove(hud_sword);
+            sprites.Remove(hud_B_item);
 
             sprites.Add(map_dot);
             sprites.Add(hud_sword);
@@ -199,7 +196,7 @@ namespace The_Legend_of_Zelda
                 hud_B_item.shown = false;
                 if (menu_open && can_open_menu)
                 {
-                    if (current_B_item == 0x36 && !sprites.Contains(menu_sprites[8]))
+                    if (current_B_item == menu_item_list[0] && !(boomerang || magical_boomerang))
                         return;
                     hud_B_item.shown = true;
                     DisplayBItem();
@@ -211,34 +208,36 @@ namespace The_Legend_of_Zelda
             if (magical_sword)
             {
                 hud_sword.shown = true;
-                hud_sword.tile_index = 0x48;
-                hud_sword.palette_index = 6;
+                hud_sword.tile_index = (byte)SpriteID.MAGIC_SWORD;
+                hud_sword.palette_index = (byte)PaletteID.SP_2;
             }
             else if (white_sword)
             {
                 hud_sword.shown = true;
-                hud_sword.tile_index = 0x20;
-                hud_sword.palette_index = 5;
+                hud_sword.tile_index = (byte)SpriteID.SWORD;
+                hud_sword.palette_index = (byte)PaletteID.SP_1;
             }
             else if (wooden_sword)
             {
                 hud_sword.shown = true;
-                hud_sword.tile_index = 0x20;
-                hud_sword.palette_index = 4;
+                hud_sword.tile_index = (byte)SpriteID.SWORD;
+                hud_sword.palette_index = (byte)PaletteID.SP_0;
             }
             else
+            {
                 hud_sword.shown = false;
+            }
 
             DisplayBItem();
 
             if (bomb_count > bomb_limit)
                 bomb_count = bomb_limit;
 
-            if (current_B_item == 0x34 && bomb_count == 0)
+            if (current_B_item == SpriteID.BOMB && bomb_count == 0)
             {
                 AutoSwitchBItem(1);
             }
-            else if (current_B_item == 0x22 && !bait)
+            else if (current_B_item == SpriteID.BAIT && !bait)
             {
                 AutoSwitchBItem(5);
             }
@@ -247,16 +246,16 @@ namespace The_Legend_of_Zelda
             {
                 if (current_screen != 128)
                 {
-                    map_dot.x = 17 + ((current_screen & 15) << 2);
-                    map_dot.y = 24 + ((current_screen >> 4) << 2);
+                    map_dot.x = 17 + ((current_screen % 16) * 4);
+                    map_dot.y = 24 + ((current_screen / 16) * 4);
                 }
             }
             else
             {
                 if (DungeonCode.room_list[DungeonCode.current_screen] is not (0x2a or 0x2b))
                 {
-                    map_dot.x = 18 + ((DungeonCode.current_screen & 15) << 3) + map_offsets[DungeonCode.current_dungeon * 2] * 8;
-                    map_dot.y = 24 + ((DungeonCode.current_screen >> 4) << 2) + map_offsets[DungeonCode.current_dungeon * 2 + 1] * 4;
+                    map_dot.x = 18 + ((DungeonCode.current_screen % 16) * 8) + map_offsets[DungeonCode.current_dungeon * 2] * 8;
+                    map_dot.y = 24 + ((DungeonCode.current_screen / 16) * 4) + map_offsets[DungeonCode.current_dungeon * 2 + 1] * 4;
                 }
             }
 
@@ -293,6 +292,7 @@ namespace The_Legend_of_Zelda
 
             if (magical_key)
             {
+                // "xA "
                 Textures.ppu[0xac] = 0x21;
                 Textures.ppu[0xad] = 0xa;
                 Textures.ppu[0xae] = 0x24;
@@ -321,7 +321,8 @@ namespace The_Legend_of_Zelda
             Textures.ppu[0xcc] = 0x21;
             if (bombs >= 10)
             {
-                Textures.ppu[0xcd] = (byte)(Math.Floor(bombs / 10.0) % 10);
+                // supports number over 19 even tho highest bomb count possible is 16
+                Textures.ppu[0xcd] = (byte)((bombs / 10) % 10);
                 Textures.ppu[0xce] = (byte)(bombs % 10);
             }
             else
@@ -339,6 +340,7 @@ namespace The_Legend_of_Zelda
                 else
                     Textures.ppu[0xd6 + i + ((i >> 3) * -40)] = 0x66;
             }
+
             void DisplayBItem()
             {
                 if (current_B_item == 0)
@@ -387,120 +389,96 @@ namespace The_Legend_of_Zelda
             }
         }
 
+        // adds in all of the other static sprites that exist inside the full screen menu
         static void InitMenu()
         {
             sprites.Add(menu_selection_left);
             sprites.Add(menu_selection_right);
 
-            if (raft[current_save_file])
+            if (raft)
             {
                 menu_sprites[0] = new StaticSprite((byte)SpriteID.RAFT, (byte)PaletteID.SP_0, 128, 31);
                 menu_sprites[1] = new StaticSprite((byte)SpriteID.RAFT, (byte)PaletteID.SP_0, 136, 31, xflip: true);
             }
 
-            if (book_of_magic[current_save_file])
+            if (book_of_magic)
             {
                 menu_sprites[2] = new StaticSprite((byte)SpriteID.BOOK_OF_MAGIC, (byte)PaletteID.SP_2, 152, 31);
             }
 
-            if (blue_ring[current_save_file] || red_ring[current_save_file])
+            if (blue_ring || red_ring)
             {
-                PaletteID make_ring_red = PaletteID.SP_1;
-                if (red_ring[current_save_file])
-                {
-                    make_ring_red = PaletteID.SP_2;
-                }
+                PaletteID make_ring_red = red_ring ? PaletteID.SP_2 : PaletteID.SP_1;
 
                 menu_sprites[3] = new StaticSprite((byte)SpriteID.RING, (byte)make_ring_red, 164, 31);
             }
 
-            if (ladder[current_save_file])
+            if (ladder)
             {
                 menu_sprites[4] = new StaticSprite((byte)SpriteID.LADDER, (byte)PaletteID.SP_0, 176, 31);
                 menu_sprites[5] = new StaticSprite((byte)SpriteID.LADDER, (byte)PaletteID.SP_0, 184, 31, xflip: true);
             }
 
-            if (magical_key[current_save_file])
+            if (magical_key)
             {
                 menu_sprites[6] = new StaticSprite((byte)SpriteID.MAGICAL_KEY, (byte)PaletteID.SP_2, 196, 31);
             }
 
-            if (power_bracelet[current_save_file])
+            if (power_bracelet)
             {
                 menu_sprites[7] = new StaticSprite((byte)SpriteID.POWER_BRACELET, (byte)PaletteID.SP_2, 208, 31);
             }
 
-            if (boomerang[current_save_file] || magical_boomerang[current_save_file])
+            if (boomerang || magical_boomerang)
             {
-                PaletteID make_boom_blue = PaletteID.SP_0;
-                if (magical_boomerang[current_save_file])
-                {
-                    make_boom_blue = PaletteID.SP_1;
-                }
+                PaletteID make_boom_blue = magical_boomerang ? PaletteID.SP_1 : PaletteID.SP_0;
 
                 menu_sprites[8] = new StaticSprite((byte)SpriteID.BOOMERANG, (byte)make_boom_blue, 132, 55);
             }
 
-            if (bomb_count[current_save_file] > 0)
+            if (bomb_count > 0)
             {
                 menu_sprites[9] = new StaticSprite((byte)SpriteID.BOMB, (byte)PaletteID.SP_1, 156, 55);
             }
 
-            if (arrow[current_save_file] || silver_arrow[current_save_file])
+            if (arrow || silver_arrow)
             {
-                PaletteID make_arrow_silver = PaletteID.SP_0;
-                if (silver_arrow[current_save_file])
-                {
-                    make_arrow_silver = PaletteID.SP_1;
-                }
+                PaletteID make_arrow_silver = silver_arrow ? PaletteID.SP_1 : PaletteID.SP_0;
 
                 menu_sprites[10] = new StaticSprite((byte)SpriteID.ARROW, (byte)make_arrow_silver, 176, 55);
             }
 
-            if (bow[current_save_file])
+            if (bow)
             {
                 menu_sprites[11] = new StaticSprite((byte)SpriteID.BOW, (byte)PaletteID.SP_0, 184, 55);
             }
 
-            if (red_candle[current_save_file] || blue_candle[current_save_file])
+            if (red_candle || blue_candle)
             {
-                PaletteID make_candle_red = PaletteID.SP_1;
-                if (red_candle[current_save_file])
-                {
-                    make_candle_red = PaletteID.SP_2;
-                }
+                PaletteID make_candle_red = red_candle ? PaletteID.SP_2 : PaletteID.SP_1;
 
                 menu_sprites[12] = new StaticSprite((byte)SpriteID.CANDLE, (byte)make_candle_red, 204, 55);
             }
 
-            if (recorder[current_save_file])
+            if (recorder)
             {
                 menu_sprites[13] = new StaticSprite((byte)SpriteID.RECORDER, (byte)PaletteID.SP_2, 132, 71);
             }
 
-            if (bait[current_save_file])
+            if (bait)
             {
                 menu_sprites[14] = new StaticSprite((byte)SpriteID.BAIT, (byte)PaletteID.SP_2, 156, 71);
             }
 
-            if (red_potion[current_save_file] || blue_potion[current_save_file] || letter[current_save_file])
+            if (red_potion || blue_potion || letter)
             {
-                byte make_red = (byte)PaletteID.SP_1;
-                SpriteID is_potion = SpriteID.MAP;
-                if (red_potion[current_save_file] || blue_potion[current_save_file])
-                {
-                    if (red_potion[current_save_file])
-                    {
-                        make_red = (byte)PaletteID.SP_2;
-                    }
+                PaletteID make_red = red_potion ? PaletteID.SP_2 : PaletteID.SP_1;
+                SpriteID is_potion = red_potion || blue_potion ? SpriteID.POTION : SpriteID.MAP;
 
-                    is_potion = SpriteID.POTION;
-                }
-
-                menu_sprites[15] = new StaticSprite((byte)is_potion, make_red, 180, 71);
+                menu_sprites[15] = new StaticSprite((byte)is_potion, (byte)make_red, 180, 71);
             }
 
-            if (magical_rod[current_save_file])
+            if (magical_rod)
             {
                 menu_sprites[16] = new StaticSprite(0x4a, (byte)PaletteID.SP_1, 204, 70);
             }
@@ -530,25 +508,69 @@ namespace The_Legend_of_Zelda
             sprites.Remove(menu_selection_right);
         }
 
+        public static void AutoSwitchBItem(int starting_index, bool add = false)
+        {
+            const int ITEM_MENU_LENGTH = 8;
+
+            bool[] conditions = new bool[ITEM_MENU_LENGTH]
+            {
+                boomerang || magical_boomerang,
+                bomb_count > 0,
+                bow && (arrow || silver_arrow),
+                red_candle || blue_candle,
+                recorder,
+                bait,
+                red_potion || blue_potion || letter,
+                magical_rod
+            };
+            SpriteID[] spriteIDs = new SpriteID[ITEM_MENU_LENGTH]
+            {
+                SpriteID.BOOMERANG,
+                SpriteID.BOMB,
+                SpriteID.ARROW,
+                SpriteID.CANDLE,
+                SpriteID.RECORDER,
+                SpriteID.BAIT,
+                SpriteID.POTION,
+                SpriteID.ROD
+            };
+
+            current_B_item = 0;
+            selected_menu_index = 0;
+
+            for (int i = 0; i < ITEM_MENU_LENGTH; i++)
+            {
+                starting_index += add ? 1 : -1;
+                // add 8 to prevent shitty modulo in C style languages
+                starting_index = (starting_index + ITEM_MENU_LENGTH) % ITEM_MENU_LENGTH;
+
+                if (conditions[starting_index])
+                {
+                    current_B_item = spriteIDs[starting_index];
+                    selected_menu_index = starting_index;
+
+                    if (current_B_item == SpriteID.POTION && !(blue_potion || red_potion))
+                    {
+                        current_B_item = SpriteID.MAP;
+                    }
+
+                    break;
+                }
+            }
+
+            MoveCursor();
+        }
+
+        // moves the position of the cursor in the menu. this is called whenever the B item changes. even if done outside of full screen menu
         public static void MoveCursor()
         {
-            sbyte index = (sbyte)Array.IndexOf(menu_item_list, current_B_item);
-            if (index < 0)
-            {
-                if (current_B_item == SpriteID.MAP)
-                    index = 6;
-                else
-                    index = 0;
-            }
-            selected_menu_index = index;
-
-            menu_selection_left.x = 128 + (selected_menu_index & 3) * 24;
-            menu_selection_left.y = 359 + (selected_menu_index >> 2) * 16;
-            menu_selection_right.x = 136 + (selected_menu_index & 3) * 24;
-            menu_selection_right.y = 359 + (selected_menu_index >> 2) * 16;
+            menu_selection_left.x = 128 + (selected_menu_index % 4) * 24;
+            menu_selection_left.y = 359 + (selected_menu_index / 4) * 16;
+            menu_selection_right.x = 136 + (selected_menu_index % 4) * 24;
+            menu_selection_right.y = 359 + (selected_menu_index / 4) * 16;
 
             SpriteID switch_to = menu_item_list[selected_menu_index];
-            if (switch_to == SpriteID.POTION && !blue_potion[current_save_file] && !red_potion[current_save_file])
+            if (switch_to == SpriteID.POTION && !(blue_potion || red_potion))
                 switch_to = SpriteID.MAP;
 
             current_B_item = switch_to;
@@ -557,36 +579,36 @@ namespace The_Legend_of_Zelda
         // draw the big triforce on the menu screen in overworld
         static void DrawTriforce()
         {
-            if (GetTriforceFlag(current_save_file, 0))
+            if (GetTriforceFlag(0))
             {
                 Textures.ppu[0x6af] = 0xe7;
                 Textures.ppu[0x6ce] = 0xe7;
                 Textures.ppu[0x6cf] = 0xf5;
             }
 
-            if (GetTriforceFlag(current_save_file, 1))
+            if (GetTriforceFlag(1))
             {
                 Textures.ppu[0x6b0] = 0xe8;
                 Textures.ppu[0x6d0] = 0xf5;
                 Textures.ppu[0x6d1] = 0xe8;
             }
 
-            if (GetTriforceFlag(current_save_file, 2))
+            if (GetTriforceFlag(2))
             {
                 Textures.ppu[0x6ed] = 0xe7;
                 Textures.ppu[0x70c] = 0xe7;
                 Textures.ppu[0x70d] = 0xf5;
             }
 
-            if (GetTriforceFlag(current_save_file, 3))
+            if (GetTriforceFlag(3))
             {
                 Textures.ppu[0x6f2] = 0xe8;
                 Textures.ppu[0x712] = 0xf5;
                 Textures.ppu[0x713] = 0xe8;
             }
 
-            bool piece_4 = GetTriforceFlag(current_save_file, 4);
-            bool piece_5 = GetTriforceFlag(current_save_file, 5);
+            bool piece_4 = GetTriforceFlag(4);
+            bool piece_5 = GetTriforceFlag(5);
             if (piece_4 || piece_5)
             {
                 if (piece_4 && piece_5)
@@ -610,8 +632,8 @@ namespace The_Legend_of_Zelda
                 }
             }
 
-            bool piece_6 = GetTriforceFlag(current_save_file, 6);
-            bool piece_7 = GetTriforceFlag(current_save_file, 7);
+            bool piece_6 = GetTriforceFlag(6);
+            bool piece_7 = GetTriforceFlag(7);
             if (piece_6 || piece_7)
             {
                 if (piece_6 && piece_7)

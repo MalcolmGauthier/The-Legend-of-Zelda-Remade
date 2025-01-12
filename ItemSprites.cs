@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using System.Data.Common;
-using static The_Legend_of_Zelda.Enemy;
+﻿using static The_Legend_of_Zelda.Enemy;
 
 namespace The_Legend_of_Zelda
 {
@@ -36,7 +34,7 @@ namespace The_Legend_of_Zelda
         public float damage;
 
         public Direction direction;
-        public StaticSprite counterpart = new StaticSprite(0, 0, 0, 0);
+        public StaticSprite counterpart = new StaticSprite(SpriteID.BLANK, 0, 0, 0);
 
         public ProjectileSprite(bool is_from_link, bool single_wide, float damage) : base(0, 0)
         {
@@ -79,7 +77,7 @@ namespace The_Legend_of_Zelda
             else
                 x += speed;
 
-            counterpart.x = (short)(x + 8);
+            counterpart.x = x + 8;
             counterpart.y = y;
         }
 
@@ -137,12 +135,12 @@ namespace The_Legend_of_Zelda
                 return;
             }
 
-            // if link is... uh...
+            // if link is... uh... facing the projectile
             if ((int)Link.facing_direction == ((int)direction ^ 1) && !((int)Link.current_action >= 4 && (int)Link.current_action <= 7))
             {
                 // small rocks and arrows can be reflected by any shield, swords and beams need the magic shield
                 if (this is RockProjectileSprite || this is ArrowSprite ||
-                    ((this is SwordProjectileSprite || this is MagicBeamSprite) && SaveLoad.magical_shield[SaveLoad.current_save_file]))
+                    ((this is SwordProjectileSprite || this is MagicBeamSprite) && SaveLoad.magical_shield))
                 {
                     bonk = true;
                 }
@@ -193,6 +191,7 @@ namespace The_Legend_of_Zelda
             animation_timer++;
         }
     }
+
     internal abstract class ItemDropSprite : Sprite
     {
         public bool collected = false;
@@ -438,9 +437,9 @@ namespace The_Legend_of_Zelda
             if (!is_from_link)
                 damage = 2;
 
-            if (SaveLoad.magical_sword[SaveLoad.current_save_file])
+            if (SaveLoad.magical_sword)
                 damage = 4;
-            else if (SaveLoad.white_sword[SaveLoad.current_save_file])
+            else if (SaveLoad.white_sword)
                 damage = 2;
 
             if (direction == Direction.DOWN)
@@ -477,7 +476,7 @@ namespace The_Legend_of_Zelda
 
             if (!(CheckIfEdgeHit() || explosion_flag))
             {
-                new_plt_index = (byte)((Program.gTimer & 3) + 4);
+                new_plt_index = (byte)((Program.gTimer % 4) + 4);
                 palette_index = new_plt_index;
                 counterpart.palette_index = new_plt_index;
                 Move();
@@ -556,12 +555,13 @@ namespace The_Legend_of_Zelda
                 smoke[i] = new StaticSprite(0x70, 5, x, y);
                 if (i % 2 == 1)
                     smoke[i].xflip = true;
-                smoke[i].x = (short)(x + (((i - 5) >> 1) * 8) + 4);
-                smoke[i].y = (short)(y - 16 * Math.Abs((i >> 1) - 1) + 16);
+                smoke[i].x = x + (((i - 5) >> 1) * 8) + 4;
+                smoke[i].y = y - 16 * Math.Abs((i >> 1) - 1) + 16;
                 smoke[i].unload_during_transition = true;
             }
             Sound.PlaySFX(Sound.SoundEffects.BOMB_PLACE);
         }
+
         public override void ProjSpecificActions()
         {
             explosion_timer--;
@@ -610,6 +610,7 @@ namespace The_Legend_of_Zelda
             }
 
         }
+
         void UncoverHoles()
         {
             int metatile_index;
@@ -624,17 +625,16 @@ namespace The_Legend_of_Zelda
 
                     if (Program.gamemode == Program.Gamemode.OVERWORLD)
                     {
-                        if (Screen.meta_tiles[metatile_index].special)
-                        {
-                            SaveLoad.SetOverworldSecretsFlag(SaveLoad.current_save_file,
-                                (byte)Array.IndexOf(OverworldCode.screens_with_secrets_list, OverworldCode.current_screen), true);
-                            Screen.meta_tiles[metatile_index].tile_index = 3;
-                            int ppu_index = 2 * metatile_index + 2 * (metatile_index & 0xFFFFFF0) + 256;
-                            Textures.ppu[ppu_index] = 0x24;
-                            Textures.ppu[ppu_index + 1] = 0x24;
-                            Textures.ppu[ppu_index + 32] = 0x24;
-                            Textures.ppu[ppu_index + 33] = 0x24;
-                        }
+                        if (!Screen.meta_tiles[metatile_index].special)
+                            continue;
+
+                        SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OverworldCode.screens_with_secrets_list, OverworldCode.current_screen), true);
+                        Screen.meta_tiles[metatile_index].tile_index = 3;
+                        int ppu_index = 2 * metatile_index + 2 * (metatile_index & 0xFFFFFF0) + 256;
+                        Textures.ppu[ppu_index] = 0x24;
+                        Textures.ppu[ppu_index + 1] = 0x24;
+                        Textures.ppu[ppu_index + 32] = 0x24;
+                        Textures.ppu[ppu_index + 33] = 0x24;
                     }
                     else
                     {
@@ -647,6 +647,7 @@ namespace The_Legend_of_Zelda
             }
         }
     }
+
     internal class ThrownFireSprite : ProjectileSprite
     {
         public ThrownFireSprite(int x, int y, Direction direction) : base(true, false, 0.5f)
@@ -656,13 +657,14 @@ namespace The_Legend_of_Zelda
             this.direction = direction;
             counterpart.tile_index = 0x5e;
             counterpart.palette_index = 6;
-            counterpart.x = (short)(x + 8);
+            counterpart.x = x + 8;
             counterpart.y = y;
             unload_during_transition = true;
             counterpart.unload_during_transition = true;
             Screen.sprites.Add(this);
             Screen.sprites.Add(counterpart);
         }
+
         public override void ProjSpecificActions()
         {
             is_from_link = !is_from_link; // fire damages link and ennemies, this makes it so it alternates between calculating dmg for link and enemies every frame
@@ -689,37 +691,38 @@ namespace The_Legend_of_Zelda
                 xflip = !xflip;
                 counterpart.xflip = !counterpart.xflip;
             }
-            counterpart.x = (short)(x + 8);
+            counterpart.x = x + 8;
             counterpart.y = y;
             animation_timer++;
         }
+
         void BurnBushes()
         {
             int metatile_index;
-            for (sbyte i = -8; i < 9; i += 8)
+            for (int i = -8; i < 9; i += 8)
             {
-                for (sbyte j = -8; j < 9; j += 8)
+                for (int j = -8; j < 9; j += 8)
                 {
                     metatile_index = ((y + i) & 0xFFF0) + ((x + j) >> 4) - 64;
 
                     if (metatile_index < 0 || metatile_index > Screen.meta_tiles.Length)
                         continue;
 
-                    if (Screen.meta_tiles[metatile_index].special)
-                    {
-                        SaveLoad.SetOverworldSecretsFlag(SaveLoad.current_save_file,
-                            (byte)Array.IndexOf(OverworldCode.screens_with_secrets_list, OverworldCode.current_screen), true);
-                        Screen.meta_tiles[metatile_index].tile_index = 0x15;
-                        int ppu_index = 2 * metatile_index + 2 * (metatile_index & 0xFFFFFF0) + 256;
-                        Textures.ppu[ppu_index] = 0x70;
-                        Textures.ppu[ppu_index + 1] = 0x72;
-                        Textures.ppu[ppu_index + 32] = 0x71;
-                        Textures.ppu[ppu_index + 33] = 0x73;
-                    }
+                    if (!Screen.meta_tiles[metatile_index].special)
+                        continue;
+
+                    SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OverworldCode.screens_with_secrets_list, OverworldCode.current_screen), true);
+                    Screen.meta_tiles[metatile_index].tile_index = 0x15;
+                    int ppu_index = 2 * metatile_index + 2 * (metatile_index & 0xFFFFFF0) + 256;
+                    Textures.ppu[ppu_index] = 0x70;
+                    Textures.ppu[ppu_index + 1] = 0x72;
+                    Textures.ppu[ppu_index + 32] = 0x71;
+                    Textures.ppu[ppu_index + 33] = 0x73;
                 }
             }
         }
     }
+
     internal class BaitSprite : Sprite
     {
         short existence_timer = 0;
@@ -741,6 +744,7 @@ namespace The_Legend_of_Zelda
             }
         }
     }
+
     internal class MagicBeamSprite : ProjectileSprite
     {
         bool attack_or_fire_flag = false;
@@ -778,13 +782,14 @@ namespace The_Legend_of_Zelda
                 counterpart.xflip = true;
             }
         }
+
         public override void ProjSpecificActions()
         {
             if (CheckIfEdgeHit() || attack_or_fire_flag)
             {
                 Menu.magic_wave_out = false;
                 attack_or_fire_flag = true;
-                if (SaveLoad.book_of_magic[SaveLoad.current_save_file])
+                if (SaveLoad.book_of_magic)
                 {
                     ThrownFireSprite fire = new ThrownFireSprite(x, y, direction);
                     fire.animation_timer = 32;
@@ -802,6 +807,7 @@ namespace The_Legend_of_Zelda
             counterpart.palette_index = new_plt_index;
         }
     }
+
     internal class TornadoSprite : Sprite, ISmokeSpawn
     {
         public int smoke_timer { get; set; } = 0;
@@ -924,14 +930,14 @@ namespace The_Legend_of_Zelda
         byte local_timer = 0;
         byte speed = 3;
         bool returning = false;
-        short x_dist_from_link, y_dist_from_link;
+        int x_dist_from_link, y_dist_from_link;
         EightDirection m_direction;
 
         public BoomerangSprite(int x, int y, bool is_from_link) : base(is_from_link, true, 1)
         {
             this.x = x;
             this.y = y;
-            if (SaveLoad.magical_boomerang[SaveLoad.current_save_file])
+            if (SaveLoad.magical_boomerang)
                 palette_index = 5;
             unload_during_transition = true;
             m_direction = FindBoomerangDirection();
@@ -946,7 +952,7 @@ namespace The_Legend_of_Zelda
                 {
                     case 0:
                         tile_index = 0x36;
-                        if (!SaveLoad.magical_boomerang[SaveLoad.current_save_file])
+                        if (!SaveLoad.magical_boomerang)
                             palette_index = 4;
                         xflip = false;
                         yflip = false;
@@ -988,8 +994,8 @@ namespace The_Legend_of_Zelda
             if (returning)
             {
                 // https://www.desmos.com/calculator/esasntj0cm
-                x_dist_from_link = (short)((x + 4) - (Link.x + 8));
-                y_dist_from_link = (short)((y + 8) - (Link.y + 8));
+                x_dist_from_link = (x + 4) - (Link.x + 8);
+                y_dist_from_link = (y + 8) - (Link.y + 8);
                 float angle = MathF.Atan(x_dist_from_link / (y_dist_from_link + 0.01f)); // +0.01f auto converts y_dist_from_link to float AND prevents div by 0 error
                 float x_dist_to_move = MathF.Sin(angle) * speed;
                 float y_dist_to_move = MathF.Cos(angle) * speed;
@@ -1001,8 +1007,8 @@ namespace The_Legend_of_Zelda
                 x_dist_to_move = MathF.Round(x_dist_to_move, MidpointRounding.AwayFromZero);
                 y_dist_to_move = MathF.Round(y_dist_to_move, MidpointRounding.AwayFromZero);
 
-                x += (short)x_dist_to_move;
-                y += (short)y_dist_to_move;
+                x += (int)x_dist_to_move;
+                y += (int)y_dist_to_move;
 
                 if (Math.Abs(x_dist_from_link) < 8 && Math.Abs(y_dist_from_link) < 8)
                 {
@@ -1057,7 +1063,7 @@ namespace The_Legend_of_Zelda
                 palette_index = 5;
             }
 
-            if (palette_index == 5) // faster way of checking if is magical boomerang
+            if (SaveLoad.magical_boomerang)
                 return;
 
             if (local_timer == 16)
@@ -1117,7 +1123,7 @@ namespace The_Legend_of_Zelda
                 palette_index = 6;
                 counterpart.palette_index = 6;
             }
-            else if (SaveLoad.silver_arrow[SaveLoad.current_save_file])
+            else if (SaveLoad.silver_arrow)
             {
                 palette_index = 5;
                 counterpart.palette_index = 5;
@@ -1438,8 +1444,8 @@ namespace The_Legend_of_Zelda
         {
             if (collected)
             {
-                SaveLoad.SetHeartContainerFlag(SaveLoad.current_save_file, index, true);
-                SaveLoad.nb_of_hearts[SaveLoad.current_save_file]++;
+                SaveLoad.SetHeartContainerFlag(index, true);
+                SaveLoad.nb_of_hearts++;
                 Screen.sprites.Remove(counterpart);
                 Screen.sprites.Remove(this);
             }
@@ -1485,10 +1491,10 @@ namespace The_Legend_of_Zelda
             if (!collected)
                 return;
 
-            // TODO play bomb get sound
-            SaveLoad.bomb_count[SaveLoad.current_save_file] += 4;
-            if (SaveLoad.bomb_count[SaveLoad.current_save_file] > SaveLoad.bomb_limit[SaveLoad.current_save_file])
-                SaveLoad.bomb_count[SaveLoad.current_save_file] = SaveLoad.bomb_limit[SaveLoad.current_save_file];
+            //TODO play bomb get sound
+            SaveLoad.bomb_count += 4;
+            if (SaveLoad.bomb_count > SaveLoad.bomb_limit)
+                SaveLoad.bomb_count = SaveLoad.bomb_limit;
             Screen.sprites.Remove(this);
         }
     }

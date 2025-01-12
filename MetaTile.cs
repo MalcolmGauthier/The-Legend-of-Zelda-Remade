@@ -52,7 +52,6 @@ namespace The_Legend_of_Zelda
             }
 
             //TODO: hardcode secrets in list, remove them from map file
-            //TODO: load secrets in after scroll anim
             // this shit is ugly af
             special = false;
             if (tile_index > 41)
@@ -60,21 +59,21 @@ namespace The_Legend_of_Zelda
                 special = true;
                 if (tile_index == 42)
                 {
-                    if (SaveLoad.GetOverworldSecretsFlag(SaveLoad.current_save_file, (byte)Array.IndexOf(screens_with_secrets_list, screen_to_apply_to)))
+                    if (SaveLoad.GetOverworldSecretsFlag((byte)Array.IndexOf(screens_with_secrets_list, screen_to_apply_to)))
                         tile_index = 3;
                     else
                         tile_index = 0;
                 }
                 else if (tile_index == 43)
                 {
-                    if (SaveLoad.GetOverworldSecretsFlag(SaveLoad.current_save_file, (byte)Array.IndexOf(screens_with_secrets_list, screen_to_apply_to)))
+                    if (SaveLoad.GetOverworldSecretsFlag((byte)Array.IndexOf(screens_with_secrets_list, screen_to_apply_to)))
                         tile_index = 0x15;
                     else
                         tile_index = 9;
                 }
                 else if (tile_index == 44)
                 {
-                    if (SaveLoad.GetOverworldSecretsFlag(SaveLoad.current_save_file, (byte)Array.IndexOf(screens_with_secrets_list, screen_to_apply_to)))
+                    if (SaveLoad.GetOverworldSecretsFlag((byte)Array.IndexOf(screens_with_secrets_list, screen_to_apply_to)))
                         tile_index = 0x15;
                     else
                     {

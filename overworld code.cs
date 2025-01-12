@@ -1,8 +1,5 @@
 ﻿using static The_Legend_of_Zelda.SaveLoad;
 using static The_Legend_of_Zelda.Screen;
-using static The_Legend_of_Zelda.Menu;
-using System.Runtime.CompilerServices;
-using System.Drawing;
 
 namespace The_Legend_of_Zelda
 {
@@ -28,16 +25,22 @@ namespace The_Legend_of_Zelda
             PEAHAT
         }
 
-        public static byte current_screen = 119;//
-        public static byte return_screen = 119;
-        public static byte scroll_destination;
-        public static byte level_7_entrance_timer = 255;
+        const byte DEFAULT_SPAWN_ROOM = 119;
+        public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
+        const int SCROLL_ANIMATION_DONE = 500;
+        const byte OPENING_ANIMATION_DONE = 255;
+
+        public static byte current_screen = DEFAULT_SPAWN_ROOM;
+        public static byte return_screen = DEFAULT_SPAWN_ROOM;
+        public static byte level_7_entrance_timer = LEVEL_7_ENTRANCE_ANIM_DONE;
+        static byte scroll_destination;
         static byte level_5_entrance_count = 0;
         static byte lost_woods_count = 0;
+        static byte opening_animation_timer = 0;
 
         public static int return_x, return_y;
-        public static ushort scroll_animation_timer = 1000;
-        public static ushort warp_animation_timer = 0;
+        public static int scroll_animation_timer = SCROLL_ANIMATION_DONE;
+        public static int warp_animation_timer = 0;
 
         public static bool black_square_stairs_flag = false;
         public static bool black_square_stairs_return_flag = false;
@@ -45,18 +48,20 @@ namespace The_Legend_of_Zelda
         public static bool fairy_animation_active = false;
         public static bool raft_flag = false;
 
-        public static sbyte opening_animation_timer = 0;
         public static sbyte recorder_destination = 0;
 
         public static Direction scroll_direction;
 
+        // list of rooms with stairs in them
         public static readonly byte[] stair_list = {
             11, 34, 26, 98, 28, 73, 29, 33, 35, 40, 52, 61, 66, 109, 70, 71, 72, 75, 77, 78, 81, 86, 91, 99, 104, 106, 107, 120, 121
         };
+        // list of rooms with black squares in them
         public static readonly byte[] screens_with_secrets_list = {
             1, 3, 5, 7, 13, 16, 18, 19, 20, 22, 29, 30, 35, 39, 40, 44, 45, 51, 70, 71, 72, 73, 75, 77, 81, 86, 91, 98, 99, 103, 104,
             106, 107, 109, 113, 118, 120, 121, 123, 124, 125
         };
+        // ppu indices of all overworld metatiles
         public static readonly byte[,] overworld_tileset_indexes = {
             {0xd8,0xda,0xd9,0xdb}, // rock
             {0x26,0x26,0x26,0x26}, // ground
@@ -101,7 +106,8 @@ namespace The_Legend_of_Zelda
             {0x7e,0x80,0x7f,0x81}, // water I BL
             {0x80,0x82,0x81,0x83}, // water I BR
         };
-        public static readonly byte[] dungeon_location_list = { // (room, y); x is always 128
+        // (room, y); x is always 128
+        public static readonly byte[] dungeon_location_list = {
             55, 144, //1
             60, 176, //2
             116, 144,//3
@@ -111,6 +117,7 @@ namespace The_Legend_of_Zelda
             66, 176, //7
             109, 96, //8
         };
+        // list of all ennemies for each room, refer to enemy spawning function to learn to decipher this
         public static readonly int[] overworld_enemy_list =
         {
             0x000000, 0x999900, 0x999900, 0xeee000, 0xaaaaaa, 0xaa9956, 0xaa99ff, 0x900000, 0xeee000, 0x000000, 0xa00000, 0x500000, 0x333333, 0x333333, 0x000000, 0x000000,
@@ -129,7 +136,7 @@ namespace The_Legend_of_Zelda
 
         public static void Init()
         {
-            draw_hud_objects = false;
+            Menu.draw_hud_objects = false;
             x_scroll = 0;
             y_scroll = 0;
             Menu.map_dot.shown = false;
@@ -140,9 +147,9 @@ namespace The_Legend_of_Zelda
             Palettes.LoadPaletteGroup(PaletteID.BG_2, Palettes.PaletteGroups.FOREST);
             Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.MOUNTAIN);
             Palettes.LoadPaletteGroup(PaletteID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
-            if (red_ring[current_save_file])
+            if (red_ring)
                 Palettes.LoadPalette(4, 1, Color._16_RED_ORANGE);
-            else if (blue_ring[current_save_file])
+            else if (blue_ring)
                 Palettes.LoadPalette(4, 1, Color._32_LIGHTER_INDIGO);
             Palettes.LoadPaletteGroup(PaletteID.SP_1, Palettes.PaletteGroups.HUDSPR_2);
             Palettes.LoadPaletteGroup(PaletteID.SP_2, Palettes.PaletteGroups.HUDSPR_3);
@@ -152,39 +159,39 @@ namespace The_Legend_of_Zelda
             //Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, current_screen, 0);
             Link.can_move = false;
             Link.Show(false);
-            hud_sword.shown = false;
-            hud_B_item.shown = false;
+            Menu.hud_sword.shown = false;
+            Menu.hud_B_item.shown = false;
             opening_animation_timer = 0;
             warp_animation_timer = 0;
         }
 
         public static void Tick()
         {
-            if (opening_animation_timer <= 80)
+            if (opening_animation_timer < OPENING_ANIMATION_DONE)
             {
                 OpeningAnimation();
                 return;
             }
 
-            DrawHUD();
+            Menu.DrawHUD();
             Link.Tick();
             RaftAnimation();
             CheckForWarp();
             Menu.Tick();
 
-            if (menu_open)
+            if (Menu.menu_open)
             {
                 Program.can_pause = false;
             }
             else
             {
-                if (current_screen != 128)
+                if (current_screen == 128)
                 {
-                    Scroll();
+                    Room128Code();
                 }
                 else
                 {
-                    Room128Code();
+                    Scroll();
                 }
             }
 
@@ -199,12 +206,12 @@ namespace The_Legend_of_Zelda
 
         static void OpeningAnimation()
         {
-            if (opening_animation_timer == 80)
+            if (opening_animation_timer == OPENING_ANIMATION_DONE)
             {
                 Link.Show(true);
                 Link.can_move = true;
-                can_open_menu = true;
-                draw_hud_objects = true;
+                Menu.can_open_menu = true;
+                Menu.draw_hud_objects = true;
                 opening_animation_timer++;
                 Sound.PlaySong(Sound.Songs.OVERWORLD, false);
                 Program.can_pause = true;
@@ -214,10 +221,10 @@ namespace The_Legend_of_Zelda
                 return;
             }
 
-            can_open_menu = false;
+            Menu.can_open_menu = false;
             Link.can_move = false;
             Link.Show(false);
-            draw_hud_objects = false;
+            Menu.draw_hud_objects = false;
             opening_animation_timer++;
 
             if (opening_animation_timer % 5 != 0)
@@ -225,8 +232,14 @@ namespace The_Legend_of_Zelda
                 return;
             }
 
-            Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, current_screen, 0);
             int num_rows_to_erase = 16 - opening_animation_timer / 5;
+            if (num_rows_to_erase <= 0)
+            {
+                opening_animation_timer = OPENING_ANIMATION_DONE - 1;
+                return;
+            }
+
+            Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, current_screen, 0);
             int left_index_start = Textures.PPU_WIDTH * 5;
             int right_index_start = Textures.PPU_WIDTH * 6 - 1;
 
@@ -238,161 +251,6 @@ namespace The_Legend_of_Zelda
                     Textures.ppu[right_index_start + j * Textures.PPU_WIDTH - i] = 0x24;
                 }
             }
-        }
-
-        public static void AutoSwitchBItem(int starting_index, bool add = false)
-        {
-            if (add)
-            {
-                for (int i = 8; i >= 0; i--)
-                {
-                    starting_index++;
-                    switch ((starting_index + 8) & 7)
-                    {
-                        case 0:
-                            if (boomerang[current_save_file] || magical_boomerang[current_save_file])
-                            {
-                                current_B_item = SpriteID.BOOMERANG;
-                                return;
-                            }
-                            break;
-
-                        case 1:
-                            if (bomb_count[current_save_file] > 0)
-                            {
-                                current_B_item = SpriteID.BOMB;
-                                return;
-                            }
-                            break;
-
-                        case 2:
-                            if (bow[current_save_file] && (arrow[current_save_file] || silver_arrow[current_save_file]))
-                            {
-                                current_B_item = SpriteID.ARROW;
-                                return;
-                            }
-                            break;
-
-                        case 3:
-                            if (red_candle[current_save_file] || blue_candle[current_save_file])
-                            {
-                                current_B_item = SpriteID.CANDLE;
-                                return;
-                            }
-                            break;
-
-                        case 4:
-                            if (recorder[current_save_file])
-                            {
-                                current_B_item = SpriteID.RECORDER;
-                                return;
-                            }
-                            break;
-
-                        case 5:
-                            if (bait[current_save_file])
-                            {
-                                current_B_item = SpriteID.BAIT;
-                                return;
-                            }
-                            break;
-
-                        case 6:
-                            if (red_potion[current_save_file] || blue_potion[current_save_file])
-                            {
-                                current_B_item = SpriteID.POTION;
-                                return;
-                            }
-                            if (letter[current_save_file])
-                            {
-                                current_B_item = SpriteID.MAP;
-                                return;
-                            }
-                            break;
-
-                        case 7:
-                            if (magical_rod[current_save_file])
-                            {
-                                current_B_item = SpriteID.ROD;
-                                return;
-                            }
-                            break;
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 0; i < 8; i++)
-                {
-                    starting_index--;
-                    switch ((starting_index + 8) & 7)
-                    {
-                        case 0:
-                            if (boomerang[current_save_file] || magical_boomerang[current_save_file])
-                            {
-                                current_B_item = 0x36;
-                                return;
-                            }
-                            break;
-                        case 1:
-                            if (bomb_count[current_save_file] > 0)
-                            {
-                                current_B_item = 0x34;
-                                return;
-                            }
-                            break;
-                        case 2:
-                            if (bow[current_save_file] && (arrow[current_save_file] || silver_arrow[current_save_file]))
-                            {
-                                current_B_item = 0x28;
-                                return;
-                            }
-                            break;
-                        case 3:
-                            if (red_candle[current_save_file] || blue_candle[current_save_file])
-                            {
-                                current_B_item = 0x26;
-                                return;
-                            }
-                            break;
-                        case 4:
-                            if (recorder[current_save_file])
-                            {
-                                current_B_item = 0x24;
-                                return;
-                            }
-                            break;
-                        case 5:
-                            if (bait[current_save_file])
-                            {
-                                current_B_item = 0x22;
-                                return;
-                            }
-                            break;
-                        case 6:
-                            if (red_potion[current_save_file] || blue_potion[current_save_file])
-                            {
-                                current_B_item = 0x40;
-                                return;
-                            }
-                            if (letter[current_save_file])
-                            {
-                                current_B_item = 0x4c;
-                                return;
-                            }
-                            break;
-                        case 7:
-                            if (magical_rod[current_save_file])
-                            {
-                                current_B_item = 0x4a;
-                                return;
-                            }
-                            break;
-                    }
-                }
-            }
-
-            current_B_item = 0;
         }
 
         static void Scroll()
@@ -417,7 +275,7 @@ namespace The_Legend_of_Zelda
                     scroll_animation_timer = 0;
                     scroll_direction = Direction.LEFT;
                 }
-                else if (Link.x > 239 && (Control.IsHeld(Buttons.RIGHT) || tornado_out))
+                else if (Link.x > 239 && (Control.IsHeld(Buttons.RIGHT) || Menu.tornado_out))
                 {
                     scroll_destination = (byte)(current_screen + 1);
                     scroll_animation_timer = 0;
@@ -429,12 +287,12 @@ namespace The_Legend_of_Zelda
 
             if (scroll_animation_timer == 0)
             {
-                if (tornado_out)
+                if (Menu.tornado_out)
                 {
                     scroll_destination = ChangeRecorderDestination(false);
                     scroll_direction = Direction.RIGHT;
                 }
-                can_open_menu = false;
+                Menu.can_open_menu = false;
                 UnloadSpritesRoomTransition();
                 ResetLinkPowerUps();
 
@@ -599,10 +457,10 @@ namespace The_Legend_of_Zelda
                 else
                     Link.SetPos(new_x: 1);
                 scroll_animation_timer += 1000;
-                can_open_menu = true;
+                Menu.can_open_menu = true;
 
                 SpawnEnemies();
-                if (current_screen == 95 && !GetHeartContainerFlag(current_save_file, 12))
+                if (current_screen == 95 && !GetHeartContainerFlag(12))
                     new HeartContainerSprite(192, 144, 12);
             }
         }
@@ -714,7 +572,7 @@ namespace The_Legend_of_Zelda
                     recorder_destination %= 8;
                 }
 
-                if (GetTriforceFlag(current_save_file, i))
+                if (GetTriforceFlag(i))
                 {
                     return dungeon_location_list[recorder_destination * 2]; // returns y coord of dungeon entrance
                 }
@@ -804,10 +662,6 @@ namespace The_Legend_of_Zelda
             // most logic for this room is found in seperate class, because there's alot
             WarpCode.Tick();
 
-            // prevent link from going in top half of room
-            if (Link.y < 144)
-                Link.SetPos(new_y: 144);
-
             // check if link is leaving
             if (Link.y >= 224)
             {
@@ -820,23 +674,22 @@ namespace The_Legend_of_Zelda
                     Link.can_move = true;
                 }
                 else
+                {
                     black_square_stairs_return_flag = true;
+                }
             }
 
-            if (!menu_open)
-                can_open_menu = Link.can_move;
+            if (!Menu.menu_open)
+                Menu.can_open_menu = Link.can_move;
         }
 
         // unloads all sprites that should unload when screen changes
         static void UnloadSpritesRoomTransition()
         {
-            for (int i = 0; i < sprites.Count; i++)
+            foreach (Sprite s in sprites)
             {
-                if (sprites[i].unload_during_transition)
-                {
-                    sprites.RemoveAt(i);
-                    i--;
-                }
+                if (s.unload_during_transition)
+                    sprites.Remove(s);
             }
         }
 
@@ -846,7 +699,7 @@ namespace The_Legend_of_Zelda
             if (warp_animation_timer == 0)
             {
                 ResetLinkPowerUps();
-                can_open_menu = false;
+                Menu.can_open_menu = false;
                 Link.can_move = false;
                 Program.can_pause = false;
                 Link.SetBGState(true);
@@ -860,7 +713,7 @@ namespace The_Legend_of_Zelda
                 else
                 {
                     Link.current_action = Link.Action.WALKING_DOWN;
-                    if (WarpCode.warp_info == 6)
+                    if (WarpCode.warp_info == WarpCode.WarpType.TAKE_ANY_ROAD)
                         WarpCode.SetWarpReturnPosition();
                     Link.SetPos(return_x, return_y);
                     Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.MOUNTAIN);
@@ -927,7 +780,7 @@ namespace The_Legend_of_Zelda
                     Link.has_moved_after_warp_flag = false;
                     warp_animation_timer = 0;
                     Program.can_pause = true;
-                    can_open_menu = true;
+                    Menu.can_open_menu = true;
                     Sound.PlaySong(Sound.Songs.OVERWORLD, false);
                     SpawnEnemies();
                     return;
@@ -1007,6 +860,7 @@ namespace The_Legend_of_Zelda
                     break;
                 case 81:
                     int mt_index = 53;
+                    // make it so you can walk on the sand by changing metatile index to ground
                     for (int i = 0; i < 4 * MetaTile.METATILES_PER_ROW; i += MetaTile.METATILES_PER_ROW)
                     {
                         for (int j = 0; j < 6; j++)
@@ -1044,16 +898,19 @@ namespace The_Legend_of_Zelda
             }
         }
 
+        // reset all of the variables keeping track of which items link has thrown onto the field
+        // and other stuff that needs to go away on a screen transition
         static void ResetLinkPowerUps()
         {
-            fire_out = 0;
-            boomerang_out = false;
-            arrow_out = false;
-            magic_wave_out = false;
-            bait_out = false;
-            bomb_out = false;
-            if (Link.shown) tornado_out = false;
-            sword_proj_out = false;
+            Menu.fire_out = 0;
+            Menu.boomerang_out = false;
+            Menu.arrow_out = false;
+            Menu.magic_wave_out = false;
+            Menu.bait_out = false;
+            Menu.bomb_out = false;
+            // if link is in the tornado, we don't want to destroy the tornado
+            if (Link.shown) Menu.tornado_out = false;
+            Menu.sword_proj_out = false;
             Link.clock_flash = false;
             Link.iframes_timer = 0;
             Link.self.palette_index = 4;
