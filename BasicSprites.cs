@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace The_Legend_of_Zelda
+﻿namespace The_Legend_of_Zelda
 {
     public class StaticSprite : Sprite
     {
@@ -52,6 +46,7 @@ namespace The_Legend_of_Zelda
             else
                 this.second_palette_index = palette_index;
         }
+
         public override void Action()
         {
             if (Program.gTimer % frames_per_flicker == 0)
@@ -69,6 +64,7 @@ namespace The_Legend_of_Zelda
             }
         }
     }
+
     internal class WaterFallSprite : Sprite
     {
         public WaterFallSprite(byte tile_index, byte palette_index, int x, int y) : base(tile_index, palette_index)
@@ -90,12 +86,14 @@ namespace The_Legend_of_Zelda
             }
         }
     }
+
     internal class UndergroundFireSprite : Sprite, ISmokeSpawn
     {
         public int smoke_timer { get; set; } = Program.RNG.Next(0, 120);
         public bool smoke_stage { get; set; } = true;
 
         StaticSprite counterpart = new StaticSprite(0x70, 5, 0, 0);
+
         public UndergroundFireSprite(byte tile_index, byte palette_index, int x, int y) : base(tile_index, palette_index)
         {
             this.tile_index = tile_index;
@@ -111,6 +109,7 @@ namespace The_Legend_of_Zelda
             Action();
             Link.can_move = false;
         }
+
         public override void Action()
         {
             smoke_timer++;
@@ -123,6 +122,7 @@ namespace The_Legend_of_Zelda
                 Flip();
             }
         }
+
         void Flip()
         {
             if (Program.gTimer % 12 == 0)
@@ -140,6 +140,7 @@ namespace The_Legend_of_Zelda
                 counterpart.xflip = false;
             }
         }
+
         public void SetSmokeGraphic()
         {
             if (smoke_timer < 70)
@@ -171,6 +172,7 @@ namespace The_Legend_of_Zelda
             }
         }
     }
+
     internal class CaveNPC : Sprite, ISmokeSpawn
     {
         public int smoke_timer { get; set; } = Program.RNG.Next(0, 120);
@@ -179,6 +181,7 @@ namespace The_Legend_of_Zelda
 
         StaticSprite counterpart = new StaticSprite(0x70, 5, 0, 0);
         WarpCode.NPC displayed_npc;
+
         public CaveNPC(WarpCode.NPC displayed_npc, byte tile_index = 0x00, byte palette_index = 5) : base(tile_index, palette_index)
         {
             this.tile_index = tile_index;
@@ -199,6 +202,7 @@ namespace The_Legend_of_Zelda
             smoke_timer = 30;
             Action();
         }
+
         public override void Action()
         {
             smoke_timer++;
@@ -211,6 +215,7 @@ namespace The_Legend_of_Zelda
                 FlashDissapear();
             }
         }
+
         public void SetSmokeGraphic()
         {
             if (smoke_timer < 70)
@@ -267,10 +272,11 @@ namespace The_Legend_of_Zelda
                 smoke_stage = false;
             }
         }
+
         public void FlashDissapear()
         {
             flash_timer++;
-            if ((flash_timer & 1) == 1)
+            if ((flash_timer % 2) == 1)
             {
                 shown = true;
                 counterpart.shown = true;
@@ -282,17 +288,20 @@ namespace The_Legend_of_Zelda
             }
         }
     }
+
     internal class StaticFairySprite : FairySprite
     {
         public StaticFairySprite(int x, int y) : base(x, y)
         {
             return;
         }
+
         public override void Action()
         {
             return;
         }
     }
+
     interface ISmokeSpawn
     {
         int smoke_timer { get; set; }

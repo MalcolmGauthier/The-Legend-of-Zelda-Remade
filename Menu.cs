@@ -350,38 +350,38 @@ namespace The_Legend_of_Zelda
                 else
                 {
                     hud_B_item.shown = true;
-                    hud_B_item.tile_index = current_B_item;
+                    hud_B_item.tile_index = (byte)current_B_item;
                     switch (current_B_item)
                     {
-                        case 0x26:
+                        case SpriteID.CANDLE:
                             if (red_candle)
                                 hud_B_item.palette_index = 6;
                             else
                                 hud_B_item.palette_index = 5;
                             break;
-                        case 0x28:
+                        case SpriteID.ARROW:
                             if (silver_arrow)
                                 hud_B_item.palette_index = 5;
                             else
                                 hud_B_item.palette_index = 4;
                             break;
 
-                        case 0x36:
+                        case SpriteID.BOOMERANG:
                             if (magical_boomerang)
                                 hud_B_item.palette_index = 5;
                             else
                                 hud_B_item.palette_index = 4;
                             break;
-                        case 0x40:
+                        case SpriteID.POTION:
                             if (red_potion)
                                 hud_B_item.palette_index = 6;
                             else
                                 hud_B_item.palette_index = 5;
                             break;
-                        case 0x34 or 0x4a or 0x4c:
+                        case SpriteID.BOMB or SpriteID.ROD or SpriteID.MAP:
                             hud_B_item.palette_index = 5;
                             break;
-                        case 0x22 or 0x24:
+                        case SpriteID.BAIT or SpriteID.RECORDER:
                             hud_B_item.palette_index = 6;
                             break;
                     }
@@ -685,6 +685,18 @@ namespace The_Legend_of_Zelda
                     ];
                 }
             }
+        }
+
+        // returns number of triforce pieces gotten
+        public static int GetTriforcePieceCount()
+        {
+            int count = 0;
+            for (byte i = 0; i < 8; i++)
+            {
+                if (SaveLoad.GetTriforceFlag(i))
+                    count++;
+            }
+            return count;
         }
     }
 }

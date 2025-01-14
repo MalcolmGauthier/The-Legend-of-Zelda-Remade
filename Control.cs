@@ -15,37 +15,49 @@ namespace The_Legend_of_Zelda
 
     internal static class Control
     {
-        static byte held_buttons = 0;
-        static byte pressed_buttons = 0;
+        static int held_buttons = 0;
+        static int pressed_buttons = 0;
 
         static bool can_screenshot = true;
 
         static void Push(Buttons button)
         {
-            byte index = (byte)(1 << (int)button);
-            if (((pressed_buttons & index) > 0) && ((held_buttons & index) > 0))
+            int index = 1 << (int)button;
+
+            // if button is in both pressed buttons and held buttons, then it's been held for more than 1 frame, so it's no longer pressed
+            if (((pressed_buttons & index) != 0) && ((held_buttons & index) != 0))
                 pressed_buttons -= index;
+
+            // if button is not in held buttons, that means it just got pressed. put it in pressed and held buttons
             if ((held_buttons & index) == 0)
             {
                 held_buttons += index;
                 pressed_buttons += index;
             }
         }
+
         static void Release(Buttons button)
         {
-            byte index = (byte)(1 << (int)button);
-            if ((held_buttons & index) > 0)
+            int index = 1 << (int)button;
+
+            // if button in held buttons, remove it from there
+            if ((held_buttons & index) != 0)
                 held_buttons -= index;
+
+            // no need to check for if button is in pressed buttons, pressed buttons gets reset before each keyboard poll
         }
+
         public static bool IsPressed(Buttons button)
         {
-            return ((pressed_buttons & (byte)(1 << (int)button)) > 0);
+            return ((pressed_buttons & (1 << (int)button)) > 0);
         }
+
         public static bool IsHeld(Buttons button)
         {
-            return ((held_buttons & (byte)(1 << (int)button)) > 0);
+            return ((held_buttons & (1 << (int)button)) > 0);
         }
-        public static void Tick()
+
+        public static void Poll()
         {
             pressed_buttons = 0;
             while (SDL_PollEvent(out Program.e) == 1)

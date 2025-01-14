@@ -4,6 +4,7 @@
     {
         StaticSprite counterpart = new StaticSprite(0x6e, 6, 128, 144);
         int triforce_anim_timer = 0;
+
         public TriforcePieceSprite() : base(120, 144, false)
         {
             tile_index = 0x6e;
@@ -12,6 +13,7 @@
             counterpart.unload_during_transition = true;
             Screen.sprites.Add(counterpart);
         }
+
         public override void ItemSpecificActions()
         {
             if (Program.gTimer % 12 == 0)
@@ -52,7 +54,7 @@
                 }
                 else if (triforce_anim_timer == 97)
                 {
-                    if (Link.hp < SaveLoad.nb_of_hearts[SaveLoad.current_save_file])
+                    if (Link.hp < SaveLoad.nb_of_hearts)
                     {
                         Link.full_heal_flag = true;
                         triforce_anim_timer--;
@@ -74,7 +76,7 @@
                     OverworldCode.opening_animation_timer = 0;
                     OverworldCode.black_square_stairs_return_flag = true;
                     OverworldCode.current_screen = OverworldCode.return_screen;
-                    SaveLoad.SetTriforceFlag(SaveLoad.current_save_file, DungeonCode.current_dungeon, true);
+                    SaveLoad.SetTriforceFlag(DungeonCode.current_dungeon, true);
                     Program.gamemode = Program.Gamemode.OVERWORLD;
                     OverworldCode.Init();
                     Link.SetBGState(true);
@@ -86,6 +88,7 @@
             }
         }
     }
+
     internal class MapSprite : ItemDropSprite
     {
         public MapSprite(int x, int y) : base(x, y, false)
@@ -97,12 +100,13 @@
         {
             if (collected)
             {
-                SaveLoad.SetMapFlag(SaveLoad.current_save_file, DungeonCode.current_dungeon, true);
+                SaveLoad.SetMapFlag(DungeonCode.current_dungeon, true);
                 Menu.DrawHudMap();
                 Screen.sprites.Remove(this);
             }
         }
     }
+
     internal class CompassSprite
     {
 

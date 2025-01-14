@@ -2,6 +2,41 @@
 {
     internal abstract class Enemy : Sprite
     {
+        // tells the animation code how to read the sprite data memory
+        public enum AnimationMode
+        {
+            ONEFRAME,         // bubble
+            ONEFRAME_M,       // blade trap
+            ONEFRAME_DU,      // ghini
+            ONEFRAME_DMUM,    // zora
+
+            TWOFRAMES,        // rock, rope
+            TWOFRAMES_M,      // leever, peahat, tektite, pols voice, zol
+            TWOFRAMES_HM,     // wallmaster
+            TWOFRAMES_SOLO,   // gel
+            TWOFRAMES_RRDU,   // lynel, moblin
+            TWOFRAMES_RRUU,   // wizrobes
+            TWOFRAMES_DURR,   // goriya
+            TWOFRAMES_DDUU,   // armos
+            TWOFRAMES_DDUU_M, // vire
+            TWOFRAMES_DMDMLL, // octorok
+
+            THREEFRAMES_M     // likelike
+        }
+
+        public enum ActionState
+        {
+            DEFAULT,
+            WALKING,
+            SHOOTING_PROJECTILE,
+            RISING,
+            BURROWING,
+            FLYING,
+            RESTING,
+            JUMPING,
+            STUNNED,
+        }
+
         public int local_timer = 0;
         public int target_x;
         public int target_y;
@@ -37,40 +72,8 @@
         public ActionState unstunned_action;
         AnimationMode animation_mode;
 
-        public StaticSprite counterpart = new StaticSprite(0, 0, 0, 0);
+        public StaticSprite counterpart = new StaticSprite(SpriteID.BLANK, 0, 0, 0);
 
-        public enum AnimationMode
-        {
-            ONEFRAME,         // bubble
-            ONEFRAME_M,       // blade trap
-            ONEFRAME_DU,      // ghini
-            ONEFRAME_DMUM,    // zora
-
-            TWOFRAMES,        // rock, rope
-            TWOFRAMES_M,      // leever, peahat, tektite, pols voice, zol
-            TWOFRAMES_HM,     // wallmaster
-            TWOFRAMES_SOLO,   // gel
-            TWOFRAMES_RRDU,   // lynel, moblin
-            TWOFRAMES_RRUU,   // wizrobes
-            TWOFRAMES_DURR,   // goriya
-            TWOFRAMES_DDUU,   // armos
-            TWOFRAMES_DDUU_M, // vire
-            TWOFRAMES_DMDMLL, // octorok
-
-            THREEFRAMES_M     // likelike
-        }
-        public enum ActionState
-        {
-            DEFAULT,
-            WALKING,
-            SHOOTING_PROJECTILE,
-            RISING,
-            BURROWING,
-            FLYING,
-            RESTING,
-            JUMPING,
-            STUNNED,
-        }
         public Enemy(AnimationMode animation_mode, byte tile_location_1, byte tile_location_2, bool stronger, bool smoke_appearance, 
             byte frames_between_animation_frames, float speed, byte drop_category, bool set_spawn = false) : base(0, 0)
         {
@@ -92,6 +95,7 @@
             Screen.sprites.Add(this);
             Screen.sprites.Add(counterpart);
         }
+
         void Init()
         {
             appeared = true;
@@ -105,51 +109,54 @@
 
             Animation();
         }
+
         public override void Action()
         {
-            if (Link.can_move)
+            if (!Link.can_move)
+                return;
+
+            if (!appeared)
             {
-                if (!appeared)
+                if (HP <= 0)
                 {
-                    if (HP <= 0)
-                    {
-                        Die();
-                    }
-                    else
-                    {
-                        SetSmokeGraphic();
-                    }
+                    Die();
                 }
                 else
                 {
-                    Animation();
-
-                    if (IsWithinLink() && !Link.clock_flash && can_damage_link)
-                    {
-                        Link.knockback_direction = (Direction)((int)Link.facing_direction ^ 1);
-                        Link.TakeDamage(damage);
-                    }
-                    TouchingSword();
-
-                    if (current_action == ActionState.STUNNED || Link.clock_flash)
-                        Stunned();
-                    else
-                        EnemySpecificActions();
-
-                    if (iframes_timer > 0)
-                        HitFlash();
-                    Knockback();
+                    SetSmokeGraphic();
                 }
-
-                counterpart.x = x + 8;
-                counterpart.y = y;
-                local_timer++;
             }
+            else
+            {
+                Animation();
+
+                if (IsWithinLink() && !Link.clock_flash && can_damage_link)
+                {
+                    Link.knockback_direction = (Direction)((int)Link.facing_direction ^ 1);
+                    Link.TakeDamage(damage);
+                }
+                TouchingSword();
+
+                if (current_action == ActionState.STUNNED || Link.clock_flash)
+                    Stunned();
+                else
+                    EnemySpecificActions();
+
+                if (iframes_timer > 0)
+                    HitFlash();
+                Knockback();
+            }
+
+            counterpart.x = x + 8;
+            counterpart.y = y;
+            local_timer++;
         }
+
         public abstract void EnemySpecificActions();
+
         bool IsPositionValid(int x, int y)
         {
-            byte tile_id = (byte)Screen.GetTileIndexAtLocation(x, y);
+            byte tile_id = Screen.GetTileIndexAtLocation(x, y);
 
             switch (tile_id)
             {
@@ -159,11 +166,13 @@
                     return false;
             }
         }
+
         bool IsWithinLink()
         {
             return x + 12 >= Link.x && x - 12 <= Link.x && 
                    y + 12 >= Link.y && y - 12 <= Link.y;
         }
+
         void SetPosMod16()
         {
             if (x % 16 < 8)
@@ -176,6 +185,7 @@
             else
                 y += 16 - (y % 16);
         }
+
         void SetSmokeGraphic()
         {
             if (!smoke_appearance)
@@ -217,6 +227,7 @@
                 Init();
             }
         }
+
         public void SpawnOnEdge()
         {
             byte count = 0;
@@ -262,8 +273,10 @@
                     valid_pos = true;
             }
         }
+
+        // readable code? no thanks, i'm full.
         void Animation()
-        { // readable code? no thanks, i'm full.
+        {
             bool flip;
             int next_tile = 2;
             int tile_to_use;
@@ -429,6 +442,7 @@
                     }
                     break;
             }
+
             bool FirstHalfOfAnimation()
             {
                 if (frames_between_anim == 0)
@@ -436,6 +450,7 @@
                 return local_timer % (frames_between_anim * 2) < frames_between_anim;
             }
         }
+
         public void FindValidSpawnLocation()
         {
             int new_x;
@@ -461,10 +476,12 @@
             x = new_x * 16;
             y = new_y * 16 + 64;
         }
+
         bool IsValidTile(byte tile)
         {
             return tile == 1 || tile == 3 || (tile >= 0x14 && tile <= 0x16) || (tile >= 0x26 && tile <= 0x29);
         }
+
         public void Walk()
         {
             if (knockback_timer > 0)
@@ -475,13 +492,47 @@
             {
                 nb_of_times_moved = 0;
                 SetPosMod16();
+                // 1/4 chance to roll for direction change towards target
                 if (Program.RNG.Next(4) == 0)
                 {
-                    facing_direction = PickDirection();
+                    List<Direction> possible_directions = new List<Direction> { Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT };
+                    //possible_directions.Remove(facing_direction);
+
+                    if (x < target_x)
+                        possible_directions.Remove(Direction.LEFT);
+                    else
+                        possible_directions.Remove(Direction.RIGHT);
+
+                    if (y < target_y)
+                        possible_directions.Remove(Direction.UP);
+                    else
+                        possible_directions.Remove(Direction.DOWN);
+
+                    if (possible_directions.Count == 0)
+                        possible_directions.Add(facing_direction);
+
+                    facing_direction = possible_directions[Program.RNG.Next(possible_directions.Count)];
                 }
                 CheckIfTurn();
             }
-            UpdateTarget();
+
+            // every time an enemy moves 1 tile, it has a 1/64 chance of switching its target from link to anti-link and vice versa
+            if (x % 16 == 0 && y % 16 == 0)
+            {
+                if (Program.RNG.Next(64) == 0)
+                    target_antilink = !target_antilink;
+            }
+
+            if (target_antilink)
+            {
+                target_x = 256 - Link.x;
+                target_y = 240 - Link.y;
+            }
+            else
+            {
+                target_x = Link.x;
+                target_y = Link.y;
+            }
 
             int frame_speed;
             if (speed % 1 == 0.5f)
@@ -492,7 +543,9 @@
                     frame_speed = (int)MathF.Floor(speed);
             }
             else
+            {
                 frame_speed = (int)speed;
+            }
 
             if (facing_direction == Direction.UP)
                 y -= frame_speed;
@@ -502,55 +555,19 @@
                 x -= frame_speed;
             else
                 x += frame_speed;
-
-            void UpdateTarget()
-            {
-                if (x % 16 == 0 && y % 16 == 0)
-                {
-                    if (Program.RNG.Next(64) == 0)
-                        target_antilink = !target_antilink;
-                }
-
-                if (target_antilink)
-                {
-                    target_x = 256 - Link.x;
-                    target_y = 240 - Link.y;
-                }
-                else
-                {
-                    target_x = Link.x;
-                    target_y = Link.y;
-                }
-            }
-            Direction PickDirection()
-            {
-                List<Direction> possible_directions = new List<Direction> { Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT };
-                //possible_directions.Remove(facing_direction);
-
-                if (x < target_x)
-                    possible_directions.Remove(Direction.LEFT);
-                else
-                    possible_directions.Remove(Direction.RIGHT);
-
-                if (y < target_y)
-                    possible_directions.Remove(Direction.UP);
-                else
-                    possible_directions.Remove(Direction.DOWN);
-
-                if (possible_directions.Count == 0)
-                    possible_directions.Add(facing_direction);
-                return possible_directions[Program.RNG.Next(possible_directions.Count)];
-            }
         }
+
+        // returns true if turned
         public bool CheckIfTurn()
-        { // returns true if turned
+        {
             Direction rtrn_value = facing_direction;
             bool valid_direction = false;
             byte counter = 0;
             while (!valid_direction)
             {
+                // prevents infinite loop. enemies walking in walls is better than a crash
                 counter++;
-                if (counter > 32) // prevents infinite loop. enemies walking in walls is better than a crash
+                if (counter > 32)
                     break;
 
                 int test_x = -1, test_y = -1;
@@ -575,6 +592,7 @@
             }
             return facing_direction != rtrn_value;
         }
+
         void HitFlash()
         {
             byte new_palette;
@@ -587,6 +605,7 @@
             counterpart.palette_index = new_palette;
             iframes_timer--;
         }
+
         void TouchingSword()
         {
             if (!Link.sword_out && !Link.wand_out)
@@ -616,15 +635,17 @@
 
             if (touching)
             {
-                knockback_direction = (Direction)Link.facing_direction;
+                knockback_direction = Link.facing_direction;
                 byte damage = 1;
-                if (SaveLoad.magical_sword[SaveLoad.current_save_file] || Link.wand_out) // wand whack does 4 damage
+                // wand whack does 4 damage
+                if (SaveLoad.magical_sword || Link.wand_out)
                     damage = 4;
-                else if (SaveLoad.white_sword[SaveLoad.current_save_file])
+                else if (SaveLoad.white_sword)
                     damage = 2;
                 TakeDamage(damage);
             }
         }
+
         public void TakeDamage(float damage_taken)
         {
             if (invincible || iframes_timer > 0)
@@ -634,10 +655,12 @@
             if (damage != 0)
             {
                 iframes_timer = 48;
-                if (((int)knockback_direction < 2 && x % 16 == 0) || ((int)knockback_direction >= 2 && y % 16 == 0)) // if aligned on grid
+                // if aligned on grid
+                if (((int)knockback_direction < 2 && x % 16 == 0) || ((int)knockback_direction >= 2 && y % 16 == 0))
                     knockback_timer = 8;
             }
             og_palette = palette_index;
+
             if (HP <= 0)
             {
                 local_timer = 0;
@@ -645,6 +668,7 @@
                 knockback_timer = 0;
             }
         }
+
         public void Stunned()
         {
             if (time_when_stunned == -1)
@@ -658,49 +682,51 @@
                 return;
             }
         }
+
         public bool CheckIfEdgeHit()
         {
             return x >= 232 || x <= 8 || y <= 64 || y >= 216;
         }
+
         bool Knockback()
         {
-            if (knockback_timer > 0)
+            if (knockback_timer <= 0)
+                return false;
+
+            // setpos overwrites safex and safey, so we have to manually remember link's last non-wall pos
+            int backup_x = x, backup_y = y;
+            knockback_timer--;
+
+            if (knockback_direction == Direction.UP)
+                y -= 4;
+            else if (knockback_direction == Direction.DOWN)
+                y += 4;
+            else if (knockback_direction == Direction.LEFT)
+                x -= 4;
+            else
+                x += 4;
+
+            if (!(IsValidTile(Screen.GetTileIndexAtLocation(x, y)) && IsValidTile(Screen.GetTileIndexAtLocation(x + 15, y)) &&
+                  IsValidTile(Screen.GetTileIndexAtLocation(x, y + 15)) && IsValidTile(Screen.GetTileIndexAtLocation(x + 15, y + 15)))
+                || y < 64 || y > 224 || x < 0 || x > 240)
             {
-                int backup_x = x, backup_y = y; // setpos overwrites safex and safey, so we have to manually remember link's last non-wall pos
-                knockback_timer--;
-
-                if (knockback_direction == Direction.UP)
-                    y -= 4;
-                else if (knockback_direction == Direction.DOWN)
-                    y += 4;
-                else if (knockback_direction == Direction.LEFT)
-                    x -= 4;
-                else
-                    x += 4;
-
-                if (!Check() || y < 64 || y > 224 || x < 0 || x > 240)
-                {
-                    knockback_timer = 0;
-                    x = backup_x;
-                    y = backup_y;
-                }
+                knockback_timer = 0;
+                x = backup_x;
+                y = backup_y;
             }
 
             return knockback_timer > 0;
-
-            bool Check()
-            {
-                return IsValidTile(Screen.GetTileIndexAtLocation(x, y)) && IsValidTile(Screen.GetTileIndexAtLocation(x + 15, y)) &&
-                    IsValidTile(Screen.GetTileIndexAtLocation(x, y + 15)) && IsValidTile(Screen.GetTileIndexAtLocation(x + 15, y + 15));
-            }
         }
+
         void DropItem()
         {
+            // every tenth enemy killed damageless drops a bomb!
             if (Link.nb_of_ens_killed_damageless % 10 == 0 && Link.nb_of_ens_killed_damageless != 0)
             {
                 new BombItemSprite(x + 4, y);
                 return;
             }
+            // every 16th enemy killed damageless drops a fairy!
             else if (Link.nb_of_ens_killed_damageless % 16 == 0 && Link.nb_of_ens_killed_damageless != 0)
             {
                 new FairyItemSprite(x, y);
@@ -712,81 +738,81 @@
                 case 0:
                     break;
                 case 1:
-                    if (Program.RNG.Next(100) <= 30)
+                    if (Program.RNG.Next(100) > 30)
+                        break;
+
+                    switch (Link.nb_of_ens_killed % 10)
                     {
-                        switch (Link.nb_of_ens_killed % 10)
-                        {
-                            case 4:
-                                new FairyItemSprite(x + 4, y);
-                                break;
-                            case 2 or 6 or 7 or 0:
-                                new HeartItemSprite(x + 4, y);
-                                break;
-                            default:
-                                new RupySprite(x + 4, y, false);
-                                break;
-                        }
+                        case 4:
+                            new FairyItemSprite(x + 4, y);
+                            break;
+                        case 2 or 6 or 7 or 0:
+                            new HeartItemSprite(x + 4, y);
+                            break;
+                        default:
+                            new RupySprite(x + 4, y, false);
+                            break;
                     }
                     break;
                 case 2:
-                    if (Program.RNG.Next(100) <= 40)
+                    if (Program.RNG.Next(100) > 40)
+                        break;
+
+                    switch (Link.nb_of_ens_killed % 10)
                     {
-                        switch (Link.nb_of_ens_killed % 10)
-                        {
-                            case 3:
-                                new ClockItemSprite(x, y);
-                                break;
-                            case 2 or 4 or 7:
-                                new RupySprite(x + 4, y, false);
-                                break;
-                            case 1 or 6 or 8:
-                                new BombItemSprite(x + 4, y);
-                                break;
-                            default:
-                                new HeartItemSprite(x + 4, y);
-                                break;
-                        }
+                        case 3:
+                            new ClockItemSprite(x, y);
+                            break;
+                        case 2 or 4 or 7:
+                            new RupySprite(x + 4, y, false);
+                            break;
+                        case 1 or 6 or 8:
+                            new BombItemSprite(x + 4, y);
+                            break;
+                        default:
+                            new HeartItemSprite(x + 4, y);
+                            break;
                     }
                     break;
                 case 3:
-                    if (Program.RNG.Next(100) <= 60)
+                    if (Program.RNG.Next(100) > 60)
+
+                    switch (Link.nb_of_ens_killed % 10)
                     {
-                        switch (Link.nb_of_ens_killed % 10)
-                        {
-                            case 6:
-                                new ClockItemSprite(x, y);
-                                break;
-                            case 2 or 5:
-                                new HeartItemSprite(x + 4, y);
-                                break;
-                            case 4 or 0:
-                                new RupySprite(x + 4, y, true);
-                                break;
-                            default:
-                                new RupySprite(x + 4, y, false);
-                                break;
-                        }
+                        case 6:
+                            new ClockItemSprite(x, y);
+                            break;
+                        case 2 or 5:
+                            new HeartItemSprite(x + 4, y);
+                            break;
+                        case 4 or 0:
+                            new RupySprite(x + 4, y, true);
+                            break;
+                        default:
+                            new RupySprite(x + 4, y, false);
+                            break;
                     }
                     break;
                 case 4:
-                    if (Program.RNG.Next(100) <= 40)
+                    if (Program.RNG.Next(100) > 40)
+                        break;
+
+                    switch (Link.nb_of_ens_killed % 10)
                     {
-                        switch (Link.nb_of_ens_killed % 10)
-                        {
-                            case 2 or 5:
-                                new FairyItemSprite(x + 4, y);
-                                break;
-                            case 3 or 9:
-                                new RupySprite(x + 4, y, false);
-                                break;
-                            default:
-                                new HeartItemSprite(x + 4, y);
-                                break;
-                        }
+                        case 2 or 5:
+                            new FairyItemSprite(x + 4, y);
+                            break;
+                        case 3 or 9:
+                            new RupySprite(x + 4, y, false);
+                            break;
+                        default:
+                            new HeartItemSprite(x + 4, y);
+                            break;
                     }
                     break;
             }
         }
+
         void Die()
         {
             byte new_palette = (byte)(local_timer % 4 + 4);
@@ -816,9 +842,11 @@
             }
         }
     }
+
     internal class Octorok : Enemy
     {
         int when_to_shoot;
+
         public Octorok (bool stronger) : base(AnimationMode.TWOFRAMES_DMDMLL, 0xb0, 0xb2, stronger, true, 6, 0.5f, 1)
         {
             when_to_shoot = Program.RNG.Next(30, 100);
@@ -842,6 +870,7 @@
                 drop_category = 2;
             }
         }
+
         public override void EnemySpecificActions()
         {
             switch (current_action)
@@ -876,9 +905,11 @@
             }
         }
     }
+
     internal class Moblin : Enemy
     {
         int when_to_shoot;
+
         public Moblin(bool stronger) : base(AnimationMode.TWOFRAMES_RRDU, 0xf0, 0xf8, stronger, false, 6, 0.5f, 1)
         {
             when_to_shoot = Program.RNG.Next(30, 60);
@@ -910,6 +941,7 @@
                 SpawnOnEdge();
             }
         }
+
         public override void EnemySpecificActions()
         {
             if (current_action == ActionState.SHOOTING_PROJECTILE)
@@ -943,9 +975,11 @@
             }
         }
     }
+
     internal class Lynel : Enemy
     {
         int when_to_shoot;
+
         public Lynel(bool stronger) : base(AnimationMode.TWOFRAMES_RRDU, 0xce, 0xd6, stronger, true, 6, 0.5f, 4)
         {
             when_to_shoot = Program.RNG.Next(30, 60);
@@ -969,6 +1003,7 @@
             CheckIfTurn();
             current_action = ActionState.WALKING;
         }
+
         public override void EnemySpecificActions()
         {
             if (current_action == ActionState.SHOOTING_PROJECTILE)
@@ -1002,6 +1037,7 @@
             }
         }
     }
+
     internal class Zora : Enemy
     {
         public Zora() : base(AnimationMode.ONEFRAME_DMUM, 0xbc, 0xbe, false, false, 0, 0, 4)
@@ -1016,6 +1052,7 @@
             local_timer = 99;
             spawn_hidden = true;
         }
+
         public override void EnemySpecificActions()
         {
             switch (current_action)
@@ -1103,9 +1140,11 @@
             return index >= 0xa && index <= 0x12;
         }
     }
+
     internal class Leever : Enemy
     {
         Direction walking_dir;
+
         public Leever(bool stronger) : base(AnimationMode.TWOFRAMES_M, 0xbc, 0xbe, stronger, false, 6, 0.5f, 3)
         {
             damage = 0.5f;
@@ -1126,6 +1165,7 @@
             counterpart.shown = false;
             spawn_hidden = true;
         }
+
         public override void EnemySpecificActions()
         {
             switch (current_action)
@@ -1288,10 +1328,12 @@
             y = new_y & 0xFFF0;
         }
     }
+
     internal class Rock : Enemy
     {
         int when_to_drop;
         bool go_left;
+
         public Rock() : base(AnimationMode.TWOFRAMES, 0x90, 0xe8, false, false, 6, 0, 0)
         {
             stunnable = false;
@@ -1307,6 +1349,7 @@
             go_left = Convert.ToBoolean(Program.RNG.Next(2));
             Spawn();
         }
+
         public override void EnemySpecificActions()
         {
             switch (current_action)
@@ -1368,25 +1411,30 @@
                     break;
             }
         }
+
         void Spawn()
         {
             y = 64;
             x = Program.RNG.Next(1, 239);
         }
+
+        // heavy bias towards link
         void PickNewDirection()
         {
-            bool value = Convert.ToBoolean(Program.RNG.Next(5));
+            bool value = Program.RNG.Next(5) != 0;
             if (x < Link.x)
                 value = !value;
             go_left = value;
         }
     }
+
     internal class Tektite : Enemy
     {
         int when_to_stop;
         int jump_height;
         bool second_jump;
         bool go_left;
+
         public Tektite(bool stronger) : base(AnimationMode.TWOFRAMES_M, 0xca, 0xcc, stronger, true, 16, 0, 1)
         {
             byte palette;
@@ -1405,6 +1453,7 @@
             counterpart.palette_index = palette;
             current_action = ActionState.RESTING;
         }
+
         public override void EnemySpecificActions()
         {
             switch (current_action)
@@ -1473,6 +1522,7 @@
                     break;
             }
         }
+
         void PickNewDirection()
         {
             bool value = Convert.ToBoolean(Program.RNG.Next(7));
@@ -1481,11 +1531,13 @@
             go_left = value;
         }
     }
+
     internal class Peahat : Enemy
     {
         int when_to_stop;
         int num_times_turned;
         EightDirection direction;
+
         public Peahat() : base(AnimationMode.TWOFRAMES_M, 0xc6, 0xc8, false, false, 0, 0, 4)
         {
             current_action = ActionState.FLYING;
@@ -1497,6 +1549,7 @@
             speed = 0.5f;
             direction = EightDirection.UP;
         }
+
         public override void EnemySpecificActions()
         {
             switch (current_action)
@@ -1591,6 +1644,7 @@
                     break;
             }
         }
+
         void Move8D()
         {
             if (local_timer % 2 != 0)
@@ -1619,6 +1673,7 @@
             }
         }
     }
+
     internal class Ghini : Enemy
     {
         public bool is_master;
@@ -1626,6 +1681,7 @@
         int num_times_turned;
         EightDirection direction = EightDirection.DOWN;
         Ghini? master = null;
+
         public Ghini(bool master, int x = -1, int y = -1) : base(AnimationMode.ONEFRAME_DU, 0xe0, 0xe4, false, true, 0, 0.5f, 3, true)
         {
             is_master = master;
@@ -1648,14 +1704,13 @@
                 spawn_hidden = true;
                 speed = 1;
 
-                for (int i = 0; i < Screen.sprites.Count; i++)
+                foreach (Sprite spr in Screen.sprites)
                 {
-                    if (Screen.sprites[i] is Ghini)
+                    if (spr is Ghini other)
                     {
-                        Ghini spr = (Ghini)Screen.sprites[i];
-                        if (spr.is_master)
+                        if (other.is_master)
                         {
-                            this.master = spr;
+                            this.master = other;
                             break;
                         }
                     }
@@ -1667,6 +1722,7 @@
                 current_action = ActionState.WALKING;
             }
         }
+
         public override void EnemySpecificActions()
         {
             switch (current_action)
@@ -1794,6 +1850,7 @@
                 }
             }
         }
+
         void Move8D()
         {
             if (local_timer % 2 != 0)
@@ -1822,9 +1879,11 @@
             }
         }
     }
+
     internal class Armos : Enemy
     {
         int metatile_index;
+
         public Armos(int metatile_index, int x, int y) : base(AnimationMode.TWOFRAMES_DDUU, 0xa0, 0xa4, false, false, 6, 0, 0, true)
         {
             palette_index = 6;
@@ -1839,6 +1898,7 @@
             this.y = y;
             this.metatile_index = metatile_index;
         }
+
         public override void EnemySpecificActions()
         {
             switch (current_action)
@@ -1865,10 +1925,11 @@
                     break;
             }
         }
+
         void ReplaceOGTile()
         {
             int ppu_tile_location = 256 + (metatile_index >> 4) * 64 + (metatile_index % 16) * 2;
-            if (OverworldCode.current_screen == 36 && !SaveLoad.power_bracelet[SaveLoad.current_save_file] && metatile_index == 78)
+            if (OverworldCode.current_screen == 36 && !SaveLoad.power_bracelet && metatile_index == 78)
                 new PowerBraceletSprite(x + 4, y);
             byte screen = OverworldCode.current_screen;
             if ((screen == 11 && metatile_index == 75) || (screen == 34 && metatile_index == 67) || (screen == 28 && metatile_index == 75) ||

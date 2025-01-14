@@ -84,7 +84,7 @@ namespace The_Legend_of_Zelda
         SP_3
     }
 
-    public unsafe static class Palettes
+    public static class Palettes
     {
         const int COLORS_IN_PALETTE = 4;
         const int NUM_PALETTES = 8;

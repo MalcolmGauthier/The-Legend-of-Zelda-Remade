@@ -45,7 +45,7 @@ namespace The_Legend_of_Zelda
             while (!exit)
             {
                 gTimer++;
-                Control.Tick();
+                Control.Poll();
 
                 if (!Paused())
                 {

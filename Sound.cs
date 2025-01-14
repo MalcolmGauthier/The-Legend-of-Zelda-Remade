@@ -9,11 +9,6 @@ namespace The_Legend_of_Zelda
 {
     public static class Sound
     {
-        public static IntPtr music = IntPtr.Zero;
-        public static IntPtr[] SFX = new IntPtr[4] {IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero};
-        static byte[] sfx_order = new byte[4] { 0, 0, 0, 0 };
-        static sbyte recorder_sfx_channel = -1;
-        public static bool recorder_playing = false;
         public enum Songs
         {
             SPLASH,
@@ -43,6 +38,14 @@ namespace The_Legend_of_Zelda
             SWORD,
             TEXT
         }
+
+        public static IntPtr music = IntPtr.Zero;
+        public static IntPtr[] SFX = new IntPtr[4] {IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero};
+        static byte[] sfx_order = new byte[4] { 0, 0, 0, 0 };
+        static sbyte recorder_sfx_channel = -1;
+        public static bool recorder_playing = false;
+
+
         public static Dictionary<Songs, string> music_list = new Dictionary<Songs, string>()
         {
             {Songs.SPLASH, @"Data\MUSIC\splash.ogg"},
@@ -72,6 +75,7 @@ namespace The_Legend_of_Zelda
             {SoundEffects.SWORD, @"Data\SFX\sword.wav"},
             {SoundEffects.TEXT, @"Data\SFX\text.wav"},
         };
+
         public static void Init()
         {
             if (Program.mute_sound)
@@ -85,6 +89,7 @@ namespace The_Legend_of_Zelda
 
             Mix_AllocateChannels(4);
         }
+
         public static void PlaySong(Songs song, bool loop = true)
         {
             if (Program.mute_sound)
@@ -104,6 +109,7 @@ namespace The_Legend_of_Zelda
             music = Mix_LoadMUS(path);
             Mix_PlayMusic(music, loops);
         }
+
         public static void PlaySFX(SoundEffects sfx_to_play, bool full_fill = false)
         {
             if (Program.mute_sound)
@@ -138,6 +144,8 @@ namespace The_Legend_of_Zelda
                         return;
                     Mix_FreeChunk(SFX[i]);
                     SFX[i] = Mix_LoadWAV(path);
+                    if (SFX[i] == IntPtr.Zero)
+                        return;
                     Mix_VolumeChunk(SFX[i], 5);
                     Mix_PlayChannel(i, SFX[i], 0);
                     for (byte j = 0; j < SFX.Length; j++)
@@ -150,6 +158,7 @@ namespace The_Legend_of_Zelda
                 }
             }
         }
+
         public static void PauseMusic(bool unpause = false)
         {
             if (Program.mute_sound)
@@ -166,6 +175,7 @@ namespace The_Legend_of_Zelda
             else
                 Mix_ResumeMusic();
         }
+
         public static bool IsMusicPlaying()
         {
             if (Program.mute_sound)
@@ -176,6 +186,7 @@ namespace The_Legend_of_Zelda
             else
                 return true;
         }
+
         public static void JumpTo(float timestamp)
         {
             if (Program.mute_sound)
@@ -183,8 +194,10 @@ namespace The_Legend_of_Zelda
 
             Mix_SetMusicPosition(timestamp);
         }
+
+        // will return true if recorder sfx is playing
         public static bool RecorderPlaying()
-        {// will return true if recorder sfx is playing
+        {
             if (Program.mute_sound)
                 return true;
 

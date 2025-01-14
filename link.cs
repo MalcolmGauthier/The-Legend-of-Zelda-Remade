@@ -1,6 +1,7 @@
 ﻿using static The_Legend_of_Zelda.Screen;
 using static The_Legend_of_Zelda.Control;
 using static The_Legend_of_Zelda.SaveLoad;
+using System.Reflection;
 namespace The_Legend_of_Zelda
 {
     public enum Direction
@@ -10,7 +11,7 @@ namespace The_Legend_of_Zelda
         LEFT,
         RIGHT
     }
-
+    
     public static class Link
     {
         public static int x, y;
@@ -63,15 +64,18 @@ namespace The_Legend_of_Zelda
         public static void Init()
         {
             shown = false;
+
             if (!sprites.Contains(self))
                 sprites.Add(self);
             if (!sprites.Contains(counterpart))
                 sprites.Add(counterpart);
+
             current_action = Action.WALKING_UP;
             facing_direction = Direction.UP;
             SetPos(120, 144);
-            if (hp <= 0)
-                hp = 3;
+
+            hp = 3;
+
             iframes_timer = 0;
             knockback_timer = 0;
             self.palette_index = 4;
@@ -91,8 +95,7 @@ namespace The_Legend_of_Zelda
             }
             else if (can_move)
             {
-                if (iframes_timer > 0 || clock_flash)
-                    HitFlash();
+                HitFlash();
 
                 if (Knockback())
                     return;
@@ -119,23 +122,26 @@ namespace The_Legend_of_Zelda
             
             Animation();
 
-            hp = Math.Clamp(hp, 0, nb_of_hearts[current_save_file]);
+            hp = Math.Clamp(hp, 0, nb_of_hearts);
             
             counterpart.x = self.x + 8;
             counterpart.y = self.y;
             x = self.x;
             y = self.y;
-
+            
             // debug section
             hp = 3f;
-            blue_candle[0] = true;
-            magical_key[0] = true;
-            recorder[0] = true;
-            SaveLoad.map_flags[0] = 0xffff;
-            bomb_count[0] = 8;
-            ladder[0] = true;
-            raft[0] = true;
-            boomerang[0] = true;
+            blue_candle = true;
+            magical_key = true;
+            recorder = true;
+            // c# doesn't have c++'s friend keyword, so fuck you c#, et reflection and die :)
+            // (this is only used for testing ofc)
+            FieldInfo? lol = typeof(SaveLoad).GetField("_map_flags", BindingFlags.NonPublic | BindingFlags.Static);
+            lol?.SetValue(null, 0xffff);
+            bomb_count = 8;
+            ladder = true;
+            raft = true;
+            boomerang = true;
         }
 
         static void CheckIfRecorderPlaying()
@@ -311,10 +317,10 @@ namespace The_Legend_of_Zelda
                     sword_1.y -= 4;
                 }
 
-                if (nb_of_hearts[current_save_file] - hp < 0.5f && !Menu.sword_proj_out && !magic_wand && !Menu.magic_wave_out)
+                if (nb_of_hearts - hp < 0.5f && !Menu.sword_proj_out && !magic_wand && !Menu.magic_wave_out)
                 {
                     Menu.sword_proj_out = true;
-                    int[] pos = SetItemPos(false);
+                    int[] pos = FindItemPos(false);
                     new SwordProjectileSprite(pos[0], pos[1], facing_direction, true);
                 }
             }
@@ -332,7 +338,7 @@ namespace The_Legend_of_Zelda
                 if (magic_wand && !Menu.magic_wave_out && !Menu.sword_proj_out)
                 {
                     Menu.magic_wave_out = true;
-                    int[] pos = SetItemPos(true);
+                    int[] pos = FindItemPos(true);
                     new MagicBeamSprite(pos[0], pos[1], facing_direction, true);
                 }
             }
@@ -379,7 +385,7 @@ namespace The_Legend_of_Zelda
 
                     Attack();
                     Menu.bait_out = true;
-                    pos = SetItemPos(false);
+                    pos = FindItemPos(false);
                     new BaitSprite(pos[0], pos[1]);
                     break;
 
@@ -397,24 +403,25 @@ namespace The_Legend_of_Zelda
                         OverworldCode.ChangeRecorderDestination(true);
                     }
 
-                    if (OverworldCode.current_screen != 66) // LEVEL 7 ENTRANCE
+                    // IF LEVEL 7 ENTRANCE
+                    if (OverworldCode.current_screen == 66)
+                    {
+                        if (OverworldCode.level_7_entrance_timer == OverworldCode.LEVEL_7_ENTRANCE_ANIM_DONE)
+                            OverworldCode.level_7_entrance_timer = 0;
+                    }
+                    else
                     {
                         if (!Menu.tornado_out && Program.gamemode == Program.Gamemode.OVERWORLD &&
-                            OverworldCode.current_screen != 128 && triforce_pieces[current_save_file] != 0)
+                            OverworldCode.current_screen != 128 && Menu.GetTriforcePieceCount() != 0)
                         {
                             new TornadoSprite(0, y);
                             Menu.tornado_out = true;
                         }
                     }
-                    else
-                    {
-                        if (OverworldCode.level_7_entrance_timer == 255)
-                            OverworldCode.level_7_entrance_timer = 0;
-                    }
                     break;
 
                 case SpriteID.CANDLE:
-                    if (blue_candle[current_save_file])
+                    if (blue_candle)
                     {
                         if (Menu.blue_candle_limit_reached)
                         {
@@ -431,20 +438,20 @@ namespace The_Legend_of_Zelda
 
                     Menu.fire_out++;
                     Attack();
-                    pos = SetItemPos(true);
+                    pos = FindItemPos(true);
                     new ThrownFireSprite(pos[0], pos[1], facing_direction);
                     break;
 
                 case SpriteID.ARROW:
-                    if (Menu.arrow_out || rupy_count[current_save_file] <= 0)
+                    if (Menu.arrow_out || rupy_count <= 0)
                     {
                         return false;
                     }
 
-                    rupy_count[current_save_file]--;
+                    rupy_count--;
                     Menu.arrow_out = true;
                     Attack();
-                    pos = SetItemPos(facing_direction == Direction.LEFT || facing_direction == Direction.RIGHT);
+                    pos = FindItemPos(facing_direction == Direction.LEFT || facing_direction == Direction.RIGHT);
                     new ArrowSprite(pos[0], pos[1], facing_direction, true);
                     break;
 
@@ -455,9 +462,9 @@ namespace The_Legend_of_Zelda
                     }
 
                     Attack();
-                    pos = SetItemPos(false);
+                    pos = FindItemPos(false);
                     new BombSprite(pos[0], pos[1]);
-                    bomb_count[current_save_file]--;
+                    bomb_count--;
                     Menu.bomb_out = true;
                     break;
 
@@ -468,21 +475,21 @@ namespace The_Legend_of_Zelda
                     }
 
                     Attack();
-                    pos = SetItemPos(false);
+                    pos = FindItemPos(false);
                     new BoomerangSprite(pos[0], pos[1], true);
                     Menu.boomerang_out = true;
                     break;
 
                 case SpriteID.POTION:
-                    if (red_potion[current_save_file])
+                    if (red_potion)
                     {
                         Menu.hud_B_item.palette_index = 5;
-                        red_potion[current_save_file] = false;
+                        red_potion = false;
                     }
                     else
                     {
                         Menu.hud_B_item.tile_index = (byte)SpriteID.MAP; // letter
-                        blue_potion[current_save_file] = false;
+                        blue_potion = false;
                     }
 
                     full_heal_flag = true;
@@ -506,7 +513,7 @@ namespace The_Legend_of_Zelda
         }
 
         // find location relative to link for where item spawns
-        static int[] SetItemPos(bool double_wide)
+        static int[] FindItemPos(bool double_wide)
         {
             int[] pos = new int[2];
 
@@ -560,15 +567,12 @@ namespace The_Legend_of_Zelda
             }
 
             if (is_x)
-            {
                 self.x += change;
-            }
             else
-            {
                 self.y += change;
-            }
         }
 
+        // snap Link to the nearest multiple of 8
         static void GotoMod8()
         {
             // why the fuck does this work
@@ -608,7 +612,7 @@ namespace The_Legend_of_Zelda
                     Sound.PauseMusic();
             }
 
-            if (hp < nb_of_hearts[current_save_file])
+            if (hp < nb_of_hearts)
             {
                 if (Program.gTimer % 22 == 0)
                     hp += 0.5f;
@@ -616,7 +620,7 @@ namespace The_Legend_of_Zelda
                 Sound.PlaySFX(Sound.SoundEffects.HEART, true);
             }
 
-            if (hp == nb_of_hearts[current_save_file] && !OverworldCode.fairy_animation_active)
+            if (hp == nb_of_hearts && !OverworldCode.fairy_animation_active)
             {
                 Menu.can_open_menu = true;
                 full_heal_flag = false;
@@ -625,25 +629,28 @@ namespace The_Legend_of_Zelda
             }
         }
 
+        // sets Link'S position to a specific value.
+        // !! bypasses wall collision checks by overriting safe_x and safe_y !!
         public static void SetPos(int new_x = -1, int new_y = -1)
         {
             if (new_x != -1)
             {
                 self.x = new_x;
-                x = new_x;
                 safe_x = new_x;
+                x = new_x;
             }
             if (new_y != -1)
             {
                 self.y = new_y;
-                y = new_y;
                 safe_y = new_y;
+                y = new_y;
             }
 
             counterpart.x = self.x + 8;
             counterpart.y = self.y;
         }
 
+        // method to show or hide link
         public static void Show(bool show)
         {
             shown = show;
@@ -651,6 +658,7 @@ namespace The_Legend_of_Zelda
             counterpart.shown = show;
         }
 
+        // method to set Link's background state
         public static void SetBGState(bool bg_mod_activated)
         {
             self.background = bg_mod_activated;
@@ -667,7 +675,7 @@ namespace The_Legend_of_Zelda
                 case Action.WALKING_DOWN:
                     if (animation_timer % 12 < 6)
                     {
-                        if (magical_shield[current_save_file])
+                        if (magical_shield)
                         {
                             self.tile_index = 0x60;
                         }
@@ -681,7 +689,7 @@ namespace The_Legend_of_Zelda
                     }
                     else
                     {
-                        if (magical_shield[current_save_file])
+                        if (magical_shield)
                         {
                             self.tile_index = 0x60;
                         }
@@ -713,7 +721,7 @@ namespace The_Legend_of_Zelda
                 case Action.WALKING_LEFT:
                     if (animation_timer % 12 < 6)
                     {
-                        if (magical_shield[current_save_file])
+                        if (magical_shield)
                         {
                             self.tile_index = 0x80;
                         }
@@ -727,7 +735,7 @@ namespace The_Legend_of_Zelda
                     }
                     else
                     {
-                        if (magical_shield[current_save_file])
+                        if (magical_shield)
                         {
                             self.tile_index = 0x54;
                         }
@@ -743,7 +751,7 @@ namespace The_Legend_of_Zelda
                 case Action.WALKING_RIGHT:
                     if (animation_timer % 12 < 6)
                     {
-                        if (magical_shield[current_save_file])
+                        if (magical_shield)
                         {
                             counterpart.tile_index = 0x80;
                         }
@@ -757,7 +765,7 @@ namespace The_Legend_of_Zelda
                     }
                     else
                     {
-                        if (magical_shield[current_save_file])
+                        if (magical_shield)
                         {
                             counterpart.tile_index = 0x54;
                         }
@@ -828,7 +836,7 @@ namespace The_Legend_of_Zelda
                     else if (animation_timer == 6 + longer_attack_anim)
                     {
                         counterpart.tile_index = 0xa;
-                        if (magical_shield[current_save_file])
+                        if (magical_shield)
                             self.tile_index = 0x60;
                         else
                             self.tile_index = 0x58;
@@ -855,7 +863,7 @@ namespace The_Legend_of_Zelda
                     else if (animation_timer == 6 + longer_attack_anim)
                     {
                         counterpart.tile_index = 0x0;
-                        if (magical_shield[current_save_file])
+                        if (magical_shield)
                             self.tile_index = 0x54;
                         else
                             self.tile_index = 0x2;
@@ -880,7 +888,7 @@ namespace The_Legend_of_Zelda
                     else if (animation_timer == 6 + longer_attack_anim)
                     {
                         self.tile_index = 0x0;
-                        if (magical_shield[current_save_file])
+                        if (magical_shield)
                             counterpart.tile_index = 0x54;
                         else
                             counterpart.tile_index = 0x2;
@@ -901,6 +909,8 @@ namespace The_Legend_of_Zelda
                     break;
             }
 
+            // equivalent to "(sword_out || wand_out) ? 6 : 0"
+            //TODO: worth removing? local functions suck
             byte AttackAnim()
             {
                 byte make_anim_longer = 0;
@@ -913,47 +923,49 @@ namespace The_Legend_of_Zelda
         }
 
         // the top half of link doesn't have collision. thus collision is only checked for the bottom 16x8 pixel box of link's sprites
+        // returns true if link collided
         static bool Collision()
         {
             bool collision = false;
 
             if (knockback_timer <= 0)
             {
-                switch (facing_direction) // performs less collision checks, but glitches when moving backwards from enemy knockback
+                // performs less collision checks, but doesn't work when moving backwards from enemy knockback
+                switch (facing_direction)
                 {
                     case Direction.UP:
-                        CheckCollision(0, 8, ref collision); // left center of link
-                        CheckCollision(15, 8, ref collision); // right center of link
+                        if (CheckCollision(0, 8) || CheckCollision(15, 8))
+                            collision = true;
                         break;
                     case Direction.DOWN:
-                        CheckCollision(0, 15, ref collision); // bottom left of link
-                        CheckCollision(15, 15, ref collision); // bottom right of link
+                        if (CheckCollision(0, 15) || CheckCollision(15, 15))
+                            collision = true;
                         break;
                     case Direction.LEFT:
-                        CheckCollision(0, 8, ref collision); // left center
-                        CheckCollision(0, 15, ref collision); // bottom left
+                        if (CheckCollision(0, 8) || CheckCollision(0, 15))
+                            collision = true;
                         break;
                     case Direction.RIGHT:
-                        CheckCollision(15, 8, ref collision); // right center
-                        CheckCollision(15, 15, ref collision); // bottom right
+                        if (CheckCollision(15, 8) || CheckCollision(15, 15))
+                            collision = true;
                         break;
                 }
             }
             else
             {
-                CheckCollision(0, 8, ref collision);
-                CheckCollision(15, 8, ref collision);
-                CheckCollision(0, 15, ref collision);
-                CheckCollision(15, 15, ref collision);
+                if (CheckCollision(0, 8) || CheckCollision(15, 8) || CheckCollision(0, 15) || CheckCollision(15, 15))
+                    collision = true;
             }
 
             // link always spawns lined up on the metatile grid when warping. being off the grid means he moved after a warp.
+            // this is useful because you can't enter a warp until you've moved after a warp transition
             if (!has_moved_after_warp_flag && 
                 ((x % 16) != 0 || (y % 16) != 0))
             {
                 has_moved_after_warp_flag = true;
             }
 
+            // safe_x safe_y system. classic!
             if (collision)
             {
                 self.x = safe_x;
@@ -968,142 +980,135 @@ namespace The_Legend_of_Zelda
             return collision;
         }
 
-        // NEVER SET COLLISION VARIABLE TO FALSE! either don't set it at all or set it to true if collision found
-        static void CheckCollision(int x_add, int y_add, ref bool collision) // create duplicate for dungeon
+        // checks if the tile at position Link.x + x_add, Link.y + y_add is solid. returns true if collision found
+        static bool CheckCollision(int x_add, int y_add) // create duplicate for dungeon
         {
-            int metatile_index = ((self.y + y_add) & 0xFFF0) + ((self.x + x_add) / 16) - 64;
+            int metatile_index = ((self.y + y_add) & (~0xF)) + ((self.x + x_add) / 16) - 64;
 
             if (metatile_index < 0 || metatile_index > meta_tiles.Length)
             {
-                return;
+                return false;
             }
 
             if (Program.gamemode == Program.Gamemode.OVERWORLD)
             {
-                if (OverworldCode.current_screen == 31)
+                // 2 exceptions to collision logic.
+
+                // room 31 where you can walk through the wall to room 15
+                if (OverworldCode.current_screen == 31 && (metatile_index == 8 || metatile_index == 24))
                 {
-                    if (metatile_index == 8 || metatile_index == 24)
-                    {
-                        stair_speed = false;
-                        return;
-                    }
+                    stair_speed = false;
+                    return false;
                 }
-                else if (OverworldCode.current_screen == 76)
+                // you can get stuck in the wall if you enter this room the wrong way, so we overwrite the tiles here to be empty
+                // (room below dungeon 2 entrance)
+                else if (OverworldCode.current_screen == 76 && (metatile_index == 79 || metatile_index == 111))
                 {
-                    if (metatile_index == 79 || metatile_index == 111)
-                    {
-                        return;
-                    }
+                    return false;
                 }
 
                 switch (meta_tiles[metatile_index].tile_index)
                 {
                     case 0x00 or 0x02 or 0x09 or 0x17 or 0x1a or 0x1b or 0x1c or 0x1d or 0x1e or 0x1f or 0x20 or 0x21 or 0x22 or 0x23 or 0x24:
-                        collision = true;
-                        break;
+                        return true;
 
                     case 0x08:
-                        if (meta_tiles[metatile_index].special && power_bracelet[current_save_file])
+                        if (meta_tiles[metatile_index].special && power_bracelet)
                         {
                             new MovingTileSprite(OverworldCode.current_screen == 73 ? MovingTileSprite.MovingTile.GREEN_ROCK : MovingTileSprite.MovingTile.ROCK, metatile_index);
                         }
-                        collision = true;
-                        break;
+                        return true;
 
                     case 0x19:
-                        collision = true;
-                        if (!meta_tiles[metatile_index].special)
+                        if (meta_tiles[metatile_index].special)
                         {
-                            byte ghini_count = 0;
-                            int mtl_x = metatile_index % 16 * 16;
-                            int mtl_y = (metatile_index >> 4) * 16 + 64;
-                            if (mtl_x == 144 && mtl_y == 144 && OverworldCode.current_screen == 33)
-                                return;
-
-                            for (int i = 0; i < sprites.Count; i++)
+                            if (facing_direction is (Direction.UP or Direction.DOWN) &&
+                                self.x % 16 == 0)
                             {
-                                if (sprites[i] is Ghini)
-                                {
-                                    ghini_count++;
-                                    if (sprites[i].x == mtl_x && sprites[i].y == mtl_y || ghini_count >= 11)
-                                        return;
-                                }
+                                new MovingTileSprite(MovingTileSprite.MovingTile.TOMBSTONE, metatile_index);
                             }
-                            new Ghini(false, mtl_x, mtl_y);
+
+                            return true;
                         }
-                        else
+
+                        byte ghini_count = 0;
+                        int mtl_x = metatile_index % 16 * 16;
+                        int mtl_y = (metatile_index >> 4) * 16 + 64;
+                        //TODO: ???
+                        if (mtl_x == 144 && mtl_y == 144 && OverworldCode.current_screen == 33)
+                            return true;
+
+                        foreach (Sprite spr in sprites)
                         {
-                            new MovingTileSprite(MovingTileSprite.MovingTile.TOMBSTONE, metatile_index);
+                            if (spr is Ghini)
+                            {
+                                ghini_count++;
+                                // do not spawn ghini if ghini would be at exact location of existing ghini (likely because it's in its spawning animation)
+                                // or if ghini count is at 11 (maximum)
+                                if (spr.x == mtl_x && spr.y == mtl_y || ghini_count >= 11)
+                                    return true;
+                            }
                         }
-                        break;
+
+                        new Ghini(false, mtl_x, mtl_y);
+                        return true;
 
                     case 0x25:
-                        collision = true;
-                        int mtl_x2 = (metatile_index & 15) * 16;
-                        int mtl_y2 = (metatile_index >> 4) * 16 + 64;
+                        int mtl_x2 = (metatile_index % 16) * 16;
+                        int mtl_y2 = (metatile_index / 16) * 16 + 64;
 
-                        for (int i = 0; i < sprites.Count; i++)
+                        foreach (Sprite spr in sprites)
                         {
-                            if (sprites[i] is Armos)
+                            if (spr is Armos)
                             {
-                                if (sprites[i].x == mtl_x2 && sprites[i].y == mtl_y2)
-                                    return;
+                                // do not spawn armos if armos already exists at that location (prevents turning 1 statue into several)
+                                if (spr.x == mtl_x2 && spr.y == mtl_y2)
+                                    return true;
                             }
                         }
                         new Armos(metatile_index, mtl_x2, mtl_y2);
-                        break;
+                        return true;
 
                     case 0x04: // BL
-                        if ((self.x + x_add & 15) < 8 || (self.y + y_add & 15) > 8)
-                            collision = true;
-                        break;
+                        return ((self.x + x_add & 15) < 8 || (self.y + y_add & 15) > 8);
                     case 0x05: // BR
-                        if ((self.x + x_add & 15) > 8 || (self.y + y_add & 15) > 8)
-                            collision = true;
-                        break;
+                        return ((self.x + x_add & 15) > 8 || (self.y + y_add & 15) > 8);
                     case 0x06: // TL
-                        if ((self.x + x_add & 15) < 8 || (self.y + y_add & 15) < 8)
-                            collision = true;
-                        break;
+                        return ((self.x + x_add & 15) < 8 || (self.y + y_add & 15) < 8);
                     case 0x07: // TR
-                        if ((self.x + x_add & 15) > 8 || (self.y + y_add & 15) < 8)
-                            collision = true;
-                        break;
+                        return ((self.x + x_add & 15) > 8 || (self.y + y_add & 15) < 8);
 
                     case 0x03:
                         if ((self.x % 16) == 0 && (self.y % 16) == 0 && has_moved_after_warp_flag)
                             OverworldCode.black_square_stairs_flag = true;
-                        if ((self.y + y_add & 15) < 8)
-                            collision = true;
-                        break;
+                        return ((self.y + y_add & 15) < 8);
 
                     case 0x18:
-                        if ((self.y + y_add & 15) < 8)
-                            collision = true;
                         if ((self.x % 16) == 0 && (self.y % 16) == 0)
                         {
                             OverworldCode.stair_warp_flag = true;
                         }
-                        break;
+                        return ((self.y + y_add & 15) < 8);
 
                     case 0x15:
                         if (((self.x + 1) % 16) < 3 && ((self.y + 1) % 16) < 3)
                         {
                             int mt_i = GetTileIndexAtLocation(x + 8, y + 8);
+                            //TODO: ??
                             if (mt_i != 0x15)
-                                break;
+                                return false;
 
                             OverworldCode.stair_warp_flag = true;
                         }
-                        break;
+                        return false;
 
                     case 0x13:
                         stair_speed = true;
-                        break;
+                        return false;
 
                     case 0x14:
                         // TODO: why check for which screen??
-                        if (raft[current_save_file] && (OverworldCode.current_screen == 63 || OverworldCode.current_screen == 85))
+                        if (raft && (OverworldCode.current_screen == 63 || OverworldCode.current_screen == 85))
                         {
                             if (((self.x + 1) % 16) < 3 && ((self.y + 1) % 16) < 3)
                             {
@@ -1119,34 +1124,23 @@ namespace The_Legend_of_Zelda
                                 can_move = false;
                             }
                         }
-                        break;
+                        return false;
 
-                    case 0x2e: // special tile that ladder turns water into (half block)
-                        if ((self.y + y_add & 15) < 8)
-                            collision = true;
-                        break;
-                    case 0x2f: // idem
-                        if ((self.y + y_add & 15) > 8)
-                            collision = true;
-                        break;
+                    // special tiles that ladder turns water into (half block)
+                    case 0x2e: // U
+                        return (((self.y + y_add) % 16) < 8);
+                    case 0x2f: // D
+                        return (((self.y + y_add) % 16) > 8);
                     case 0x30: // L
-                        if ((self.x + x_add & 15) < 8)
-                            collision = true;
-                        break;
+                        return (((self.x + x_add) % 16) < 8);
                     case 0x31: // R
-                        if ((self.x + x_add & 15) > 8)
-                            collision = true;
-                        break;
+                        return (((self.x + x_add) % 16) > 8);
                     case 0x32: // TL
-                        if ((self.x + x_add & 15) < 8 || (self.y + y_add & 15) < 8)
-                            collision = true;
-                        break;
+                        return (((self.x + x_add) % 16) < 8 || ((self.y + y_add) % 16) < 8);
                     case 0x33: // TR
-                        if ((self.x + x_add & 15) > 8 || (self.y + y_add & 15) < 8)
-                            collision = true;
-                        break;
+                        return (((self.x + x_add) % 16) > 8 || ((self.y + y_add) % 16) < 8);
                     case 0x34: // none
-                        break;
+                        return false;
 
                     case 0x0a:
                         if (metatile_index > 16 && metatile_index < 32)
@@ -1161,89 +1155,77 @@ namespace The_Legend_of_Zelda
 
                     case 0x0b:
                     case 0x0c or 0x0d or 0x0e or 0x0f or 0x10 or 0x11 or 0x12:
-                        if (ladder[current_save_file] && !ladder_used && !(OverworldCode.scroll_animation_timer < 200) &&
+                        // only activate ladder if you have it, it's not being used, scrolling is done and you,re not near the edge of the screen
+                        if (ladder && !ladder_used && OverworldCode.scroll_animation_timer == OverworldCode.SCROLL_ANIMATION_DONE &&
                             y >= 66 && y <= 222 && x >= 2 && x <= 238)
                         {
                             new LadderSprite(metatile_index);
+                            return false;
                         }
-                        else
-                        {
-                            collision = true;
-                        }
-                        break;
+                        return true;
 
                     default:
                         stair_speed = false;
-                        break;
+                        return false;
                 }
             }
-            else
+            else if (Program.gamemode == Program.Gamemode.DUNGEON)
             {
                 switch (meta_tiles[metatile_index].tile_index)
                 {
+                    // ???
+                    //TODO: enum + wtf is this first one
                     case 0 or 5 or 7 or 9:
                         if (!IsHeld(Buttons.UP) && !IsHeld(Buttons.DOWN) && !IsHeld(Buttons.LEFT) && !IsHeld(Buttons.RIGHT))
                             dungeon_wall_push_timer = 0;
-                        return;
+                        return false;
                     case 1 or 3 or 4 or 8:
-                        collision = true;
                         KeyCode();
-                        return;
+                        return true;
                     case 2:
-                        if (ladder[current_save_file] && !ladder_used)
+                        if (ladder && !ladder_used)
+                        {
                             new LadderSprite(metatile_index);
-                        else
-                            collision = true;
-                        return;
+                            return false;
+                        }
+                        return true;
                     case 6:
                         DungeonCode.warp_flag = true;
-                        return;
+                        return false;
 
                     case 10: // top of dungeon room
-                        if ((self.y + y_add & 15) < 8 && self.x != 120)
-                            collision = true;
-                        return;
+                        return ((self.y + y_add & 15) < 8 && self.x != 120);
                     case 11: // left of up/down doors
-                        if ((self.x + x_add & 15) < 8)
-                            collision = true;
-                        return;
+                        return ((self.x + x_add & 15) < 8);
                     case 12: // right of up/down doors
-                        if ((self.x + x_add & 15) > 8)
-                            collision = true;
-                        return;
+                        return ((self.x + x_add & 15) > 8);
 
                     case 13: // walk-through tile
                         // TODO: 8 frame timer before animation
-                        return;
+                        return true;
 
                     // LADDER SHENANIGANS
-                    case 0x2e: // special tile that ladder turns water into (half block)
-                        if ((self.y + y_add & 15) < 8)
-                            collision = true;
-                        break;
-                    case 0x2f: // idem
-                        if ((self.y + y_add & 15) > 8)
-                            collision = true;
-                        break;
+                    // special tiles that ladder turns water into (half block)
+                    case 0x2e: // U
+                        return (((self.y + y_add) % 16) < 8);
+                    case 0x2f: // D
+                        return (((self.y + y_add) % 16) > 8);
                     case 0x30: // L
-                        if ((self.x + x_add & 15) < 8)
-                            collision = true;
-                        break;
+                        return (((self.x + x_add) % 16) < 8);
                     case 0x31: // R
-                        if ((self.x + x_add & 15) > 8)
-                            collision = true;
-                        break;
+                        return (((self.x + x_add) % 16) > 8);
                     case 0x32: // TL
-                        if ((self.x + x_add & 15) < 8 || (self.y + y_add & 15) < 8)
-                            collision = true;
-                        break;
+                        return (((self.x + x_add) % 16) < 8 || ((self.y + y_add) % 16) < 8);
                     case 0x33: // TR
-                        if ((self.x + x_add & 15) > 8 || (self.y + y_add & 15) < 8)
-                            collision = true;
-                        break;
+                        return (((self.x + x_add) % 16) > 8 || ((self.y + y_add) % 16) < 8);
+                    case 0x34: // none
+                        return false;
                 }
             }
 
+            return false;
+
+            //TODO: move this up
             void KeyCode()
             {
                 if (!meta_tiles[metatile_index].special)
@@ -1257,18 +1239,36 @@ namespace The_Legend_of_Zelda
                     return;
                 }
 
-                if (!magical_key[current_save_file])
+                if (!magical_key)
                 {
-                    if (key_count[current_save_file] <= 0)
+                    if (key_count <= 0)
                     {
                         return;
                     }
 
-                    key_count[current_save_file]--;
+                    key_count--;
                 }
 
-                SetOpenedKeyDoorsFlag(current_save_file, (byte)Array.IndexOf(DungeonCode.key_door_connections,
-                    (short)DungeonCode.getConnectionID(DungeonCode.current_screen, (Direction)Array.IndexOf(DungeonCode.door_metatiles, (byte)metatile_index))), true);
+                // jesus christ...
+                // SET OPENED KEY DOOR FLAG TO TRUE.
+                // WHICH KEY DOOR? WELL ITS ID IS GOING TO BE ITS INDEX IN THIS LIST.
+                // WHICH VALUE IN THE LIST HOWEVER? WELL ITS VALUE IS ITS CONNECTION_ID.
+                // WHAT IS ITS CONNECTION_ID? IT'S CALCULATED WITH THE CURRENT SCREEN AND THE DIRECTION OF THE DOOR.
+                // WHAT DIRECTION IS THIS SPECIFIC DOOR POINTING IN? THE INDEX OF THE METATILE IN THIS LIST, CASTED TO A DIRECTION.
+                //TODO: find a way to cut this bullshit
+                SetOpenedKeyDoorsFlag(
+                    (byte)Array.IndexOf(
+                        DungeonCode.key_door_connections,
+                        (short)DungeonCode.getConnectionID(
+                            DungeonCode.current_screen,
+                            (Direction)Array.IndexOf(
+                                DungeonCode.door_metatiles,
+                                (byte)metatile_index
+                            )
+                        )
+                    ),
+                true
+                );
 
                 DungeonCode.door_types[Array.IndexOf(DungeonCode.door_metatiles, (byte)metatile_index)] = DungeonCode.DoorType.OPEN;
                 DungeonCode.DrawDoors(DungeonCode.current_screen, 0, true);
@@ -1281,16 +1281,17 @@ namespace The_Legend_of_Zelda
             if (!can_move || iframes_timer > 0)
                 return;
 
-            if (red_ring[current_save_file])
+            if (red_ring)
                 damage /= 4;
-            else if (blue_ring[current_save_file])
+            else if (blue_ring)
                 damage /= 2;
 
             hp -= damage;
             iframes_timer = 48;
 
+            // if aligned on grid
             if (((int)knockback_direction < 2 && x % 8 == 0) ||
-                ((int)knockback_direction >= 2 && y % 8 == 0)) // if aligned on grid
+                ((int)knockback_direction >= 2 && y % 8 == 0))
             {
                 knockback_timer = 8;
             }
@@ -1305,9 +1306,10 @@ namespace The_Legend_of_Zelda
 
             // death init
             hp = 0;
-            death_count[current_save_file]++;
+            death_count++;
             Sound.PauseMusic();
-            Menu.DrawHUD(); // update menu to 0 hearts right now because it won't be updated in death animation
+            // update menu to 0 hearts right now because it won't be updated in death animation
+            Menu.DrawHUD();
             sprites.Remove(sword_1);
             sprites.Remove(sword_2);
             DeathCode.death_timer = 0;
@@ -1315,8 +1317,12 @@ namespace The_Legend_of_Zelda
             Program.gamemode = Program.Gamemode.DEATH;
         }
 
+        // checks to se eif link should flash, does it if so
         static void HitFlash()
         {
+            if (iframes_timer <= 0 && !clock_flash)
+                return;
+
             byte new_palette;
             if (iframes_timer == 1)
                 new_palette = 4;
@@ -1331,11 +1337,10 @@ namespace The_Legend_of_Zelda
         static bool Knockback()
         {
             if (knockback_timer <= 0)
-            {
                 return false;
-            }
 
-            int backup_x = x, backup_y = y; // setpos overwrites safex and safey, so we have to manually remember link's last non-wall pos
+            // setpos overwrites safex and safey, so we have to manually remember link's last non-wall pos
+            int backup_x = x, backup_y = y;
             knockback_timer--;
             int new_x = 0, new_y = 0;
 
@@ -1367,16 +1372,16 @@ namespace The_Legend_of_Zelda
         }
 
         // returns false if underflow or overflow, true if not
-        // "perform_addition_automatically" performs the change. no matter what the rupy count is
+        // "perform_addition" performs the change. no matter what the rupy count is.set it to false to just check if link has enough
         public static bool AddRupees(int change, bool perform_addition = true)
         {
-            int new_val = rupy_count[current_save_file] + change;
+            int new_val = rupy_count + change;
 
             int clamped_val = Math.Clamp(new_val, byte.MinValue, byte.MaxValue);
 
             if (perform_addition)
             {
-                rupy_count[current_save_file] = (byte)clamped_val;
+                rupy_count = (byte)clamped_val;
             }
 
             return new_val == clamped_val;

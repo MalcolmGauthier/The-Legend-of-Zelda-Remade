@@ -7,12 +7,14 @@ namespace The_Legend_of_Zelda
         bool used = false;
         short animation_timer = 0;
         FairyHeartSprite[] hearts = new FairyHeartSprite[8];
+
         public OverworldFairySprite() : base(124, 126)
         {
             Sound.PlaySFX(Sound.SoundEffects.HEART); // TODO: replace with fairy sound
             unload_during_transition = true;
             Screen.sprites.Add(this);
         }
+
         public override void Action()
         {
             base.Action();
@@ -33,7 +35,7 @@ namespace The_Legend_of_Zelda
                     int heart_index = animation_timer / 11;
                     hearts[heart_index] = new FairyHeartSprite((byte)heart_index, this);
                 }
-                else if (animation_timer >= 100 && Link.hp == SaveLoad.nb_of_hearts[SaveLoad.current_save_file])
+                else if (animation_timer >= 100 && Link.hp == SaveLoad.nb_of_hearts)
                 {
                     for (int i = 0; i < hearts.Length; i++)
                         hearts[i].Kill();
@@ -49,10 +51,12 @@ namespace The_Legend_of_Zelda
                 animation_timer++;
             }
         }
+
         bool LinkInRange()
         {
             return Link.y <= 176 && Link.y >= 168 && Link.x >= 112 && Link.x <= 128;
         }
+
         class FairyHeartSprite : Sprite
         {
             byte heart_index;
@@ -60,7 +64,7 @@ namespace The_Legend_of_Zelda
             public FairyHeartSprite(byte heart_index, OverworldFairySprite host) : base(0xf2, 6)
             {
                 use_chr_rom = true;
-                ChangeTexture();
+                UpdateTexture();
                 this.heart_index = heart_index;
                 this.host = host;
                 Screen.sprites.Add(this);
@@ -76,9 +80,11 @@ namespace The_Legend_of_Zelda
             }
         }
     }
+
     internal class RaftSprite : Sprite
     {
         StaticSprite counterpart = new StaticSprite(0x6c, 4, (short)(Link.x + 8), (short)Link.y, true);
+
         public RaftSprite() : base(0x6c, 4)
         {
             x = (short)Link.x;
@@ -86,6 +92,7 @@ namespace The_Legend_of_Zelda
             Screen.sprites.Add(this);
             Screen.sprites.Add(counterpart);
         }
+
         public override void Action()
         {
             x = (short)Link.x;
@@ -112,15 +119,9 @@ namespace The_Legend_of_Zelda
             }
         }
     }
+
     internal class MovingTileSprite : Sprite
     {
-        byte local_timer = 0;
-        byte plt_to_pick;
-        int metatile_index;
-        int ppu_tile_location;
-        MovingTile moving_tile;
-        Direction direction;
-        StaticSprite counterpart = new StaticSprite(0, 7, 0, 0);
         public enum MovingTile
         {
             ROCK,
@@ -128,6 +129,15 @@ namespace The_Legend_of_Zelda
             TOMBSTONE,
             DUNGEON_BLOCK
         }
+
+        byte local_timer = 0;
+        byte plt_to_pick;
+        int metatile_index;
+        int ppu_tile_location;
+        MovingTile moving_tile;
+        Direction direction;
+        StaticSprite counterpart = new StaticSprite(0, 7, 0, 0);
+
         public MovingTileSprite(MovingTile moving_tile, int metatile_index) : base (0, 7)
         {
             use_chr_rom = true;
@@ -161,11 +171,11 @@ namespace The_Legend_of_Zelda
             counterpart.tile_index = (byte)(new_tile + 2);
             for (byte i = 0; i < 4; i++)
             {
-                Palettes.LoadPalette(7, i, Palettes.active_palette_list[plt_to_pick * 4 + i]);
+                Palettes.LoadPalette(7, i, (Color)Palettes.active_palette_list[plt_to_pick * 4 + i]);
             }
 
-            ChangeTexture();
-            counterpart.ChangeTexture();
+            UpdateTexture();
+            counterpart.UpdateTexture();
             Screen.meta_tiles[metatile_index].special = false;
             x = metatile_index % 16 * 16;
             y = (metatile_index >> 4) * 16 + 64;
@@ -198,8 +208,7 @@ namespace The_Legend_of_Zelda
                 bool is_overwolrd = Program.gamemode == Program.Gamemode.OVERWORLD;
                 if (is_overwolrd && moving_tile != MovingTile.TOMBSTONE)
                 {
-                    SaveLoad.SetOverworldSecretsFlag(SaveLoad.current_save_file,
-                        (byte)Array.IndexOf(OverworldCode.screens_with_secrets_list, OverworldCode.current_screen), true);
+                    SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OverworldCode.screens_with_secrets_list, OverworldCode.current_screen), true);
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, OverworldCode.current_screen, 0);
                 }
 
@@ -265,7 +274,7 @@ namespace The_Legend_of_Zelda
 
                 if (is_overwolrd)
                 {
-                    Palettes.LoadPaletteGroup(PalettedID.SP_3, Palettes.PaletteGroups.OVERWORLD_DARK_ENEMIES);
+                    Palettes.LoadPaletteGroup(PaletteID.SP_3, Palettes.PaletteGroups.OVERWORLD_DARK_ENEMIES);
                 }
 
                 Screen.sprites.Remove(counterpart);
@@ -290,6 +299,7 @@ namespace The_Legend_of_Zelda
             counterpart.y = y;
         }
     }
+
     internal class PowerBraceletSprite : ItemDropSprite
     {
         public PowerBraceletSprite(int x, int y) : base(x, y, false)
@@ -298,11 +308,12 @@ namespace The_Legend_of_Zelda
             palette_index = 6;
             return;
         }
+
         public override void ItemSpecificActions()
         {
             if (collected)
             {
-                SaveLoad.power_bracelet[SaveLoad.current_save_file] = true;
+                SaveLoad.power_bracelet = true;
                 Screen.sprites.Remove(this);
             }
         }

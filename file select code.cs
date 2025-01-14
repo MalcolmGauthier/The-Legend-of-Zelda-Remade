@@ -1,4 +1,5 @@
-﻿using static The_Legend_of_Zelda.Screen;
+﻿using System.Runtime.CompilerServices;
+using static The_Legend_of_Zelda.Screen;
 namespace The_Legend_of_Zelda
 {
     internal static class FileSelectCode
@@ -179,10 +180,13 @@ namespace The_Legend_of_Zelda
             if (!SaveLoad.save_file_exists[file_index])
                 return;
 
+            // retreive gameplay info from a specific file (this is the only time we need to do this)
+            (bool blue_ring, bool red_ring, byte nb_of_hearts, byte death_count) file_info = SaveLoad.GetBasicFileInfo(file_index);
+
             // link icon color (ring status)
-            if (SaveLoad.red_ring[file_index])
+            if (file_info.red_ring)
                 Palettes.LoadPalette((byte)(PaletteID.SP_0 + file_index), 1, Color._16_RED_ORANGE);
-            else if (SaveLoad.blue_ring[file_index])
+            else if (file_info.blue_ring)
                 Palettes.LoadPalette((byte)(PaletteID.SP_0 + file_index), 1, Color._32_LIGHTER_INDIGO);
 
             // file name
@@ -192,14 +196,14 @@ namespace The_Legend_of_Zelda
             }
 
             // death count
-            if (SaveLoad.death_count[file_index] >= 100)
-                Textures.ppu[0x189 + file_index * 0x60] = (byte)Math.Floor(SaveLoad.death_count[file_index] / 100.0);
-            if (SaveLoad.death_count[file_index] >= 10)
-                Textures.ppu[0x18a + file_index * 0x60] = (byte)(Math.Floor(SaveLoad.death_count[file_index] / 10.0) % 10);
-            Textures.ppu[0x18b + file_index * 0x60] = (byte)(SaveLoad.death_count[file_index] % 10);
+            if (file_info.death_count >= 100)
+                Textures.ppu[0x189 + file_index * 0x60] = (byte)Math.Floor(file_info.death_count / 100.0);
+            if (file_info.death_count >= 10)
+                Textures.ppu[0x18a + file_index * 0x60] = (byte)(Math.Floor(file_info.death_count / 10.0) % 10);
+            Textures.ppu[0x18b + file_index * 0x60] = (byte)(file_info.death_count % 10);
 
             // max hearts
-            for (int i = 0; i < SaveLoad.nb_of_hearts[file_index]; i++)
+            for (int i = 0; i < file_info.nb_of_hearts; i++)
             {
                 int ppu_index = i >= 8 ? 0x172 - 8 : 0x192;
                 Textures.ppu[0x192 + file_index * 0x60 + i] = 0xf2;
@@ -386,12 +390,12 @@ namespace The_Legend_of_Zelda
                 // the mod 8 makes it so that a full name will select the first character, and setting the value to -1 beforehand makes it so that if the name
                 // is completely empty, the loop won't do anything and the increment will overflow the value to 0, which is where we want it to be.
                 selected_name_letter = byte.MaxValue;
-                for (byte i = NAME_LENGTH; i >= 0; i--)
+                for (int i = NAME_LENGTH - 1; i >= 0; i--)
                 {
                     if (file_new_names[(int)selected_option, i] == EMPTY_LETTER)
                         continue;
 
-                    selected_name_letter = i;
+                    selected_name_letter = (byte)i;
                     break;
                 }
                 selected_name_letter++;

@@ -25,18 +25,18 @@ namespace The_Legend_of_Zelda
             PEAHAT
         }
 
-        const byte DEFAULT_SPAWN_ROOM = 119;
+        public const byte DEFAULT_SPAWN_ROOM = 119;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
-        const int SCROLL_ANIMATION_DONE = 500;
+        public const int SCROLL_ANIMATION_DONE = 500;
         const byte OPENING_ANIMATION_DONE = 255;
 
         public static byte current_screen = DEFAULT_SPAWN_ROOM;
         public static byte return_screen = DEFAULT_SPAWN_ROOM;
         public static byte level_7_entrance_timer = LEVEL_7_ENTRANCE_ANIM_DONE;
-        static byte scroll_destination;
+        public static byte opening_animation_timer = 0;
+        public static byte scroll_destination;
         static byte level_5_entrance_count = 0;
         static byte lost_woods_count = 0;
-        static byte opening_animation_timer = 0;
 
         public static int return_x, return_y;
         public static int scroll_animation_timer = SCROLL_ANIMATION_DONE;
@@ -206,13 +206,14 @@ namespace The_Legend_of_Zelda
 
         static void OpeningAnimation()
         {
+            opening_animation_timer++;
+
             if (opening_animation_timer == OPENING_ANIMATION_DONE)
             {
                 Link.Show(true);
                 Link.can_move = true;
                 Menu.can_open_menu = true;
                 Menu.draw_hud_objects = true;
-                opening_animation_timer++;
                 Sound.PlaySong(Sound.Songs.OVERWORLD, false);
                 Program.can_pause = true;
                 Menu.map_dot.shown = true;
@@ -225,7 +226,6 @@ namespace The_Legend_of_Zelda
             Link.can_move = false;
             Link.Show(false);
             Menu.draw_hud_objects = false;
-            opening_animation_timer++;
 
             if (opening_animation_timer % 5 != 0)
             {
@@ -236,12 +236,11 @@ namespace The_Legend_of_Zelda
             if (num_rows_to_erase <= 0)
             {
                 opening_animation_timer = OPENING_ANIMATION_DONE - 1;
-                return;
             }
 
             Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, current_screen, 0);
-            int left_index_start = Textures.PPU_WIDTH * 5;
-            int right_index_start = Textures.PPU_WIDTH * 6 - 1;
+            int left_index_start = Textures.PPU_WIDTH * 8;
+            int right_index_start = Textures.PPU_WIDTH * 9 - 1;
 
             for (int i = 0; i < num_rows_to_erase; i++)
             {
@@ -686,10 +685,14 @@ namespace The_Legend_of_Zelda
         // unloads all sprites that should unload when screen changes
         static void UnloadSpritesRoomTransition()
         {
-            foreach (Sprite s in sprites)
+            // no foreach, because foreach throws error when modifying list
+            for (int i = 0; i < sprites.Count; i++)
             {
-                if (s.unload_during_transition)
-                    sprites.Remove(s);
+                if (sprites[i].unload_during_transition)
+                {
+                    sprites.RemoveAt(i);
+                    i--;
+                }
             }
         }
 
@@ -765,7 +768,7 @@ namespace The_Legend_of_Zelda
                     return_screen = current_screen;
                     current_screen = 128;
                     Link.SetBGState(false);
-                    WarpCode.Init(true);
+                    WarpCode.Init();
                 }
                 else
                 {

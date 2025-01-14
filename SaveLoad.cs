@@ -6,6 +6,7 @@
 
         public static bool[] save_file_exists = new bool[3];
         public static byte[,] file_name = new byte[3,8];
+        public static bool[] second_quest = new bool[3];
 
         private static byte[] _nb_of_hearts = new byte[3];
         private static byte[] _bomb_limit = new byte[3];
@@ -37,7 +38,6 @@
         private static bool[] _blue_potion = new bool[3];
         private static bool[] _red_potion = new bool[3];
         private static bool[] _magical_rod = new bool[3];
-        private static bool[] _second_quest = new bool[3];
         private static bool[] _potion_shop_activated = new bool[3];
         private static bool[] _magical_shield = new bool[3];
 
@@ -100,7 +100,7 @@
                     bw.Write(gift_flags[save_file]);
                     for (int i = 0; i < 8; i++)
                         bw.Write(file_name[save_file, i]);
-                    bw.Write(_second_quest[save_file]);
+                    bw.Write(second_quest[save_file]);
                     bw.Write(_death_count[save_file]);
                     bw.Write(save_file_exists[save_file]);
                     bw.Write(heart_container_flags[save_file]);
@@ -162,7 +162,7 @@
                     bombed_holes_flags[save_file] = br.ReadInt64();
                     opened_key_doors_flags[save_file] = br.ReadInt64();
                     gift_flags[save_file] = br.ReadInt64();
-                    _second_quest[save_file] = br.ReadBoolean();
+                    second_quest[save_file] = br.ReadBoolean();
                     _death_count[save_file] = br.ReadByte();
                     heart_container_flags[save_file] = br.ReadInt16();
                     _potion_shop_activated[save_file] = br.ReadBoolean();
@@ -223,7 +223,7 @@
             gift_flags[save_file] = 0;
             for (int i = 0; i < 8; i++)
                 file_name[save_file, i] = 0x24;
-            _second_quest[save_file] = false;
+            second_quest[save_file] = false;
             _death_count[save_file] = 0;
             save_file_exists[save_file] = false;
             heart_container_flags[save_file] = 0;
@@ -234,6 +234,15 @@
             for (int i = 0; i < 4; i++)
                 dungeon_rooms_visited_flags[save_file, i] = 0;
             SaveFile(save_file);
+        }
+
+        // returns the basic information the file select code needs to display a file correctly.
+        // this is an exception because this is the only time outside of gameplay within a specific file where we need
+        // to know info for a specific file of the 3.
+        // format: blue ring, red ring, nb of hearts, death count
+        public static (bool blue_ring, bool red_ring, byte nb_of_hearts, byte death_count) GetBasicFileInfo(int index)
+        {
+            return (_blue_ring[index], _red_ring[index], _nb_of_hearts[index], _death_count[index]);
         }
 
         public static byte nb_of_hearts
@@ -564,17 +573,6 @@
             set
             {
                 _magical_rod[current_save_file] = value;
-            }
-        }
-        public static bool second_quest
-        {
-            get
-            {
-                return _second_quest[current_save_file];
-            }
-            set
-            {
-                _second_quest[current_save_file] = value;
             }
         }
         public static bool potion_shop_activated

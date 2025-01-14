@@ -240,7 +240,7 @@ namespace The_Legend_of_Zelda
         public StaticHeartSprite(int x, int y) : base(0xf2, 6, x, y, 8, 0xf2, second_palette_index: 5)
         {
             use_chr_rom = true;
-            ChangeTexture();
+            UpdateTexture();
         }
     }
 
@@ -250,7 +250,7 @@ namespace The_Legend_of_Zelda
         {
             tile_index = 0xf2;
             use_chr_rom = true;
-            ChangeTexture();
+            UpdateTexture();
             palette_index = 5;
         }
 
@@ -1491,7 +1491,7 @@ namespace The_Legend_of_Zelda
             if (!collected)
                 return;
 
-            //TODO play bomb get sound
+            //TODO: play bomb get sound
             SaveLoad.bomb_count += 4;
             if (SaveLoad.bomb_count > SaveLoad.bomb_limit)
                 SaveLoad.bomb_count = SaveLoad.bomb_limit;

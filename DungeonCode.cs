@@ -28,7 +28,7 @@ namespace The_Legend_of_Zelda
             KEESE,
             NPC,
             RAZOR_TRAP,
-            // TODO: proj statues (hardcoded)
+            //TODO: proj statues (hardcoded)
 
             // dungeons 1, 2, 7
             STALFOS,
@@ -235,12 +235,13 @@ namespace The_Legend_of_Zelda
             Link.facing_direction = Direction.UP;
 
             Menu.InitHUD();
-            Textures.ppu[0x48] = (byte)(dungeon + 1); // set number in hud "LEVEL-X"
+            // set number in hud "LEVEL-X"
+            Textures.ppu[0x48] = (byte)(dungeon + 1);
 
             current_dungeon = dungeon;
             current_screen = starting_screens[current_dungeon];
 
-            if (SaveLoad.GetMapFlag(SaveLoad.current_save_file, current_dungeon))
+            if (SaveLoad.GetMapFlag(current_dungeon))
             {
                 Menu.DrawHudMap();
             }
@@ -432,7 +433,7 @@ namespace The_Legend_of_Zelda
                 case 1:
                     return DoorType.OPEN;
                 case 2:
-                    if (SaveLoad.GetOpenedKeyDoorsFlag(SaveLoad.current_save_file, (byte)Array.IndexOf(key_door_connections, (short)connection_index)))
+                    if (SaveLoad.GetOpenedKeyDoorsFlag((byte)Array.IndexOf(key_door_connections, (short)connection_index)))
                         return DoorType.OPEN;
                     else
                         return DoorType.KEY;
@@ -732,7 +733,7 @@ namespace The_Legend_of_Zelda
             if ((enemies & 0xFFFF0000) == 0xFFFF0000)
             {
                 // if boss killed, it's gone
-                if (SaveLoad.GetBossKillsFlag(SaveLoad.current_save_file, (byte)Array.IndexOf(rooms_with_boses, current_screen)))
+                if (SaveLoad.GetBossKillsFlag((byte)Array.IndexOf(rooms_with_boses, current_screen)))
                     return;
 
                 switch ((Bosses)(enemies & 0xFFFF))
@@ -849,13 +850,14 @@ namespace The_Legend_of_Zelda
                 enemy_selector >>= 4;
             }
         }
+
         static void SpawnItems()
         {
-            if (room_list[current_screen] == 11 && !SaveLoad.GetTriforceFlag(SaveLoad.current_save_file, current_dungeon))
+            if (room_list[current_screen] == 11 && !SaveLoad.GetTriforceFlag(current_dungeon))
             {
                 new TriforcePieceSprite();
             }
-            if (current_screen is 25 or 128 or 165 && !SaveLoad.GetDungeonVisitedRoomFlag(SaveLoad.current_save_file, current_screen))
+            if (current_screen is 25 or 128 or 165 && !SaveLoad.GetDungeonVisitedRoomFlag(current_screen))
             {
                 byte[] rupee_pile_x_positions = { 124, 116, 132, 100, 116, 132, 148, 116, 132, 124 };
                 byte[] rupee_pile_y_positions = { 112, 128, 128, 144, 144, 144, 144, 160, 160, 176 };
@@ -863,6 +865,7 @@ namespace The_Legend_of_Zelda
                     new RupySprite(rupee_pile_x_positions[i], rupee_pile_y_positions[i], false, false);
             }
         }
+
         static void UnloadSpritesRoomTransition()
         {
             for (int i = 0; i < sprites.Count; i++)
@@ -874,6 +877,7 @@ namespace The_Legend_of_Zelda
                 }
             }
         }
+
         static void ResetLinkPowerUps()
         {
             fire_out = 0;
@@ -890,6 +894,7 @@ namespace The_Legend_of_Zelda
             Link.self.palette_index = 4;
             Link.counterpart.palette_index = 4;
         }
+
         public static void DrawDoors(byte room, byte screen_index, bool redraw = false)
         {
             int screen_index_offset = screen_index * 0x3c0;
@@ -932,7 +937,7 @@ namespace The_Legend_of_Zelda
                 {
                     //meta_tiles[door_metatiles[i]].special = true;
                     if (door_types[i] == DoorType.BOMBABLE &&
-                        SaveLoad.GetBombedHoleFlag(SaveLoad.current_save_file, (byte)Array.IndexOf(bombable_connections, (short)getConnectionID(room, (Direction)i))))
+                        SaveLoad.GetBombedHoleFlag((byte)Array.IndexOf(bombable_connections, (short)getConnectionID(room, (Direction)i))))
                     {
                         byte[] bomb_hole_texture_data = {
                             0x8c, 0x8d, 0x24, 0x24,
@@ -941,11 +946,11 @@ namespace The_Legend_of_Zelda
                             0x24, 0x92, 0x24, 0x93
                         };
 
-                        int ppu_location = door_ppu_locations[i] + ppu_location_differences[i];
-                        Textures.ppu[ppu_location + screen_index_offset] = bomb_hole_texture_data[i * 4];
-                        Textures.ppu[ppu_location + 1 + screen_index_offset] = bomb_hole_texture_data[i * 4 + 1];
-                        Textures.ppu[ppu_location + 32 + screen_index_offset] = bomb_hole_texture_data[i * 4 + 2];
-                        Textures.ppu[ppu_location + 33 + screen_index_offset] = bomb_hole_texture_data[i * 4 + 3];
+                        int ppu_location2 = door_ppu_locations[i] + ppu_location_differences[i];
+                        Textures.ppu[ppu_location2 + screen_index_offset] = bomb_hole_texture_data[i * 4];
+                        Textures.ppu[ppu_location2 + 1 + screen_index_offset] = bomb_hole_texture_data[i * 4 + 1];
+                        Textures.ppu[ppu_location2 + 32 + screen_index_offset] = bomb_hole_texture_data[i * 4 + 2];
+                        Textures.ppu[ppu_location2 + 33 + screen_index_offset] = bomb_hole_texture_data[i * 4 + 3];
                         MakeDoorWalkable(i);
                     }
                     else if (door_types[i] == DoorType.WALK_THROUGH)
@@ -1027,6 +1032,7 @@ namespace The_Legend_of_Zelda
                 }
             }
         }
+
         public static void LinkWalkAnimation()
         {
             const byte anim_len = 10;
@@ -1053,7 +1059,7 @@ namespace The_Legend_of_Zelda
                 Link.can_move = true;
                 SpawnEnemies();
                 SpawnItems();
-                SaveLoad.SetDungeonVisitedRoomFlag(SaveLoad.current_save_file, current_screen, true);
+                SaveLoad.SetDungeonVisitedRoomFlag(current_screen, true);
             }
 
             Link.animation_timer++;
@@ -1074,6 +1080,7 @@ namespace The_Legend_of_Zelda
 
             link_walk_animation_timer--;
         }
+
         static void DoorCode()
         {
             bool redraw = false;
@@ -1087,9 +1094,9 @@ namespace The_Legend_of_Zelda
                         if (door_statuses[i])
                         {
                             byte index = (byte)Array.IndexOf(bombable_connections, (short)getConnectionID(current_screen, (Direction)i));
-                            if (!SaveLoad.GetBombedHoleFlag(SaveLoad.current_save_file, index))
+                            if (!SaveLoad.GetBombedHoleFlag(index))
                             {
-                                SaveLoad.SetBombedHoleFlag(SaveLoad.current_save_file, index, true);
+                                SaveLoad.SetBombedHoleFlag(index, true);
                                 door_types[i] = DoorType.BOMBABLE;
                                 redraw = true;
                             }
@@ -1121,7 +1128,7 @@ namespace The_Legend_of_Zelda
                         }
                         break;
                     case DoorType.CLOSED_TRIFORCE:
-                        if (SaveLoad.triforce_of_power[SaveLoad.current_save_file])
+                        if (SaveLoad.triforce_of_power)
                         {
                             door_types[i] = DoorType.OPEN;
                             redraw = true;
@@ -1135,6 +1142,7 @@ namespace The_Legend_of_Zelda
             if (redraw)
                 DrawDoors(current_screen, 0, true);
         }
+
         static void CheckForWarp()
         {
             if (warp_flag)
@@ -1143,6 +1151,7 @@ namespace The_Legend_of_Zelda
                 Link.current_action = Link.Action.WALKING_DOWN;
             }
         }
+
         static byte GetMetatileIndexFromGiftLocationID(byte id)
         {
             byte gift_metatile = 0;
@@ -1187,6 +1196,7 @@ namespace The_Legend_of_Zelda
             }
             return gift_metatile;
         }
+
         public static bool GetRoomDarkness(byte room)
         {
             int value = dark_rooms[room >> 4] & (1 << (15 - (room % 16)));
