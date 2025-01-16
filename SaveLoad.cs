@@ -58,7 +58,7 @@
         {
             try
             {
-                using (Stream stream = File.OpenWrite(@"C:\Users\Malcolm\source\repos\The Legend of Zelda\Data\SaveData.bin"))
+                using (Stream stream = File.OpenWrite(@"SaveData.bin"))
                 {
                     BinaryWriter bw = new BinaryWriter(stream);
                     bw.Seek(save_file * 0x200, SeekOrigin.Begin);
@@ -98,11 +98,8 @@
                     bw.Write(bombed_holes_flags[save_file]);
                     bw.Write(opened_key_doors_flags[save_file]);
                     bw.Write(gift_flags[save_file]);
-                    for (int i = 0; i < 8; i++)
-                        bw.Write(file_name[save_file, i]);
                     bw.Write(second_quest[save_file]);
                     bw.Write(_death_count[save_file]);
-                    bw.Write(save_file_exists[save_file]);
                     bw.Write(heart_container_flags[save_file]);
                     bw.Write(_potion_shop_activated[save_file]);
                     bw.Write(_magical_shield[save_file]);
@@ -111,6 +108,9 @@
                         bw.Write(dungeon_gift_flags[save_file, i]);
                     for (int i = 0; i < 4; i++)
                         bw.Write(dungeon_rooms_visited_flags[save_file, i]);
+                    for (int i = 0; i < 8; i++)
+                        bw.Write(file_name[save_file, i]);
+                    bw.Write(save_file_exists[save_file]);
                 }
             }
             catch (Exception ex)
@@ -122,7 +122,7 @@
         {
             try
             {
-                using (Stream stream = File.OpenRead(@"C:\Users\Malcolm\source\repos\The Legend of Zelda\Data\SaveData.bin"))
+                using (Stream stream = File.OpenRead(@"SaveData.bin"))
                 {
                     BinaryReader br = new BinaryReader(stream);
                     br.ReadBytes(save_file * 0x200);
@@ -171,7 +171,7 @@
                     for (int i = 0; i < 4; i++)
                         dungeon_gift_flags[save_file, i] = br.ReadInt64();
                     for (int i = 0; i < 4; i++)
-                        dungeon_gift_flags[save_file, i] = br.ReadInt64();
+                        dungeon_rooms_visited_flags[save_file, i] = br.ReadInt64();
                     for (int i = 0; i < 8; i++)
                         file_name[save_file, i] = br.ReadByte();
                     save_file_exists[save_file] = br.ReadBoolean();

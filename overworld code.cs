@@ -3,7 +3,7 @@ using static The_Legend_of_Zelda.Screen;
 
 namespace The_Legend_of_Zelda
 {
-    internal static class OverworldCode
+    public sealed class OverworldCode : GameplayCode
     {
         public enum OverworldEnemies
         {
@@ -27,42 +27,34 @@ namespace The_Legend_of_Zelda
 
         public const byte DEFAULT_SPAWN_ROOM = 119;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
-        public const int SCROLL_ANIMATION_DONE = 500;
-        const byte OPENING_ANIMATION_DONE = 255;
 
-        public static byte current_screen = DEFAULT_SPAWN_ROOM;
-        public static byte return_screen = DEFAULT_SPAWN_ROOM;
-        public static byte level_7_entrance_timer = LEVEL_7_ENTRANCE_ANIM_DONE;
-        public static byte opening_animation_timer = 0;
-        public static byte scroll_destination;
-        static byte level_5_entrance_count = 0;
-        static byte lost_woods_count = 0;
+        public byte return_screen = DEFAULT_SPAWN_ROOM;
+        public byte level_7_entrance_timer { get; private set; } = LEVEL_7_ENTRANCE_ANIM_DONE;
+        byte level_5_entrance_count = 0;
+        byte lost_woods_count = 0;
 
-        public static int return_x, return_y;
-        public static int scroll_animation_timer = SCROLL_ANIMATION_DONE;
-        public static int warp_animation_timer = 0;
+        public int return_x, return_y;
+        public int warp_animation_timer = 0;
 
-        public static bool black_square_stairs_flag = false;
-        public static bool black_square_stairs_return_flag = false;
-        public static bool stair_warp_flag = false;
-        public static bool fairy_animation_active = false;
-        public static bool raft_flag = false;
+        public bool black_square_stairs_flag = false;
+        public bool black_square_stairs_return_flag = false;
+        public bool stair_warp_flag = false;
+        public bool fairy_animation_active = false;
+        public bool raft_flag = false;
 
-        public static sbyte recorder_destination = 0;
-
-        public static Direction scroll_direction;
+        public int recorder_destination = 0;
 
         // list of rooms with stairs in them
-        public static readonly byte[] stair_list = {
+        public readonly byte[] stair_list = {
             11, 34, 26, 98, 28, 73, 29, 33, 35, 40, 52, 61, 66, 109, 70, 71, 72, 75, 77, 78, 81, 86, 91, 99, 104, 106, 107, 120, 121
         };
         // list of rooms with black squares in them
-        public static readonly byte[] screens_with_secrets_list = {
+        public readonly byte[] screens_with_secrets_list = {
             1, 3, 5, 7, 13, 16, 18, 19, 20, 22, 29, 30, 35, 39, 40, 44, 45, 51, 70, 71, 72, 73, 75, 77, 81, 86, 91, 98, 99, 103, 104,
             106, 107, 109, 113, 118, 120, 121, 123, 124, 125
         };
         // ppu indices of all overworld metatiles
-        public static readonly byte[,] overworld_tileset_indexes = {
+        public readonly byte[,] overworld_tileset_indexes = {
             {0xd8,0xda,0xd9,0xdb}, // rock
             {0x26,0x26,0x26,0x26}, // ground
             {0xce,0xd0,0xcf,0xd1}, // rock T
@@ -107,7 +99,7 @@ namespace The_Legend_of_Zelda
             {0x80,0x82,0x81,0x83}, // water I BR
         };
         // (room, y); x is always 128
-        public static readonly byte[] dungeon_location_list = {
+        public readonly byte[] dungeon_location_list = {
             55, 144, //1
             60, 176, //2
             116, 144,//3
@@ -118,7 +110,7 @@ namespace The_Legend_of_Zelda
             109, 96, //8
         };
         // list of all ennemies for each room, refer to enemy spawning function to learn to decipher this
-        public static readonly int[] overworld_enemy_list =
+        public readonly int[] overworld_enemy_list =
         {
             0x000000, 0x999900, 0x999900, 0xeee000, 0xaaaaaa, 0xaa9956, 0xaa99ff, 0x900000, 0xeee000, 0x000000, 0xa00000, 0x500000, 0x333333, 0x333333, 0x000000, 0x000000,
             0xaaaa00, 0xaa99ff, 0xaaaaaa, 0xaa9900, 0x999900, 0xaa99ff, 0xeee000, 0xeee000, 0xeee000, 0xeee000, 0x333333, 0x000000, 0x000000, 0xffffff, 0x333333, 0xffffff,
@@ -130,11 +122,11 @@ namespace The_Legend_of_Zelda
             0xffff00, 0x888880, 0x888700, 0x888800, 0x300000, 0xfff566, 0x333300, 0x000000, 0x111100, 0x444440, 0x444400, 0x555555, 0x555555, 0x222200, 0x111100, 0x200000
         };
         // screens where enemies spawn on the side instead of in the middle
-        public static readonly byte[] overworld_screens_side_entrance = {
+        public readonly byte[] overworld_screens_side_entrance = {
             75, 77, 78, 82, 87, 88, 91, 92, 93, 97, 98, 104, 107, 108, 109, 110, 113, 114, 115, 120
         };
 
-        public static void Init()
+        public void Init()
         {
             Menu.draw_hud_objects = false;
             x_scroll = 0;
@@ -148,9 +140,9 @@ namespace The_Legend_of_Zelda
             Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.MOUNTAIN);
             Palettes.LoadPaletteGroup(PaletteID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
             if (red_ring)
-                Palettes.LoadPalette(4, 1, Color._16_RED_ORANGE);
+                Palettes.LoadPalette(PaletteID.SP_0, 1, Color._16_RED_ORANGE);
             else if (blue_ring)
-                Palettes.LoadPalette(4, 1, Color._32_LIGHTER_INDIGO);
+                Palettes.LoadPalette(PaletteID.SP_0, 1, Color._32_LIGHTER_INDIGO);
             Palettes.LoadPaletteGroup(PaletteID.SP_1, Palettes.PaletteGroups.HUDSPR_2);
             Palettes.LoadPaletteGroup(PaletteID.SP_2, Palettes.PaletteGroups.HUDSPR_3);
             Palettes.LoadPaletteGroup(PaletteID.SP_3, Palettes.PaletteGroups.OVERWORLD_DARK_ENEMIES);
@@ -163,27 +155,17 @@ namespace The_Legend_of_Zelda
             Menu.hud_B_item.shown = false;
             opening_animation_timer = 0;
             warp_animation_timer = 0;
+            // detect initialization
+            if (current_screen == 0)
+                current_screen = DEFAULT_SPAWN_ROOM;
         }
 
-        public static void Tick()
+        protected override void SpecificCode()
         {
-            if (opening_animation_timer < OPENING_ANIMATION_DONE)
-            {
-                OpeningAnimation();
-                return;
-            }
-
-            Menu.DrawHUD();
-            Link.Tick();
             RaftAnimation();
             CheckForWarp();
-            Menu.Tick();
 
-            if (Menu.menu_open)
-            {
-                Program.can_pause = false;
-            }
-            else
+            if (!Menu.menu_open)
             {
                 if (current_screen == 128)
                 {
@@ -196,65 +178,11 @@ namespace The_Legend_of_Zelda
             }
 
             Level7EntranceAnimation();
-
-            if (!Sound.IsMusicPlaying())
-            {
-                Sound.PlaySong(Sound.Songs.OVERWORLD, false);
-                Sound.JumpTo(5.1f);
-            }
         }
 
-        static void OpeningAnimation()
+        void Scroll()
         {
-            opening_animation_timer++;
-
-            if (opening_animation_timer == OPENING_ANIMATION_DONE)
-            {
-                Link.Show(true);
-                Link.can_move = true;
-                Menu.can_open_menu = true;
-                Menu.draw_hud_objects = true;
-                Sound.PlaySong(Sound.Songs.OVERWORLD, false);
-                Program.can_pause = true;
-                Menu.map_dot.shown = true;
-                Menu.map_dot.x = 45;
-                Menu.map_dot.y = 52;
-                return;
-            }
-
-            Menu.can_open_menu = false;
-            Link.can_move = false;
-            Link.Show(false);
-            Menu.draw_hud_objects = false;
-
-            if (opening_animation_timer % 5 != 0)
-            {
-                return;
-            }
-
-            int num_rows_to_erase = 16 - opening_animation_timer / 5;
-            if (num_rows_to_erase <= 0)
-            {
-                opening_animation_timer = OPENING_ANIMATION_DONE - 1;
-            }
-
-            Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, current_screen, 0);
-            int left_index_start = Textures.PPU_WIDTH * 8;
-            int right_index_start = Textures.PPU_WIDTH * 9 - 1;
-
-            for (int i = 0; i < num_rows_to_erase; i++)
-            {
-                for (int j = 0; j < 22; j++)
-                {
-                    Textures.ppu[left_index_start + j * Textures.PPU_WIDTH + i] = 0x24;
-                    Textures.ppu[right_index_start + j * Textures.PPU_WIDTH - i] = 0x24;
-                }
-            }
-        }
-
-        static void Scroll()
-        {
-            if (scroll_animation_timer > 500)
+            if (scroll_animation_timer >= OPENING_ANIMATION_DONE)
             {
                 if (Link.y < 64 && (Control.IsHeld(Buttons.UP) || raft_flag))
                 {
@@ -289,78 +217,41 @@ namespace The_Legend_of_Zelda
                 if (Menu.tornado_out)
                 {
                     scroll_destination = ChangeRecorderDestination(false);
-                    scroll_direction = Direction.RIGHT;
                 }
                 Menu.can_open_menu = false;
                 UnloadSpritesRoomTransition();
                 ResetLinkPowerUps();
 
+                // special screen. going right, up or down loops, going left exits and going up 4 times in a row exits
                 if (current_screen == 27)
                 {
+                    const int NUM_OF_SCROLLS_TO_EXIT = 4;
+
                     if (scroll_direction == Direction.UP)
-                    {
-                        if (level_5_entrance_count == 3)
-                        {
-                            level_5_entrance_count = 0;
-                            // todo: play secret discovered jingle
-                        }
-                        else
-                        {
-                            level_5_entrance_count++;
-                            scroll_destination = 27;
-                        }
-                    }
-                    else if (scroll_direction != Direction.LEFT)
-                    {
+                        level_5_entrance_count++;
+
+                    if (scroll_direction != Direction.LEFT || (scroll_direction == Direction.UP && level_5_entrance_count < NUM_OF_SCROLLS_TO_EXIT))
                         scroll_destination = 27;
+
+                    if (scroll_direction != Direction.UP || level_5_entrance_count >= NUM_OF_SCROLLS_TO_EXIT)
                         level_5_entrance_count = 0;
-                    }
-                    else
-                    {
-                        level_5_entrance_count = 0;
-                    }
                 }
 
+                // special screen. going left, up or down loops, going right exits, and going up->left->down->left exits
                 if (current_screen == 97)
                 {
-                    if (scroll_direction != Direction.RIGHT)
-                    {
-                        switch (lost_woods_count)
-                        {
-                            case 0:
-                                if (scroll_direction == Direction.UP)
-                                    lost_woods_count++;
-                                else
-                                    lost_woods_count = 0;
-                                scroll_destination = 97;
-                                break;
-                            case 1:
-                                if (scroll_direction == Direction.LEFT)
-                                    lost_woods_count++;
-                                else
-                                    lost_woods_count = 0;
-                                scroll_destination = 97;
-                                break;
-                            case 2:
-                                if (scroll_direction == Direction.DOWN)
-                                    lost_woods_count++;
-                                else
-                                    lost_woods_count = 0;
-                                scroll_destination = 97;
-                                break;
-                            case 3:
-                                if (scroll_direction == Direction.LEFT)
-                                    scroll_destination = 96;
-                                else
-                                    scroll_destination = 97;
-                                lost_woods_count = 0;
-                                break;
-                        }
-                    }
+                    Direction[] LOST_FOREST_CODE = { Direction.UP, Direction.LEFT, Direction.DOWN, Direction.LEFT};
+
+                    if (scroll_direction == LOST_FOREST_CODE[lost_woods_count])
+                        lost_woods_count++;
                     else
-                    {
                         lost_woods_count = 0;
-                    }
+
+                    if (scroll_direction != Direction.RIGHT || (scroll_direction == Direction.LEFT && lost_woods_count == LOST_FOREST_CODE.Length))
+                        scroll_destination = 97;
+
+                    if (lost_woods_count >= LOST_FOREST_CODE.Length)
+                        lost_woods_count = 0;
                 }
 
                 if (scroll_direction == Direction.DOWN)
@@ -383,7 +274,7 @@ namespace The_Legend_of_Zelda
 
             if (scroll_direction == Direction.UP || scroll_direction == Direction.DOWN)
             {
-                if ((Program.gTimer & 1) == 0)
+                if ((Program.gTimer % 2) == 0)
                 {
                     if (scroll_direction == Direction.UP)
                     {
@@ -455,7 +346,7 @@ namespace The_Legend_of_Zelda
                     Link.SetPos(new_x: 239);
                 else
                     Link.SetPos(new_x: 1);
-                scroll_animation_timer += 1000;
+                scroll_animation_timer = SCROLL_ANIMATION_DONE;
                 Menu.can_open_menu = true;
 
                 SpawnEnemies();
@@ -466,7 +357,7 @@ namespace The_Legend_of_Zelda
 
         // spawn ennemies depending on current screen. most enemies are stored in overworld_enemy_list as ints where each 4 bits is the code of an enemy.
         // example: 0000 0000 0101 0101 0101 0101 0110 0110 -> 0 0 5 5 5 5 6 6 -> 4 red Leevers and 2 blue Leevers
-        static void SpawnEnemies()
+        void SpawnEnemies()
         {
             const int NUM_ENS_PER_SCRREN = 6;
             const int ENS_MEM_SIZE_BITS = 4;
@@ -479,13 +370,11 @@ namespace The_Legend_of_Zelda
             }
 
             int enemies = overworld_enemy_list[current_screen];
-            int enemy_mask = (int)Math.Pow(Math.Pow(2, ENS_MEM_SIZE_BITS), NUM_ENS_PER_SCRREN); // (2^4)^6 == 15728640 == 0xF00000 <- mask
             int right_shift_ammount = (NUM_ENS_PER_SCRREN - 1) * ENS_MEM_SIZE_BITS;
+            int enemy_mask = ((int)Math.Pow(2, ENS_MEM_SIZE_BITS) - 1) << right_shift_ammount; // (2^4)<<20 == 15728640 == 0xF00000 <- mask
 
             for (int i = 0; i < NUM_ENS_PER_SCRREN; i++)
             {
-                right_shift_ammount -= ENS_MEM_SIZE_BITS;
-
                 switch ((OverworldEnemies)((enemies & enemy_mask) >> right_shift_ammount))
                 {
                     case OverworldEnemies.NONE:
@@ -544,6 +433,7 @@ namespace The_Legend_of_Zelda
                         break;
                 }
 
+                right_shift_ammount -= ENS_MEM_SIZE_BITS;
                 enemy_mask >>= 4;
             }
 
@@ -557,7 +447,7 @@ namespace The_Legend_of_Zelda
         }
 
         // returns current recorder destination, and changes it if change_value is set
-        public static byte ChangeRecorderDestination(bool change_the_value)
+        public byte ChangeRecorderDestination(bool change_the_value)
         {
             for (byte i = 0; i < 8; i++)
             {
@@ -580,7 +470,7 @@ namespace The_Legend_of_Zelda
             return 0;
         }
 
-        static void CheckForWarp()
+        void CheckForWarp()
         {
             if (black_square_stairs_return_flag)
             {
@@ -652,7 +542,7 @@ namespace The_Legend_of_Zelda
         }
 
         // code that executes when link is in an underground room (room 128)
-        static void Room128Code()
+        void Room128Code()
         {
             //TODO: make this only happen once on load
             if (Sound.IsMusicPlaying())
@@ -682,22 +572,8 @@ namespace The_Legend_of_Zelda
                 Menu.can_open_menu = Link.can_move;
         }
 
-        // unloads all sprites that should unload when screen changes
-        static void UnloadSpritesRoomTransition()
-        {
-            // no foreach, because foreach throws error when modifying list
-            for (int i = 0; i < sprites.Count; i++)
-            {
-                if (sprites[i].unload_during_transition)
-                {
-                    sprites.RemoveAt(i);
-                    i--;
-                }
-            }
-        }
-
         // code for animation that plays with black square on overworld
-        public static void BlackSquareLinkAnimation(bool entering, bool immediate_exit = false)
+        void BlackSquareLinkAnimation(bool entering, bool immediate_exit = false)
         {
             if (warp_animation_timer == 0)
             {
@@ -717,11 +593,11 @@ namespace The_Legend_of_Zelda
                 {
                     Link.current_action = Link.Action.WALKING_DOWN;
                     if (WarpCode.warp_info == WarpCode.WarpType.TAKE_ANY_ROAD)
-                        WarpCode.SetWarpReturnPosition();
+                        SetWarpReturnPosition();
                     Link.SetPos(return_x, return_y);
                     Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.MOUNTAIN);
-                    Palettes.LoadPalette(2, 1, Color._1A_SEMI_LIGHT_GREEN);
-                    Palettes.LoadPalette(2, 2, Color._37_BEIGE);
+                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._1A_SEMI_LIGHT_GREEN);
+                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._37_BEIGE);
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, return_screen, 0);
                     current_screen = return_screen; // keep this after ppu page load or else bombable/burnable tiles fuck up their display
                     Link.SetBGState(true);
@@ -748,9 +624,9 @@ namespace The_Legend_of_Zelda
                 {
                     UnloadSpritesRoomTransition();
                     Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.OVERWORLD_CAVE);
-                    Palettes.LoadPalette(2, 1, Color._30_WHITE);
-                    Palettes.LoadPalette(2, 2, Color._0F_BLACK);
-                    WarpCode.SetWarpReturnPosition();
+                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._30_WHITE);
+                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._0F_BLACK);
+                    SetWarpReturnPosition();
                     if (WarpCode.screen_warp_info[current_screen] != 0xe)
                     {
                         Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, 128, 0);
@@ -808,7 +684,7 @@ namespace The_Legend_of_Zelda
             warp_animation_timer++;
         }
 
-        static void RaftAnimation()
+        void RaftAnimation()
         {
             if (!raft_flag)
                 return;
@@ -821,7 +697,8 @@ namespace The_Legend_of_Zelda
             Link.animation_timer++;
         }
 
-        static void Level7EntranceAnimation()
+        public void ActivateLevel7Animation() => level_7_entrance_timer = 0;
+        void Level7EntranceAnimation()
         {
             if (level_7_entrance_timer == 255)
                 return;
@@ -829,37 +706,37 @@ namespace The_Legend_of_Zelda
             switch (level_7_entrance_timer)
             {
                 case 0:
-                    Palettes.LoadPalette(3, 3, Color._12_SMEI_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._12_SMEI_DARK_BLUE);
                     break;
                 case 1:
-                    Palettes.LoadPalette(3, 3, Color._11_SEMI_LIGHT_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._11_SEMI_LIGHT_BLUE);
                     break;
                 case 9:
-                    Palettes.LoadPalette(3, 3, Color._22_LIGHT_INDIGO);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._22_LIGHT_INDIGO);
                     break;
                 case 17:
-                    Palettes.LoadPalette(3, 3, Color._21_LIGHT_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._21_LIGHT_BLUE);
                     break;
                 case 25:
-                    Palettes.LoadPalette(3, 3, Color._31_LIGHTER_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._31_LIGHTER_BLUE);
                     break;
                 case 33:
-                    Palettes.LoadPalette(3, 3, Color._32_LIGHTER_INDIGO);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._32_LIGHTER_INDIGO);
                     break;
                 case 41:
-                    Palettes.LoadPalette(3, 3, Color._33_LIGHTER_PURPLE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._33_LIGHTER_PURPLE);
                     break;
                 case 49:
-                    Palettes.LoadPalette(3, 3, Color._35_LIGHTER_RED);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._35_LIGHTER_RED);
                     break;
                 case 57:
-                    Palettes.LoadPalette(3, 3, Color._34_LIGHTER_PINK);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._34_LIGHTER_PINK);
                     break;
                 case 65:
-                    Palettes.LoadPalette(3, 3, Color._36_LIGHTER_ORANGE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._36_LIGHTER_ORANGE);
                     break;
                 case 73:
-                    Palettes.LoadPalette(3, 3, Color._37_BEIGE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._37_BEIGE);
                     break;
                 case 81:
                     int mt_index = 53;
@@ -901,23 +778,52 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        // reset all of the variables keeping track of which items link has thrown onto the field
-        // and other stuff that needs to go away on a screen transition
-        static void ResetLinkPowerUps()
+        // sets the exact x and y coordinates that link will return to when exiting
+        public void SetWarpReturnPosition()
         {
-            Menu.fire_out = 0;
-            Menu.boomerang_out = false;
-            Menu.arrow_out = false;
-            Menu.magic_wave_out = false;
-            Menu.bait_out = false;
-            Menu.bomb_out = false;
-            // if link is in the tornado, we don't want to destroy the tornado
-            if (Link.shown) Menu.tornado_out = false;
-            Menu.sword_proj_out = false;
-            Link.clock_flash = false;
-            Link.iframes_timer = 0;
-            Link.self.palette_index = 4;
-            Link.counterpart.palette_index = 4;
+            Dictionary<byte, (int x, int y)> warpPositions = new()
+            {
+                { 11, (112, 128) },
+                { 34, (112, 128) },
+                { 26, (96, 128) },
+                { 98, (96, 128) },
+                { 28, (48, 112) },
+                { 73, (48, 112) },
+                { 29, (32, 112) },
+                { 33, (80, 112) },
+                { 35, (64, 96) },
+                { 40, (224, 160) },
+                { 52, (64, 112) },
+                { 61, (144, 112) },
+                { 66, (96, 96) },
+                { 109, (96, 96) },
+                { 70, (128, 176) },
+                { 71, (176, 160) },
+                { 72, (176, 112) },
+                { 75, (192, 96) },
+                { 77, (192, 144) },
+                { 78, (112, 112) },
+                { 81, (160, 160) },
+                { 86, (176, 176) },
+                { 91, (48, 160) },
+                { 99, (112, 160) },
+                { 104, (48, 144) },
+                { 106, (208, 160) },
+                { 107, (80, 160) },
+                { 120, (80, 144) },
+                { 121, (96, 112) }
+            };
+
+            if (warpPositions.TryGetValue(return_screen, out (int x, int y) position))
+            {
+                return_x = position.x;
+                return_y = position.y;
+            }
+            else
+            {
+                return_x = Link.x;
+                return_y = Link.y;
+            }
         }
     }
 }

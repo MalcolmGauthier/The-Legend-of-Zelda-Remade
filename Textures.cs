@@ -1,4 +1,5 @@
-﻿using static SDL2.SDL;
+﻿using static The_Legend_of_Zelda.Program;
+
 namespace The_Legend_of_Zelda
 {
     public enum Text : byte
@@ -266,7 +267,7 @@ namespace The_Legend_of_Zelda
                     {
                         BinaryReader reader = new BinaryReader(stream);
                         // IF TOP DOWN
-                        if (DungeonCode.room_list[page] < 0x2a)
+                        if (DC.room_list[page] < 0x2a)
                         {
                             int screen_1_exception = 0;
                             if (screen_index == 1)
@@ -284,14 +285,14 @@ namespace The_Legend_of_Zelda
                                 byte palette = 2;
                                 if (i % 32 >= 4 && i % 32 <= 0x1b)
                                 {
-                                    if (DungeonCode.rooms_with_palette_3.Contains(page) || DungeonCode.GetRoomDarkness(page))
+                                    if (DC.rooms_with_palette_3.Contains(page) || DC.GetRoomDarkness(page))
                                         palette = 3;
-                                    else if (DungeonCode.rooms_with_palette_1.Contains(page))
+                                    else if (DC.rooms_with_palette_1.Contains(page))
                                         palette = 1;
                                 }
                                 ppu_plt[i] = palette;
                             }
-                            stream.Seek(0x420 + (12 * 7) * DungeonCode.room_list[page], SeekOrigin.Begin);
+                            stream.Seek(0x420 + (12 * 7) * DC.room_list[page], SeekOrigin.Begin);
                             for (int i = 2; i < 9; i++)
                             {
                                 for (int j = 2 + screen_index * 176; j < 14 + screen_index * 176; j++)
@@ -304,12 +305,12 @@ namespace The_Legend_of_Zelda
                             //byte[] metatiles_to_reset = { 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 };
                             foreach (byte i in new byte[]{ 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 })
                                 Screen.meta_tiles[i].tile_index = 1;
-                            DungeonCode.DrawDoors(page, screen_index);
+                            DC.DrawDoors(page, screen_index);
                         }
                         // IF SIDE VIEW
                         else
                         {
-                            stream.Seek(0x2c0 + (DungeonCode.room_list[page] - 0x2a) * 176, SeekOrigin.Begin);
+                            stream.Seek(0x2c0 + (DC.room_list[page] - 0x2a) * 176, SeekOrigin.Begin);
                             for (int i = screen_index * 176; i < screen_index * 176 + 176; i++)
                             {
                                 Screen.meta_tiles[i].SetPPUValues(reader.ReadByte());

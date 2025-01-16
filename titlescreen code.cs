@@ -22,19 +22,19 @@ namespace The_Legend_of_Zelda
 
             if (gTimer % 56 == 6)
             {
-                Palettes.LoadPalette(1, 2, Color._37_BEIGE);
+                Palettes.LoadPalette(PaletteID.BG_1, 2, Color._37_BEIGE);
             }
             else if ((gTimer % 56 == 0) || (gTimer % 56 == 18))
             {
-                Palettes.LoadPalette(1, 2, Color._27_GOLD);
+                Palettes.LoadPalette(PaletteID.BG_1, 2, Color._27_GOLD);
             }
             else if ((gTimer % 56 == 24) || (gTimer % 56 == 40))
             {
-                Palettes.LoadPalette(1, 2, Color._17_DARK_GOLD);
+                Palettes.LoadPalette(PaletteID.BG_1, 2, Color._17_DARK_GOLD);
             }
             else if (gTimer % 56 == 30)
             {
-                Palettes.LoadPalette(1, 2, Color._07_BROWN);
+                Palettes.LoadPalette(PaletteID.BG_1, 2, Color._07_BROWN);
             }
         }
 
@@ -59,8 +59,8 @@ namespace The_Legend_of_Zelda
                     break;
                 case 530:
                     Palettes.background_color = Color._3B_LIGHT_TURQUOISE;
-                    Palettes.LoadPalette(3, 1, Color._10_GRAY);
-                    Palettes.LoadPalette(7, 1, Color._10_GRAY);
+                    Palettes.LoadPalette(PaletteID.BG_3, 1, Color._10_GRAY);
+                    Palettes.LoadPalette(PaletteID.SP_3, 1, Color._10_GRAY);
                     break;
                 case 534:
                     Palettes.background_color = Color._2C_CYAN;
@@ -70,94 +70,94 @@ namespace The_Legend_of_Zelda
                     break;
                 case 539:
                     Palettes.background_color = Color._02_BLUE;
-                    Palettes.LoadPalette(1, 1, Color._06_RED);
-                    Palettes.LoadPalette(2, 1, Color._0A_GREEN);
-                    Palettes.LoadPalette(2, 2, Color._1A_SEMI_LIGHT_GREEN);
-                    Palettes.LoadPalette(2, 2, Color._18_OLIVE);
-                    Palettes.LoadPalette(3, 2, Color._2B_TURQUOISE);
-                    Palettes.LoadPalette(3, 3, Color._12_SMEI_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_1, 1, Color._06_RED);
+                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._0A_GREEN);
+                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._1A_SEMI_LIGHT_GREEN);
+                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._18_OLIVE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 2, Color._2B_TURQUOISE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._12_SMEI_DARK_BLUE);
 
-                    Palettes.LoadPalette(6, 1, Color._0A_GREEN);
-                    Palettes.LoadPalette(6, 2, Color._1A_SEMI_LIGHT_GREEN);
-                    Palettes.LoadPalette(6, 3, Color._18_OLIVE);
-                    Palettes.LoadPalette(7, 2, Color._2B_TURQUOISE);
-                    Palettes.LoadPalette(7, 3, Color._12_SMEI_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.SP_2, 1, Color._0A_GREEN);
+                    Palettes.LoadPalette(PaletteID.SP_2, 2, Color._1A_SEMI_LIGHT_GREEN);
+                    Palettes.LoadPalette(PaletteID.SP_2, 3, Color._18_OLIVE);
+                    Palettes.LoadPalette(PaletteID.SP_3, 2, Color._2B_TURQUOISE);
+                    Palettes.LoadPalette(PaletteID.SP_3, 3, Color._12_SMEI_DARK_BLUE);
                     break;
                 case 541:
                     Palettes.background_color = Color._0C_AQUA;
-                    Palettes.LoadPalette(1, 1, Color._03_DARK_INDIGO);
-                    Palettes.LoadPalette(1, 2, Color._16_RED_ORANGE);
-                    Palettes.LoadPalette(2, 1, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(2, 2, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(2, 3, Color._08_DARK_YELLOW);
-                    Palettes.LoadPalette(3, 1, Color._00_DARK_GRAY);
-                    Palettes.LoadPalette(3, 2, Color._1B_EVERGREEN);
-                    Palettes.LoadPalette(3, 3, Color._02_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_1, 1, Color._03_DARK_INDIGO);
+                    Palettes.LoadPalette(PaletteID.BG_1, 2, Color._16_RED_ORANGE);
+                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_2, 3, Color._08_DARK_YELLOW);
+                    Palettes.LoadPalette(PaletteID.BG_3, 1, Color._00_DARK_GRAY);
+                    Palettes.LoadPalette(PaletteID.BG_3, 2, Color._1B_EVERGREEN);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._02_BLUE);
 
-                    Palettes.LoadPalette(6, 1, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(6, 2, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(6, 3, Color._08_DARK_YELLOW);
-                    Palettes.LoadPalette(7, 1, Color._00_DARK_GRAY);
-                    Palettes.LoadPalette(7, 2, Color._1B_EVERGREEN);
-                    Palettes.LoadPalette(7, 3, Color._02_BLUE);
+                    Palettes.LoadPalette(PaletteID.SP_2, 1, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.SP_2, 2, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.SP_2, 3, Color._08_DARK_YELLOW);
+                    Palettes.LoadPalette(PaletteID.SP_3, 1, Color._00_DARK_GRAY);
+                    Palettes.LoadPalette(PaletteID.SP_3, 2, Color._1B_EVERGREEN);
+                    Palettes.LoadPalette(PaletteID.SP_3, 3, Color._02_BLUE);
                     break;
                 case 543:
                     Palettes.background_color = Color._0F_BLACK;
-                    Palettes.LoadPalette(0, 1, Color._0F_BLACK);
-                    Palettes.LoadPalette(0, 2, Color._0F_BLACK);
-                    Palettes.LoadPalette(0, 3, Color._00_DARK_GRAY);
-                    Palettes.LoadPalette(1, 1, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(1, 2, Color._11_SEMI_LIGHT_BLUE);
-                    Palettes.LoadPalette(2, 1, Color._0C_AQUA);
-                    Palettes.LoadPalette(2, 2, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(2, 3, Color._02_BLUE);
-                    Palettes.LoadPalette(3, 1, Color._00_DARK_GRAY);
-                    Palettes.LoadPalette(3, 2, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(3, 3, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.BG_0, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_0, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_0, 3, Color._00_DARK_GRAY);
+                    Palettes.LoadPalette(PaletteID.BG_1, 1, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_1, 2, Color._11_SEMI_LIGHT_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_2, 3, Color._02_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 1, Color._00_DARK_GRAY);
+                    Palettes.LoadPalette(PaletteID.BG_3, 2, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._0C_AQUA);
 
-                    Palettes.LoadPalette(6, 1, Color._0C_AQUA);
-                    Palettes.LoadPalette(6, 2, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(6, 3, Color._02_BLUE);
-                    Palettes.LoadPalette(7, 1, Color._00_DARK_GRAY);
-                    Palettes.LoadPalette(7, 2, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(7, 3, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.SP_2, 1, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.SP_2, 2, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.SP_2, 3, Color._02_BLUE);
+                    Palettes.LoadPalette(PaletteID.SP_3, 1, Color._00_DARK_GRAY);
+                    Palettes.LoadPalette(PaletteID.SP_3, 2, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.SP_3, 3, Color._0C_AQUA);
                     break;
                 case 735:
-                    Palettes.LoadPalette(2, 1, Color._0F_BLACK);
-                    Palettes.LoadPalette(2, 2, Color._0C_AQUA);
-                    Palettes.LoadPalette(2, 3, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(3, 1, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(3, 2, Color._0C_AQUA);
-                    Palettes.LoadPalette(3, 3, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.BG_2, 3, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 1, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 2, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._0F_BLACK);
 
-                    Palettes.LoadPalette(6, 1, Color._0F_BLACK);
-                    Palettes.LoadPalette(6, 2, Color._0C_AQUA);
-                    Palettes.LoadPalette(6, 3, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(7, 1, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(7, 2, Color._0C_AQUA);
-                    Palettes.LoadPalette(7, 3, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.SP_2, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.SP_2, 2, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.SP_2, 3, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.SP_3, 1, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.SP_3, 2, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.SP_3, 3, Color._0F_BLACK);
                     break;
                 case 741:
-                    Palettes.LoadPalette(0, 3, Color._0F_BLACK);
-                    Palettes.LoadPalette(1, 1, Color._0F_BLACK);
-                    Palettes.LoadPalette(1, 2, Color._01_DARK_BLUE);
-                    Palettes.LoadPalette(2, 2, Color._0F_BLACK);
-                    Palettes.LoadPalette(2, 3, Color._0C_AQUA);
-                    Palettes.LoadPalette(3, 1, Color._0C_AQUA);
-                    Palettes.LoadPalette(3, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_0, 3, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_1, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_1, 2, Color._01_DARK_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_2, 3, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.BG_3, 1, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.BG_3, 2, Color._0F_BLACK);
 
-                    Palettes.LoadPalette(6, 2, Color._0F_BLACK);
-                    Palettes.LoadPalette(6, 3, Color._0C_AQUA);
-                    Palettes.LoadPalette(7, 1, Color._0C_AQUA);
-                    Palettes.LoadPalette(7, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.SP_2, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.SP_2, 3, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.SP_3, 1, Color._0C_AQUA);
+                    Palettes.LoadPalette(PaletteID.SP_3, 2, Color._0F_BLACK);
                     break;
                 case 745:
-                    Palettes.LoadPalette(1, 2, Color._0F_BLACK);
-                    Palettes.LoadPalette(2, 3, Color._0F_BLACK);
-                    Palettes.LoadPalette(3, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_1, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_2, 3, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_3, 1, Color._0F_BLACK);
 
-                    Palettes.LoadPalette(6, 3, Color._0F_BLACK);
-                    Palettes.LoadPalette(7, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.SP_2, 3, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.SP_3, 1, Color._0F_BLACK);
                     break;
             }
         }
@@ -170,12 +170,17 @@ namespace The_Legend_of_Zelda
             switch (gTimer)
             {
                 case 775:
-                    Palettes.LoadPalette(0, 1, Color._30_WHITE);
-                    Palettes.LoadPalette(1, 1, Color._21_LIGHT_BLUE);
-                    Palettes.LoadPalette(2, 1, Color._16_RED_ORANGE);
-                    Palettes.LoadPalette(3, 1, Color._29_LIGHT_GREEN);
-                    Palettes.LoadPalette(3, 2, Color._1A_SEMI_LIGHT_GREEN);
-                    Palettes.LoadPalette(3, 3, Color._09_DARK_GREEN);
+                    Palettes.LoadPalette(PaletteID.BG_0, 1, Color._30_WHITE);
+                    Palettes.LoadPalette(PaletteID.BG_1, 1, Color._21_LIGHT_BLUE);
+                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._16_RED_ORANGE);
+                    Palettes.LoadPalette(PaletteID.BG_3, 1, Color._29_LIGHT_GREEN);
+                    Palettes.LoadPalette(PaletteID.BG_3, 2, Color._1A_SEMI_LIGHT_GREEN);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._09_DARK_GREEN);
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 2, 1);
+                    break;
+                case 1425:
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 2, 0);
                     break;
                 case 1684:
                     y_scroll = 0;
@@ -214,13 +219,8 @@ namespace The_Legend_of_Zelda
                 y_scroll++;
                 if (gTimer % 16 == 0)
                 {
-                    Textures.ScrollPPU_V(Textures.PPUDataGroup.OTHER, 0x780 + 0x20 * intro_scroll_counter, intro_scroll_counter);
                     intro_scroll_counter++;
                 }
-            }
-            else if (gTimer >= 745 && gTimer < 805)
-            {
-                Textures.ScrollPPU_V(Textures.PPUDataGroup.OTHER, 0x3c0 + 0x20 * (gTimer - 745), gTimer - 745);
             }
         }
 
@@ -286,7 +286,7 @@ namespace The_Legend_of_Zelda
                     break;
                 case 945:
                     Palettes.LoadPaletteGroup(PaletteID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
-                    Palettes.LoadPalette(4, 2, Color._37_BEIGE);
+                    Palettes.LoadPalette(PaletteID.SP_0, 2, Color._37_BEIGE);
                     Palettes.LoadPaletteGroup(PaletteID.SP_1, Palettes.PaletteGroups.HUDSPR_2);
                     Palettes.LoadPaletteGroup(PaletteID.SP_2, Palettes.PaletteGroups.HUDSPR_3);
                     break;
@@ -364,8 +364,8 @@ namespace The_Legend_of_Zelda
                     sprites.Add(new StaticSprite(0x6a, 6, 180, 1854, xflip: true));
                     break;
                 case 3956:
-                    sprites.Add(new FlickeringSprite(0x6e, 5, 120, 1918, 6, 0x6e, second_palette_index: 6));
-                    sprites.Add(new FlickeringSprite(0x6e, 5, 128, 1918, 6, 0x6e, true, second_palette_index: 6));
+                    sprites.Add(new FlickeringSprite(0x6e, 5, 120, 1918, 8, 0x6e, second_palette_index: 6));
+                    sprites.Add(new FlickeringSprite(0x6e, 5, 128, 1918, 8, 0x6e, true, second_palette_index: 6));
                     break;
                 case 4084:
                     sprites.Add(new StaticSprite(0xe0, 4, 104, 2014));

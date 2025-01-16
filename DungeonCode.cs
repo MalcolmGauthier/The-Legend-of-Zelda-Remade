@@ -1,8 +1,9 @@
-﻿using static The_Legend_of_Zelda.Menu;
-using static The_Legend_of_Zelda.Screen;
+﻿using static The_Legend_of_Zelda.Screen;
+using static The_Legend_of_Zelda.Program;
+
 namespace The_Legend_of_Zelda
 {
-    public static class DungeonCode
+    public sealed class DungeonCode : GameplayCode
     {
         public enum DoorType
         {
@@ -73,25 +74,22 @@ namespace The_Legend_of_Zelda
             GANON,
         }
 
-        public static byte current_dungeon;
-        public static byte current_screen;
-        public static byte nb_enemies_alive = 0;
-        public static sbyte opening_animation_timer = 0;
-        static byte scroll_destination;
-        static byte link_walk_animation_timer = 0;
+        const int NUMBER_OF_DOORS = 4;
 
-        public static int scroll_animation_timer = 1000;
-        static int dark_room_animation_timer = 0;
+        public byte current_dungeon { get; private set; }
+        public byte nb_enemies_alive = 0;
+        byte link_walk_animation_timer = 0;
 
-        public static bool warp_flag = false;
-        public static bool block_push_flag = false;
-        static bool is_dark = false;
+        int dark_room_animation_timer = 0;
 
-        public static DoorType[] door_types = new DoorType[4];
-        static Direction scroll_direction;
-        static FlickeringSprite compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
+        public bool warp_flag = false;
+        public bool block_push_flag = false;
+        bool is_dark = false;
 
-        public static readonly byte[] room_list = {
+        public DoorType[] door_types = new DoorType[NUMBER_OF_DOORS];
+        FlickeringSprite compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
+
+        public readonly byte[] room_list = {
             0x2A, 0x14, 0x14, 0x29, 0x0B, 0x0B, 0x0F, 0x2B, 0x29, 0x1A, 0x1B, 0x0B, 0x2A, 0x06, 0x0C, 0x2B,
             0x19, 0x1C, 0x16, 0x05, 0x18, 0x10, 0x08, 0x29, 0x18, 0x29, 0x14, 0x19, 0x0B, 0x29, 0x16, 0x29,
             0x08, 0x1E, 0x02, 0x29, 0x00, 0x1C, 0x02, 0x00, 0x0D, 0x17, 0x0C, 0x0D, 0x0E, 0x1D, 0x1E, 0x0D,
@@ -109,7 +107,7 @@ namespace The_Legend_of_Zelda
             0x00, 0x1F, 0x20, 0x03, 0x0E, 0x1C, 0x0F, 0x2B, 0x2B, 0x0C, 0x29, 0x10, 0x07, 0x16, 0x29, 0x2B,
             0x1F, 0x01, 0x02, 0x2A, 0x0C, 0x1F, 0x01, 0x1A, 0x2B, 0x10, 0x2A, 0x07, 0x0C, 0x2B, 0x01, 0x2B
         };
-        public static readonly ushort[] dark_rooms = {
+        public readonly ushort[] dark_rooms = {
             0b0000000001100000,
             0b0010000000000000,
             0b0100010001000001,
@@ -127,7 +125,7 @@ namespace The_Legend_of_Zelda
             0b0010000000000100,
             0b0000000100000000,
         };
-        public static readonly byte[] connection_IDs = {
+        public readonly byte[] connection_IDs = {
             #region code
             /*
                 0 - none
@@ -169,23 +167,23 @@ namespace The_Legend_of_Zelda
             0x13, 0x11, 0x11, 0x01, 0x01, 0x00, 0x10, 0x00, 0x00, 0x11, 0x02, 0x20, 0x01, 0x06, 0x10, 0x00,
             0x00, 0x11, 0x00, 0x00, 0x06, 0x01, 0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x10, 0x00
         };
-        public static readonly byte[] starting_screens = {
+        public readonly byte[] starting_screens = {
             123, 117, 116, 121, 126, 113, 241, 246, 254 
         };
-        public static readonly byte[] rooms_with_boses = {
+        public readonly byte[] rooms_with_boses = {
             61, 54, 6, 69, 24, 27, 94, 44, 16, 20, 131, 132, 148, 162, 177, 178, 208, 228, 242, 245, 230, 197, 166, 150, 233, 218, 169, 175, 158, 202
         };
-        public static readonly byte[] rooms_with_palette_3 = {
+        public readonly byte[] rooms_with_palette_3 = {
             9, 17, 18, 30, 33, 37, 40, 41, 43, 46, 47, 49, 52, 56, 57, 59, 63, 72, 78, 79, 80, 93, 95, 110, 113, 116, 117, 121, 123, 126, 
             132, 137, 144, 150, 157, 171, 172, 177, 182, 187, 188, 193, 195, 200, 202, 210, 214, 215, 216, 219, 222, 223, 225, 229, 237, 241, 245, 246, 247
         };
-        public static readonly byte[] rooms_with_palette_1 = {
+        public readonly byte[] rooms_with_palette_1 = {
             54, 69, 131
         };
-        public static readonly byte[] door_metatiles = {
+        public readonly byte[] door_metatiles = {
             23, 151, 81, 94
         };
-        public static readonly byte[,] dungeon_tileset_indexes = {
+        public readonly byte[,] dungeon_tileset_indexes = {
             {0x74,0x76,0x75,0x77}, // floor tile
             {0xb0,0xb2,0xb1,0xb3}, // block
             {0xf4,0xf4,0xf4,0xf4}, // water/lava
@@ -197,7 +195,7 @@ namespace The_Legend_of_Zelda
             {0xfa,0xfa,0xfa,0xfa}, // bricks
             {0x6f,0x6f,0x6f,0x6f}  // gray stairs
         };
-        public static readonly uint[] dungeon_enemy_list = {
+        public readonly uint[] dungeon_enemy_list = {
             0x55550000, 0xbbccc000, 0x2288aa00, 0x60000000, 0x00000000, 0x00000000, 0xffff0001, 0x00005555, 0x60000000, 0x55555555, 0x70000000, 0x00000000, 0x55550000, 0xbbbbbb00, 0x00000000, 0x55550000,
             0xffff0005, 0xaa228800, 0xbbbbbb00, 0xbbcccaaa, 0xffff0009, 0xaa228800, 0x99999000, 0x60000000, 0xffff0003, 0x00000000, 0x99999000, 0xffff0004, 0x00000000, 0x60000000, 0x55555550, 0x60000000,
             0xbbccc000, 0xbbccc000, 0x55555555, 0x60000000, 0xbbcc7000, 0x22999000, 0xcccccccc, 0x11111000, 0x99999000, 0x11111000, 0x70000000, 0x99900000, 0xffff0007, 0xccccc000, 0x99999000, 0x9955cc00,
@@ -215,20 +213,20 @@ namespace The_Legend_of_Zelda
             0x75555000, 0xaaaaa000, 0x55555555, 0xaaaaaa00, 0xffff0007, 0x88888888, 0xffff0003, 0x55550000, 0x55550000, 0xffff000b, 0x55555555, 0x88888000, 0x2aaabbcc, 0x222bbccc, 0x60000000, 0x55550000,
             0xccccc000, 0x00000000, 0xffff000c, 0x55550000, 0x22aab999, 0xffff0003, 0x00000000, 0x22288555, 0x55550000, 0x00000000, 0x55550000, 0xbbccc222, 0xee000000, 0x55550000, 0x00000000, 0x55550000
         };
-        public static readonly short[] bombable_connections = {
+        public readonly short[] bombable_connections = {
             3, 5, 18, 45, 49, 50, 51, 58, 61, 65, 78, 110, 137, 142, 150, 152, 167, 174, 217, 219, 256, 257, 
             265, 279, 283, 286, 291, 293, 299, 304, 314, 318, 323, 331, 332, 339, 343, 346, 349, 350, 355, 359, 
             360, 369, 375, 381, 406, 410, 418, 420, 428, 441, 442, 443, 449
         };
-        public static readonly short[] key_door_connections = {
+        public readonly short[] key_door_connections = {
             2, 17, 27, 28, 34, 40, 76, 80, 82, 85, 86, 89, 93, 102, 113, 122, 133, 135, 148, 151, 163, 173, 205,
             211, 214, 221, 225, 262, 275, 284, 289, 295, 300, 308, 309, 310, 313, 320, 341, 342, 347, 348, 368, 
             384, 395, 400, 429, 438, 469, 470, 503
         };
 
-        public static bool[] door_statuses = new bool[door_types.Length];
+        public bool[] door_statuses = new bool[NUMBER_OF_DOORS];
 
-        public static void Init(byte dungeon)
+        public void Init(byte dungeon)
         {
             Link.knockback_timer = 0;
             Link.iframes_timer = 0;
@@ -270,36 +268,22 @@ namespace The_Legend_of_Zelda
 
             LinkWalkAnimation();
             opening_animation_timer = 0;
-            OverworldCode.black_square_stairs_flag = false;
-            OverworldCode.stair_warp_flag = false;
-            map_dot.shown = false;
+            OC.black_square_stairs_flag = false;
+            OC.stair_warp_flag = false;
+            Menu.map_dot.shown = false;
         }
 
-        public static void Tick()
+        protected override void SpecificCode()
         {
-            if (opening_animation_timer <= 80)
-            {
-                OpeningAnimation();
-                return;
-            }
-
-            DrawHUD();
-
             if (link_walk_animation_timer > 0)
                 LinkWalkAnimation();
-
-            Link.Tick();
 
             if (scroll_animation_timer > 500)
                 DoorCode();
 
             CheckForWarp();
-            Menu.Tick();
 
-            if (menu_open)
-                Program.can_pause = false;
-
-            if (!menu_open)
+            if (!Menu.menu_open)
             {
                 if (dark_room_animation_timer == 0 && link_walk_animation_timer == 0)
                     Scroll();
@@ -308,42 +292,50 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        static void OpeningAnimation()
+        void OpeningAnimation()
         {
-            if (opening_animation_timer == 80)
+            opening_animation_timer++;
+
+            if (opening_animation_timer >= OPENING_ANIMATION_DONE)
             {
                 Link.Show(true);
-                can_open_menu = true;
-                draw_hud_objects = true;
-                opening_animation_timer++;
+                Menu.can_open_menu = true;
+                Menu.draw_hud_objects = true;
                 Sound.PlaySong(Sound.Songs.DUNGEON);
                 Program.can_pause = true;
                 Menu.map_dot.shown = true;
                 return;
             }
 
-            can_open_menu = false;
+            Menu.can_open_menu = false;
             Link.can_move = false;
             Link.Show(false);
-            draw_hud_objects = false;
-            opening_animation_timer++;
+            Menu.draw_hud_objects = false;
 
             if (opening_animation_timer % 5 != 0)
                 return;
 
-            Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, current_screen, 0);
             int num_rows_to_erase = 16 - opening_animation_timer / 5;
+            if (num_rows_to_erase <= 0)
+            {
+                opening_animation_timer = OPENING_ANIMATION_DONE - 1;
+            }
+
+            Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, current_screen, 0);
+            int left_index_start = Textures.PPU_WIDTH * 8;
+            int right_index_start = Textures.PPU_WIDTH * 9 - 1;
+
             for (int i = 0; i < num_rows_to_erase; i++)
             {
-                for (int j = 0; j < 22 * Textures.PPU_WIDTH; j += Textures.PPU_WIDTH)
+                for (int j = 0; j < 22; j++)
                 {
-                    Textures.ppu[0x100 + j + i] = 0x24;
-                    Textures.ppu[0x11f + j - i] = 0x24;
+                    Textures.ppu[left_index_start + j * Textures.PPU_WIDTH + i] = 0x24;
+                    Textures.ppu[right_index_start + j * Textures.PPU_WIDTH - i] = 0x24;
                 }
             }
         }
 
-        public static void LoadPalette(bool underground_room = false)
+        public void LoadPalette(bool underground_room = false)
         {
             // the side-view rooms are gray, no matter the dungeon palette
             if (underground_room)
@@ -387,12 +379,12 @@ namespace The_Legend_of_Zelda
 
             // dungeons 2, 3, 5 and 9 have red water (lava)
             if ((current_dungeon + 1) is 2 or 3 or 5 or 9)
-                Palettes.LoadPalette(3, 1, Color._16_RED_ORANGE);
+                Palettes.LoadPalette(PaletteID.BG_3, 1, Color._16_RED_ORANGE);
             else
-                Palettes.LoadPalette(3, 1, Color._12_SMEI_DARK_BLUE);
+                Palettes.LoadPalette(PaletteID.BG_3, 1, Color._12_SMEI_DARK_BLUE);
         }
 
-        public static DoorType GetDoorType(byte room_id, Direction door_direction)
+        public DoorType GetDoorType(byte room_id, Direction door_direction)
         {
             // door_types must be cleared before use
             if (door_types[(int)door_direction] != DoorType.NONE)
@@ -491,7 +483,7 @@ namespace The_Legend_of_Zelda
         }
 
         // get connection ID of connection between two rooms, found with direction relative to room id
-        public static int getConnectionID(byte room_id, Direction door_direction)
+        public int getConnectionID(byte room_id, Direction door_direction)
         {
             int connection_id = 2 * room_id;
             if (door_direction == Direction.LEFT)
@@ -507,7 +499,7 @@ namespace The_Legend_of_Zelda
                 return connection_id;
         }
 
-        static void Scroll()
+        void Scroll()
         {
             // no scrolling in the side view rooms!
             if (room_list[current_screen] >= 0x2a)
@@ -533,7 +525,7 @@ namespace The_Legend_of_Zelda
                     scroll_animation_timer = 0;
                     scroll_direction = Direction.LEFT;
                 }
-                else if (Link.x > 239 && (Control.IsHeld(Buttons.RIGHT) || tornado_out))
+                else if (Link.x > 239 && (Control.IsHeld(Buttons.RIGHT) || Menu.tornado_out))
                 {
                     scroll_destination = (byte)(current_screen + 1);
                     scroll_animation_timer = 0;
@@ -546,7 +538,7 @@ namespace The_Legend_of_Zelda
             if (scroll_animation_timer == 0)
             {
                 Link.Show(false);
-                can_open_menu = false;
+                Menu.can_open_menu = false;
                 UnloadSpritesRoomTransition();
                 ResetLinkPowerUps();
 
@@ -554,12 +546,12 @@ namespace The_Legend_of_Zelda
                 {
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
                     Program.gamemode = Program.Gamemode.OVERWORLD;
-                    OverworldCode.black_square_stairs_return_flag = true;
+                    OC.black_square_stairs_return_flag = true;
                     Link.Show(false);
                     Link.SetPos(-16, -16);
-                    OverworldCode.Init();
-                    OverworldCode.current_screen = OverworldCode.return_screen;
-                    scroll_animation_timer = 1000;
+                    OC.Init();
+                    OC.current_screen = OC.return_screen;
+                    scroll_animation_timer = SCROLL_ANIMATION_DONE;
                     return;
                 }
 
@@ -651,6 +643,7 @@ namespace The_Legend_of_Zelda
                 Link.Show(true);
                 x_scroll = 0;
                 y_scroll = 0;
+                Menu.blue_candle_limit_reached = false;
                 Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 0);
                 current_screen = scroll_destination;
                 if (scroll_direction == Direction.UP)
@@ -662,18 +655,18 @@ namespace The_Legend_of_Zelda
                 else
                     Link.SetPos(new_x: 1);
                 scroll_animation_timer += 1000;
-                can_open_menu = true;
+                Menu.can_open_menu = true;
 
                 LinkWalkAnimation();
             }
         }
 
         // plays the room darkening animation, either forwards or backwards depending on dark room enter or exit
-        static void DarkeningAnimation()
+        void DarkeningAnimation()
         {
             // often for this animation you're just lowering a palette color one level down, so this function takes a list of indices and lowers them by 16
             // this function also makes it so we don't have to care about what color the dungeon uses
-            static void reducePalettes(byte[] to_reduce)
+            void reducePalettes(byte[] to_reduce)
             {
                 foreach (byte i in to_reduce)
                     if (Palettes.active_palette_list[i] > 15)
@@ -695,21 +688,21 @@ namespace The_Legend_of_Zelda
 
                 case 11:
                     reducePalettes(list_11);
-                    Palettes.LoadPalette(2, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._0F_BLACK);
                     break;
 
                 case 1:
-                    Palettes.LoadPalette(2, 2, Color._0F_BLACK);
-                    Palettes.LoadPalette(3, 1, Color._0F_BLACK);
-                    Palettes.LoadPalette(3, 2, Color._0F_BLACK);
-                    Palettes.LoadPalette(3, 3, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_3, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_3, 2, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_3, 3, Color._0F_BLACK);
                     break;
 
                 case -21:
                     LoadPalette();
                     reducePalettes(list_21);
                     reducePalettes(list_11);
-                    Palettes.LoadPalette(2, 1, Color._0F_BLACK);
+                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._0F_BLACK);
                     break;
 
                 case -11:
@@ -724,7 +717,7 @@ namespace The_Legend_of_Zelda
         }
 
         // spawn ennemies and or bosses in a simillar way to overworld
-        static void SpawnEnemies()
+        void SpawnEnemies()
         {
             uint enemies = dungeon_enemy_list[current_screen];
             // the first 16 bits of the enemy code being FFFF is a signal to load the boss of that room instead, whose id is the 16 next bits.
@@ -851,7 +844,7 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        static void SpawnItems()
+        void SpawnItems()
         {
             if (room_list[current_screen] == 11 && !SaveLoad.GetTriforceFlag(current_dungeon))
             {
@@ -866,36 +859,7 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        static void UnloadSpritesRoomTransition()
-        {
-            for (int i = 0; i < sprites.Count; i++)
-            {
-                if (sprites[i].unload_during_transition)
-                {
-                    sprites.RemoveAt(i);
-                    i--;
-                }
-            }
-        }
-
-        static void ResetLinkPowerUps()
-        {
-            fire_out = 0;
-            boomerang_out = false;
-            arrow_out = false;
-            magic_wave_out = false;
-            bait_out = false;
-            bomb_out = false;
-            if (Link.shown)
-                tornado_out = false;
-            sword_proj_out = false;
-            Link.clock_flash = false;
-            Link.iframes_timer = 0;
-            Link.self.palette_index = 4;
-            Link.counterpart.palette_index = 4;
-        }
-
-        public static void DrawDoors(byte room, byte screen_index, bool redraw = false)
+        public void DrawDoors(byte room, byte screen_index, bool redraw = false)
         {
             int screen_index_offset = screen_index * 0x3c0;
 
@@ -1033,13 +997,13 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        public static void LinkWalkAnimation()
+        public void LinkWalkAnimation()
         {
-            const byte anim_len = 10;
+            const byte ANIM_LEN = 10;
             if (link_walk_animation_timer == 0)
-                link_walk_animation_timer = anim_len;
+                link_walk_animation_timer = ANIM_LEN;
 
-            if (link_walk_animation_timer == anim_len)
+            if (link_walk_animation_timer == ANIM_LEN)
             {
                 if (is_dark && !GetRoomDarkness(current_screen))
                 {
@@ -1081,7 +1045,7 @@ namespace The_Legend_of_Zelda
             link_walk_animation_timer--;
         }
 
-        static void DoorCode()
+        void DoorCode()
         {
             bool redraw = false;
             for (int i = 0; i < door_types.Length; i++)
@@ -1143,7 +1107,7 @@ namespace The_Legend_of_Zelda
                 DrawDoors(current_screen, 0, true);
         }
 
-        static void CheckForWarp()
+        void CheckForWarp()
         {
             if (warp_flag)
             {
@@ -1152,7 +1116,7 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        static byte GetMetatileIndexFromGiftLocationID(byte id)
+        byte GetMetatileIndexFromGiftLocationID(byte id)
         {
             byte gift_metatile = 0;
             switch (current_dungeon)
@@ -1197,7 +1161,7 @@ namespace The_Legend_of_Zelda
             return gift_metatile;
         }
 
-        public static bool GetRoomDarkness(byte room)
+        public bool GetRoomDarkness(byte room)
         {
             int value = dark_rooms[room >> 4] & (1 << (15 - (room % 16)));
             return value > 0;

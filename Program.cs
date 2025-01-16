@@ -1,4 +1,6 @@
-﻿using static SDL2.SDL;
+﻿using System.IO;
+using System.Runtime.CompilerServices;
+using static SDL2.SDL;
 using static SDL2.SDL_mixer;
 
 namespace The_Legend_of_Zelda
@@ -16,7 +18,9 @@ namespace The_Legend_of_Zelda
             SCREENTEST
         }
 
-        private const double NES_FPS = 60.1; // the NES runs at just under 60.1 frames per second. This is the goal.
+        private const double NES_FPS = 60.0988; // the NES runs at just under 60.1 frames per second. This is the goal.
+        public const int NES_OUTPUT_WIDTH = 256;
+        public const int NES_OUTPUT_HEIGHT = 240;
 
         public static IntPtr window;
         public static SDL_Event e;
@@ -26,17 +30,23 @@ namespace The_Legend_of_Zelda
         public static bool can_pause = false;
 
         public static int gTimer = 0;
-        const int FPS = (int)(TimeSpan.TicksPerSecond / NES_FPS);
+        const int TicksPerFrame = (int)(TimeSpan.TicksPerSecond / NES_FPS);
         static long frame_time;
+        static int screenshot_message_timer = 0;
+        static string screenshot_file_name = "";
 
         public static Gamemode gamemode = Gamemode.TITLESCREEN;
         public static Random RNG = new Random();
+        public static OverworldCode OC = new();
+        public static DungeonCode DC = new();
 
         // debug
         static long last_fps_display = DateTime.Now.Ticks;
         static ushort fps_count = 0, last_fps_count;
-        public static bool show_fps = false, input_display = false, uncap_fps = false, mute_sound = false, screentest = false, 
-            fast_forward_with_tab = true;
+        public static bool advance_1_frame = false;
+        public static bool full_pause = false;
+        public static bool show_fps = false, input_display = false, uncap_fps = false, mute_sound = true, screentest = false, 
+            fast_forward = true, pause_whenever = true, frame_advance = true, reset = true;
 
         static void Main()
         {
@@ -44,7 +54,8 @@ namespace The_Legend_of_Zelda
 
             while (!exit)
             {
-                gTimer++;
+                if (!full_pause)
+                    gTimer++;
                 Control.Poll();
 
                 if (!Paused())
@@ -55,19 +66,8 @@ namespace The_Legend_of_Zelda
                 SDL_RenderPresent(Screen.render);
 
                 if (!uncap_fps)
-                    while (frame_time > DateTime.Now.Ticks - FPS) ;
+                    while (frame_time > DateTime.Now.Ticks - TicksPerFrame) ;
                 frame_time = DateTime.Now.Ticks;
-
-                #region console fps display
-                //if (last_fps_display + 10000000 < DateTime.Now.Ticks)
-                //{
-                //    last_fps_count = fps_count;
-                //    last_fps_display = DateTime.Now.Ticks;
-                //    fps_count = 0;
-                //    Console.WriteLine(last_fps_count);
-                //}
-                //fps_count++;
-                #endregion
             }
 
             SDL_DestroyRenderer(Screen.render);
@@ -79,7 +79,8 @@ namespace The_Legend_of_Zelda
         static void Init()
         {
             SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-            window = SDL_CreateWindow("The Legend of Zelda", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 256, 240, SDL_WindowFlags.SDL_WINDOW_SHOWN);
+            window = SDL_CreateWindow("The Legend of Zelda", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, NES_OUTPUT_WIDTH * 2, NES_OUTPUT_HEIGHT * 2,
+                SDL_WindowFlags.SDL_WINDOW_SHOWN | SDL_WindowFlags.SDL_WINDOW_RESIZABLE);
             SDL_PollEvent(out e);
             Palettes.Init();
             Textures.Init();
@@ -110,10 +111,10 @@ namespace The_Legend_of_Zelda
                     FileSelectCode.Tick();
                     break;
                 case Gamemode.OVERWORLD:
-                    OverworldCode.Tick();
+                    OC.Tick();
                     break;
                 case Gamemode.DUNGEON:
-                    DungeonCode.Tick();
+                    DC.Tick();
                     break;
                 case Gamemode.DEATH:
                     DeathCode.Tick();
@@ -128,11 +129,10 @@ namespace The_Legend_of_Zelda
 
         static void Render()
         {
-            //Textures.ppu[500] = (byte)(gTimer / 15);//DEBUG
-            //Screen.tiles[500].ChangeTexture();
-
             Screen.Render();
 
+            SDL_GetWindowSize(window, out int w, out int h);
+            DebugText.SetScreenDimensions(w, h);
             if (show_fps)
             {
                 if (last_fps_display + 10000000 < DateTime.Now.Ticks)
@@ -186,12 +186,31 @@ namespace The_Legend_of_Zelda
                 if (Control.IsPressed(Buttons.SELECT))
                     SDL_RenderDrawPoint(Screen.render, 23, 30);
             }
+            if (screenshot_message_timer > 0)
+            {
+                screenshot_message_timer--;
+                DebugText.DisplayText($"saved screenshot at {screenshot_file_name}", 10, 10, 1, 0xff0000);
+            }
             //Text.DisplayText(SDL_GetError(), 1, 200, 1);
             //Text.DisplayText(gTimer.ToString(), 10, 40, 1);
         }
 
         static bool Paused()
         {
+            if (advance_1_frame)
+            {
+                advance_1_frame = false;
+                full_pause = true;
+                gTimer++;
+                return false;
+            }
+
+            if (pause_whenever && full_pause)
+            {
+                DebugText.DisplayText("II", 10, 10, 3, 0xff0000);
+                return true;
+            }
+
             if (gamemode != Gamemode.OVERWORLD && gamemode != Gamemode.DUNGEON)
                 return false;
 
@@ -209,7 +228,7 @@ namespace The_Legend_of_Zelda
             return game_paused;
         }
 
-        public static unsafe void Screenshot()
+        public static void Screenshot()
         { 
             // little endian >:(
             byte[] bmp_header =
@@ -239,30 +258,51 @@ namespace The_Legend_of_Zelda
                     return;
             }
 
-            using (Stream stream = File.Create(@$"screenshots\capture{i}.bmp"))
+            using (FileStream stream = File.Create(@$"screenshots\capture{i}.bmp"))
             {
                 BinaryWriter bw = new BinaryWriter(stream);
                 SDL_Color couleure;
 
                 bw.Write(bmp_header);
 
-                byte* ref_screen = (byte*)((SDL_Surface*)Screen.window_surface)->pixels;
-
-                for (int y = 239; y >= 0; y--)
+                unsafe
                 {
-                    for (int x = 0; x < 256; x++)
-                    {
-                        couleure = Palettes.color_list[Palettes.active_palette_list[ref_screen[(y << 8) + x]]];
+                    byte* ref_screen = (byte*)((SDL_Surface*)Screen.window_surface)->pixels;
 
-                        bw.Write(couleure.b);
-                        bw.Write(couleure.g);
-                        bw.Write(couleure.r);
+                    for (int y = 239; y >= 0; y--)
+                    {
+                        for (int x = 0; x < 256; x++)
+                        {
+                            couleure = Palettes.color_list[Palettes.active_palette_list[ref_screen[(y << 8) + x]]];
+
+                            bw.Write(couleure.b);
+                            bw.Write(couleure.g);
+                            bw.Write(couleure.r);
+                        }
                     }
                 }
+
+                screenshot_file_name = stream.Name;
+                screenshot_message_timer = 500;
             }
+        }
+
+        public static void Reset()
+        {
+            gTimer = 0;
+            gamemode = Gamemode.TITLESCREEN;
+            Screen.sprites.Clear();
+            Palettes.Init();
+            Textures.Init();
+            game_paused = false;
+            full_pause = false;
+            advance_1_frame = false;
+            Screen.x_scroll = 0;
+            Screen.y_scroll = 0;
         }
     }
 
+    // copied from older project. this is an old version of my sdl debug text code
     public static class DebugText
     {
         // documentation texte
@@ -286,14 +326,15 @@ namespace The_Legend_of_Zelda
         //         scroll sera ajusté pour ne pas dépasser la longeure du texte. si scroll est négatif, aucun texte n'est affiché.
         //
         // toutes ces valeures peuvent êtres complètements différentes d'une image à l'autre, mais marchent mieux avec un changement lent.
-        public static short extra_y = 0;
-        public static int ret_length = 0, text_tick = 0;
+        private static short extra_y = 0;
+        private static int ret_length = 0, text_tick = 0;
+        static int w, h;
         private static void DisplayChar(char charac, int x, int y, byte size, short i, byte r, byte g, byte b, byte a)
         {
             SDL_SetRenderDrawColor(Screen.render, r, g, b, a);
             y += extra_y;
             x -= (short)ret_length;
-            if (x + size * 5 > 256)
+            if (x + size * 5 > w)
             {
                 extra_y += (short)(13 * size);
                 ret_length = (int)((i + 1) * 8 * size);
@@ -611,8 +652,13 @@ namespace The_Legend_of_Zelda
             text = text.ToLower();
             for (short i = 0; i < scroll; i++)
             {
-                DisplayChar(text[i], (short)(x + i * 8 * size), y, size, i, (byte)((color & 0xFF0000) >> 16), (byte)((color & 0x00FF00) >> 8), (byte)(color & 0x0000FF), (byte)alpha);
+                DisplayChar(text[i], x + i * 8 * size, y, size, i, (byte)((color & 0xFF0000) >> 16), (byte)((color & 0x00FF00) >> 8), (byte)(color & 0x0000FF), (byte)alpha);
             }
+        }
+        public static void SetScreenDimensions(int new_w, int new_h)
+        {
+            w = new_w;
+            h = new_h;
         }
     }
 }

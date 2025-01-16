@@ -1,4 +1,6 @@
-﻿namespace The_Legend_of_Zelda
+﻿using static The_Legend_of_Zelda.Program;
+
+namespace The_Legend_of_Zelda
 {
     public static class DeathCode
     {
@@ -59,12 +61,12 @@
             else if (death_timer == 60)
             {
                 //TODO: does this cover the case of dying in the graveyard? (or anywhere with gray palette)
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 1, Color._17_DARK_GOLD);
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 2, Color._16_RED_ORANGE);
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 3, Color._26_LIGHT_ORANGE);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 1, Color._17_DARK_GOLD);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 2, Color._16_RED_ORANGE);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 3, Color._26_LIGHT_ORANGE);
+                Palettes.LoadPalette(PaletteID.BG_2, 1, Color._17_DARK_GOLD);
+                Palettes.LoadPalette(PaletteID.BG_2, 2, Color._16_RED_ORANGE);
+                Palettes.LoadPalette(PaletteID.BG_2, 3, Color._26_LIGHT_ORANGE);
+                Palettes.LoadPalette(PaletteID.BG_3, 1, Color._17_DARK_GOLD);
+                Palettes.LoadPalette(PaletteID.BG_3, 2, Color._16_RED_ORANGE);
+                Palettes.LoadPalette(PaletteID.BG_3, 3, Color._26_LIGHT_ORANGE);
             }
             else if (death_timer > 60 && death_timer <= 120)
             {
@@ -87,43 +89,43 @@
             // death animation part 3: background fades to black
             else if (death_timer == 116)
             {
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 1, Color._06_RED);
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 2, Color._17_DARK_GOLD);
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 3, Color._16_RED_ORANGE);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 1, Color._06_RED);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 2, Color._17_DARK_GOLD);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 3, Color._16_RED_ORANGE);
+                Palettes.LoadPalette(PaletteID.BG_2, 1, Color._06_RED);
+                Palettes.LoadPalette(PaletteID.BG_2, 2, Color._17_DARK_GOLD);
+                Palettes.LoadPalette(PaletteID.BG_2, 3, Color._16_RED_ORANGE);
+                Palettes.LoadPalette(PaletteID.BG_3, 1, Color._06_RED);
+                Palettes.LoadPalette(PaletteID.BG_3, 2, Color._17_DARK_GOLD);
+                Palettes.LoadPalette(PaletteID.BG_3, 3, Color._16_RED_ORANGE);
             }
             else if (death_timer == 125)
             {
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 1, Color._07_BROWN);
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 2, Color._06_RED);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 1, Color._07_BROWN);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 2, Color._06_RED);
+                Palettes.LoadPalette(PaletteID.BG_2, 1, Color._07_BROWN);
+                Palettes.LoadPalette(PaletteID.BG_2, 2, Color._06_RED);
+                Palettes.LoadPalette(PaletteID.BG_3, 1, Color._07_BROWN);
+                Palettes.LoadPalette(PaletteID.BG_3, 2, Color._06_RED);
             }
             else if (death_timer == 135)
             {
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 1, Color._0F_BLACK);
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 2, Color._07_BROWN);
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 3, Color._06_RED);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 1, Color._0F_BLACK);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 2, Color._07_BROWN);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 3, Color._06_RED);
+                Palettes.LoadPalette(PaletteID.BG_2, 1, Color._0F_BLACK);
+                Palettes.LoadPalette(PaletteID.BG_2, 2, Color._07_BROWN);
+                Palettes.LoadPalette(PaletteID.BG_2, 3, Color._06_RED);
+                Palettes.LoadPalette(PaletteID.BG_3, 1, Color._0F_BLACK);
+                Palettes.LoadPalette(PaletteID.BG_3, 2, Color._07_BROWN);
+                Palettes.LoadPalette(PaletteID.BG_3, 3, Color._06_RED);
             }
             else if (death_timer == 145)
             {
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 2, Color._0F_BLACK);
-                Palettes.LoadPalette((byte)PaletteID.BG_2, 3, Color._0F_BLACK);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 2, Color._0F_BLACK);
-                Palettes.LoadPalette((byte)PaletteID.BG_3, 3, Color._0F_BLACK);
+                Palettes.LoadPalette(PaletteID.BG_2, 2, Color._0F_BLACK);
+                Palettes.LoadPalette(PaletteID.BG_2, 3, Color._0F_BLACK);
+                Palettes.LoadPalette(PaletteID.BG_3, 2, Color._0F_BLACK);
+                Palettes.LoadPalette(PaletteID.BG_3, 3, Color._0F_BLACK);
             }
 
             // death animation part 4: link goes gray then explodes into a spark
             else if (death_timer == 146)
             {
-                Palettes.LoadPalette((byte)PaletteID.SP_0, 1, Color._10_GRAY);
-                Palettes.LoadPalette((byte)PaletteID.SP_0, 2, Color._30_WHITE);
-                Palettes.LoadPalette((byte)PaletteID.SP_0, 3, Color._00_DARK_GRAY);
+                Palettes.LoadPalette(PaletteID.SP_0, 1, Color._10_GRAY);
+                Palettes.LoadPalette(PaletteID.SP_0, 2, Color._30_WHITE);
+                Palettes.LoadPalette(PaletteID.SP_0, 3, Color._00_DARK_GRAY);
             }
             else if (death_timer == 170)
             {
@@ -224,13 +226,14 @@
                 if (died_in_dungeon)
                 {
                     Program.gamemode = Program.Gamemode.DUNGEON;
-                    DungeonCode.Init(DungeonCode.current_dungeon);
+                    DC.Init(DC.current_dungeon);
                 }
                 else
                 {
-                    OverworldCode.current_screen = OverworldCode.DEFAULT_SPAWN_ROOM;
+                    OC.current_screen = OverworldCode.DEFAULT_SPAWN_ROOM;
                     Program.gamemode = Program.Gamemode.OVERWORLD;
-                    OverworldCode.Init();
+                    Link.Init();
+                    OC.Init();
                 }
 
                 return;

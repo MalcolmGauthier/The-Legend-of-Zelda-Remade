@@ -1,4 +1,5 @@
-﻿using static The_Legend_of_Zelda.OverworldCode;
+﻿using static The_Legend_of_Zelda.Program;
+
 namespace The_Legend_of_Zelda
 {
     public static class WarpCode
@@ -88,9 +89,8 @@ namespace The_Legend_of_Zelda
             item_collected = false;
             side_rupee.unload_during_transition = true;
             side_rupee.shown = true;
-            level_7_entrance_timer = LEVEL_7_ENTRANCE_ANIM_DONE;
 
-            warp_info = (WarpType)screen_warp_info[return_screen];
+            warp_info = (WarpType)screen_warp_info[OC.return_screen];
             text_counter = 0;
 
             // init text, NPC, flags, prices and other stuff
@@ -98,14 +98,14 @@ namespace The_Legend_of_Zelda
             {
                 case WarpType.DOOR_REPAIR_CHARGE or WarpType.SECRET_10 or WarpType.SECRET_30 or WarpType.SECRET_100:
                     // these can only happen once
-                    if (SaveLoad.GetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen)))
+                    if (SaveLoad.GetGiftFlag((byte)Array.IndexOf(gift_flag_list, OC.return_screen)))
                         break;
 
                     if (warp_info == WarpType.DOOR_REPAIR_CHARGE)
                     {
                         current_npc = NPC.OLD_MAN;
                         // door repair charge activates the moment the text ends, so unlike the secret rupees, you cannot leave the cave without activating this flag
-                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, OC.return_screen), true);
                         text_row_1 = new byte[19] { 0x19, 0xa, 0x22, 0x24, 0x16, 0xe, 0x24, 0xf, 0x18, 0x1b, 0x24, 0x1d, 0x11, 0xe, 0x24, 0xd, 0x18, 0x18, 0x1b }; // PAY ME FOR THE DOOR
                         text_row_2 = new byte[14] { 0x1b, 0xe, 0x19, 0xa, 0x12, 0x1b, 0x24, 0xc, 0x11, 0xa, 0x1b, 0x10, 0xe, 0x2c }; // REPAIR CHARGE.
                     }
@@ -117,6 +117,7 @@ namespace The_Legend_of_Zelda
 
                         items[1] = new FlickeringSprite(0x32, 6, 124, 152, 8, 0x32, second_palette_index: 5);
                         items[1].shown = true;
+                        items[1].unload_during_transition = true;
                         Screen.sprites.Add(items[1]);
                     }
                     break;
@@ -157,6 +158,7 @@ namespace The_Legend_of_Zelda
                     for (int i = 0; i < items.Length; i++)
                     {
                         items[i] = new FlickeringSprite(0x32, 6, 92 + (i * 32), 152, 8, 0x32, second_palette_index: 5);
+                        items[i].unload_during_transition = true;
                         Screen.sprites.Add(items[i]);
                     }
 
@@ -279,10 +281,10 @@ namespace The_Legend_of_Zelda
 
                 case WarpType.ITEM_GIVEAWAY:
                     // if item gotten, empty cave
-                    if ((return_screen == 10 && SaveLoad.white_sword) ||
-                        (return_screen == 33 && SaveLoad.magical_sword) ||
-                        (return_screen == 119 && SaveLoad.wooden_sword) ||
-                        (return_screen == 14 && SaveLoad.letter))
+                    if ((OC.return_screen == 10 && SaveLoad.white_sword) ||
+                        (OC.return_screen == 33 && SaveLoad.magical_sword) ||
+                        (OC.return_screen == 119 && SaveLoad.wooden_sword) ||
+                        (OC.return_screen == 14 && SaveLoad.letter))
                     {
                         break;
                     }
@@ -295,16 +297,16 @@ namespace The_Legend_of_Zelda
                     current_npc = NPC.OLD_MAN;
 
                     // stuff that depends on which giveaway it is
-                    switch (return_screen)
+                    switch (OC.return_screen)
                     {
                         case 10 or 33:
-                            if ((SaveLoad.white_sword && return_screen == 10) ||
-                                (SaveLoad.magical_sword && return_screen == 33))
+                            if ((SaveLoad.white_sword && OC.return_screen == 10) ||
+                                (SaveLoad.magical_sword && OC.return_screen == 33))
                                 break;
 
                             text_row_1 = new byte[19] { 0x16, 0xa, 0x1c, 0x1d, 0xe, 0x1b, 0x24, 0x1e, 0x1c, 0x12, 0x17, 0x10, 0x24, 0x12, 0x1d, 0x24, 0xa, 0x17, 0xd }; // MASTER USING IT AND
                             text_row_2 = new byte[19] { 0x24, 0x22, 0x18, 0x1e, 0x24, 0xc, 0xa, 0x17, 0x24, 0x11, 0xa, 0x1f, 0xe, 0x24, 0x1d, 0x11, 0x12, 0x1c, 0x2c }; //  YOU CAN HAVE THIS.
-                            if (return_screen == 33)
+                            if (OC.return_screen == 33)
                             {
                                 items[1].tile_index = (byte)SpriteID.MAGIC_SWORD;
                                 items[1].palette_index = (byte)PaletteID.SP_2;
@@ -351,7 +353,7 @@ namespace The_Legend_of_Zelda
                         Screen.sprites.Add(items[i]);
                     }
 
-                    if (return_screen == 112)
+                    if (OC.return_screen == 112)
                     {
                         for (int i = 0; i < 3; i++)
                         {
@@ -376,7 +378,7 @@ namespace The_Legend_of_Zelda
                     break;
 
                 case WarpType.FREE_INFO:
-                    if (return_screen == 117)
+                    if (OC.return_screen == 117)
                     {
                         current_npc = NPC.OLD_WOMAN;
                         text_row_1 = new byte[16] {0x16,0xe,0xe,0x1d,0x24,0x1d,0x11,0xe,0x24,0x18,0x15,0xd,0x24,0x16,0xa,0x17}; // MEET THE OLD MAN
@@ -392,11 +394,11 @@ namespace The_Legend_of_Zelda
 
                 case WarpType.DUNGEON:
                     Program.gamemode = Program.Gamemode.DUNGEON;
-                    DungeonCode.Init((byte)Array.IndexOf(dungeon_locations, return_screen));
+                    DC.Init((byte)Array.IndexOf(dungeon_locations, OC.return_screen));
                     return;
 
                 case WarpType.HEALTH_UPGRADE:
-                    if (SaveLoad.GetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen)))
+                    if (SaveLoad.GetGiftFlag((byte)Array.IndexOf(gift_flag_list, OC.return_screen)))
                         break;
 
                     current_npc = NPC.OLD_MAN;
@@ -497,28 +499,28 @@ namespace The_Legend_of_Zelda
                     case WarpType.SECRET_10:
                         Textures.ppu[0x2cf] = 1;
                         Textures.ppu[0x2d0] = 0;
-                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, OC.return_screen), true);
                         break;
                     case WarpType.SECRET_30:
                         Textures.ppu[0x2cf] = 3;
                         Textures.ppu[0x2d0] = 0;
-                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, OC.return_screen), true);
                         break;
                     case WarpType.SECRET_100:
                         Textures.ppu[0x2ce] = 1;
                         Textures.ppu[0x2cf] = 0;
                         Textures.ppu[0x2d0] = 0;
-                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, OC.return_screen), true);
                         break;
                     case WarpType.ITEM_GIVEAWAY:
                         // do NOT give the sword if link does not meet these conditions
-                        if (return_screen == 10 && SaveLoad.nb_of_hearts < 5)
+                        if (OC.return_screen == 10 && SaveLoad.nb_of_hearts < 5)
                             return;
-                        else if (return_screen == 33 && SaveLoad.nb_of_hearts < 12)
+                        else if (OC.return_screen == 33 && SaveLoad.nb_of_hearts < 12)
                             return;
                         break;
                     case WarpType.HEALTH_UPGRADE:
-                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, return_screen), true);
+                        SaveLoad.SetGiftFlag((byte)Array.IndexOf(gift_flag_list, OC.return_screen), true);
                         break;
                 }
 
@@ -668,7 +670,7 @@ namespace The_Legend_of_Zelda
                     break;
 
                 case WarpType.ITEM_GIVEAWAY:
-                    switch (return_screen)
+                    switch (OC.return_screen)
                     {
                         case 10:
                             SaveLoad.white_sword = true;
@@ -707,7 +709,7 @@ namespace The_Legend_of_Zelda
                         { (26, 3), (20, go_up_up, the_mountain_ahead) }
                     };
 
-                    if (textData.TryGetValue((return_screen, chosen_item), out (int cost, byte[] row1, byte[] row2) data) && Link.AddRupees(-data.cost, false))
+                    if (textData.TryGetValue((OC.return_screen, chosen_item), out (int cost, byte[] row1, byte[] row2) data) && Link.AddRupees(-data.cost, false))
                     {
                         Link.AddRupees(-data.cost);
                         text_counter = 0;
@@ -763,53 +765,6 @@ namespace The_Legend_of_Zelda
             }
             
             Screen.sprites.Remove(side_rupee);
-        }
-
-        // sets the exact x and y coordinates that link will return to when exiting
-        public static void SetWarpReturnPosition()
-        {
-            Dictionary<byte, (int x, int y)> warpPositions = new()
-            {
-                { 11, (112, 128) },
-                { 34, (112, 128) },
-                { 26, (96, 128) },
-                { 98, (96, 128) },
-                { 28, (48, 112) },
-                { 73, (48, 112) },
-                { 29, (32, 112) },
-                { 33, (80, 112) },
-                { 35, (64, 96) },
-                { 40, (224, 160) },
-                { 52, (64, 112) },
-                { 61, (144, 112) },
-                { 66, (96, 96) },
-                { 109, (96, 96) },
-                { 70, (128, 176) },
-                { 71, (176, 160) },
-                { 72, (176, 112) },
-                { 75, (192, 96) },
-                { 77, (192, 144) },
-                { 78, (112, 112) },
-                { 81, (160, 160) },
-                { 86, (176, 176) },
-                { 91, (48, 160) },
-                { 99, (112, 160) },
-                { 104, (48, 144) },
-                { 106, (208, 160) },
-                { 107, (80, 160) },
-                { 120, (80, 144) },
-                { 121, (96, 112) }
-            };
-
-            if (warpPositions.TryGetValue(return_screen, out (int x, int y) position))
-            {
-                return_x = position.x;
-                return_y = position.y;
-            }
-            else
-            {
-                Link.SetPos(return_x, return_y);
-            }
         }
     }
 }

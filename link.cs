@@ -1,7 +1,9 @@
 ﻿using static The_Legend_of_Zelda.Screen;
 using static The_Legend_of_Zelda.Control;
 using static The_Legend_of_Zelda.SaveLoad;
+using static The_Legend_of_Zelda.Program;
 using System.Reflection;
+
 namespace The_Legend_of_Zelda
 {
     public enum Direction
@@ -136,8 +138,8 @@ namespace The_Legend_of_Zelda
             recorder = true;
             // c# doesn't have c++'s friend keyword, so fuck you c#, et reflection and die :)
             // (this is only used for testing ofc)
-            FieldInfo? lol = typeof(SaveLoad).GetField("_map_flags", BindingFlags.NonPublic | BindingFlags.Static);
-            lol?.SetValue(null, 0xffff);
+            FieldInfo? lol = typeof(SaveLoad).GetField("map_flags", BindingFlags.NonPublic | BindingFlags.Static);
+            lol?.SetValue(null, new ushort[]{ 0xffff, 0, 0});
             bomb_count = 8;
             ladder = true;
             raft = true;
@@ -197,7 +199,7 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        public static void Attack()
+        static void Attack()
         {
             if (current_action == Action.WALKING_LEFT)
                 current_action = Action.ATTACK_LEFT;
@@ -400,19 +402,19 @@ namespace The_Legend_of_Zelda
 
                     if (self.shown)
                     {
-                        OverworldCode.ChangeRecorderDestination(true);
+                        OC.ChangeRecorderDestination(true);
                     }
 
                     // IF LEVEL 7 ENTRANCE
-                    if (OverworldCode.current_screen == 66)
+                    if (OC.current_screen == 66)
                     {
-                        if (OverworldCode.level_7_entrance_timer == OverworldCode.LEVEL_7_ENTRANCE_ANIM_DONE)
-                            OverworldCode.level_7_entrance_timer = 0;
+                        if (OC.level_7_entrance_timer == OverworldCode.LEVEL_7_ENTRANCE_ANIM_DONE)
+                            OC.ActivateLevel7Animation();
                     }
                     else
                     {
                         if (!Menu.tornado_out && Program.gamemode == Program.Gamemode.OVERWORLD &&
-                            OverworldCode.current_screen != 128 && Menu.GetTriforcePieceCount() != 0)
+                            OC.current_screen != 128 && Menu.GetTriforcePieceCount() != 0)
                         {
                             new TornadoSprite(0, y);
                             Menu.tornado_out = true;
@@ -606,7 +608,7 @@ namespace The_Legend_of_Zelda
         {
             Menu.can_open_menu = false;
             can_move = false;
-            if (!OverworldCode.fairy_animation_active)
+            if (!OC.fairy_animation_active)
             {
                 if (Sound.IsMusicPlaying())
                     Sound.PauseMusic();
@@ -620,7 +622,7 @@ namespace The_Legend_of_Zelda
                 Sound.PlaySFX(Sound.SoundEffects.HEART, true);
             }
 
-            if (hp == nb_of_hearts && !OverworldCode.fairy_animation_active)
+            if (hp == nb_of_hearts && !OC.fairy_animation_active)
             {
                 Menu.can_open_menu = true;
                 full_heal_flag = false;
@@ -995,14 +997,14 @@ namespace The_Legend_of_Zelda
                 // 2 exceptions to collision logic.
 
                 // room 31 where you can walk through the wall to room 15
-                if (OverworldCode.current_screen == 31 && (metatile_index == 8 || metatile_index == 24))
+                if (OC.current_screen == 31 && (metatile_index == 8 || metatile_index == 24))
                 {
                     stair_speed = false;
                     return false;
                 }
                 // you can get stuck in the wall if you enter this room the wrong way, so we overwrite the tiles here to be empty
                 // (room below dungeon 2 entrance)
-                else if (OverworldCode.current_screen == 76 && (metatile_index == 79 || metatile_index == 111))
+                else if (OC.current_screen == 76 && (metatile_index == 79 || metatile_index == 111))
                 {
                     return false;
                 }
@@ -1015,7 +1017,7 @@ namespace The_Legend_of_Zelda
                     case 0x08:
                         if (meta_tiles[metatile_index].special && power_bracelet)
                         {
-                            new MovingTileSprite(OverworldCode.current_screen == 73 ? MovingTileSprite.MovingTile.GREEN_ROCK : MovingTileSprite.MovingTile.ROCK, metatile_index);
+                            new MovingTileSprite(OC.current_screen == 73 ? MovingTileSprite.MovingTile.GREEN_ROCK : MovingTileSprite.MovingTile.ROCK, metatile_index);
                         }
                         return true;
 
@@ -1035,7 +1037,7 @@ namespace The_Legend_of_Zelda
                         int mtl_x = metatile_index % 16 * 16;
                         int mtl_y = (metatile_index >> 4) * 16 + 64;
                         //TODO: ???
-                        if (mtl_x == 144 && mtl_y == 144 && OverworldCode.current_screen == 33)
+                        if (mtl_x == 144 && mtl_y == 144 && OC.current_screen == 33)
                             return true;
 
                         foreach (Sprite spr in sprites)
@@ -1080,13 +1082,13 @@ namespace The_Legend_of_Zelda
 
                     case 0x03:
                         if ((self.x % 16) == 0 && (self.y % 16) == 0 && has_moved_after_warp_flag)
-                            OverworldCode.black_square_stairs_flag = true;
+                            OC.black_square_stairs_flag = true;
                         return ((self.y + y_add & 15) < 8);
 
                     case 0x18:
                         if ((self.x % 16) == 0 && (self.y % 16) == 0)
                         {
-                            OverworldCode.stair_warp_flag = true;
+                            OC.stair_warp_flag = true;
                         }
                         return ((self.y + y_add & 15) < 8);
 
@@ -1098,7 +1100,7 @@ namespace The_Legend_of_Zelda
                             if (mt_i != 0x15)
                                 return false;
 
-                            OverworldCode.stair_warp_flag = true;
+                            OC.stair_warp_flag = true;
                         }
                         return false;
 
@@ -1108,7 +1110,7 @@ namespace The_Legend_of_Zelda
 
                     case 0x14:
                         // TODO: why check for which screen??
-                        if (raft && (OverworldCode.current_screen == 63 || OverworldCode.current_screen == 85))
+                        if (raft && (OC.current_screen == 63 || OC.current_screen == 85))
                         {
                             if (((self.x + 1) % 16) < 3 && ((self.y + 1) % 16) < 3)
                             {
@@ -1117,10 +1119,10 @@ namespace The_Legend_of_Zelda
                                 else
                                     facing_direction = Direction.UP;
 
-                                if (!OverworldCode.raft_flag)
+                                if (!OC.raft_flag)
                                     new RaftSprite();
 
-                                OverworldCode.raft_flag = true;
+                                OC.raft_flag = true;
                                 can_move = false;
                             }
                         }
@@ -1156,7 +1158,7 @@ namespace The_Legend_of_Zelda
                     case 0x0b:
                     case 0x0c or 0x0d or 0x0e or 0x0f or 0x10 or 0x11 or 0x12:
                         // only activate ladder if you have it, it's not being used, scrolling is done and you,re not near the edge of the screen
-                        if (ladder && !ladder_used && OverworldCode.scroll_animation_timer == OverworldCode.SCROLL_ANIMATION_DONE &&
+                        if (ladder && !ladder_used && OC.ScrollingDone() &&
                             y >= 66 && y <= 222 && x >= 2 && x <= 238)
                         {
                             new LadderSprite(metatile_index);
@@ -1190,7 +1192,7 @@ namespace The_Legend_of_Zelda
                         }
                         return true;
                     case 6:
-                        DungeonCode.warp_flag = true;
+                        DC.warp_flag = true;
                         return false;
 
                     case 10: // top of dungeon room
@@ -1258,11 +1260,11 @@ namespace The_Legend_of_Zelda
                 //TODO: find a way to cut this bullshit
                 SetOpenedKeyDoorsFlag(
                     (byte)Array.IndexOf(
-                        DungeonCode.key_door_connections,
-                        (short)DungeonCode.getConnectionID(
-                            DungeonCode.current_screen,
+                        DC.key_door_connections,
+                        (short)DC.getConnectionID(
+                            DC.current_screen,
                             (Direction)Array.IndexOf(
-                                DungeonCode.door_metatiles,
+                                DC.door_metatiles,
                                 (byte)metatile_index
                             )
                         )
@@ -1270,8 +1272,8 @@ namespace The_Legend_of_Zelda
                 true
                 );
 
-                DungeonCode.door_types[Array.IndexOf(DungeonCode.door_metatiles, (byte)metatile_index)] = DungeonCode.DoorType.OPEN;
-                DungeonCode.DrawDoors(DungeonCode.current_screen, 0, true);
+                DC.door_types[Array.IndexOf(DC.door_metatiles, (byte)metatile_index)] = DungeonCode.DoorType.OPEN;
+                DC.DrawDoors(DC.current_screen, 0, true);
                 // TODO: play door opening sfx
             }
         }

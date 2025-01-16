@@ -1,4 +1,4 @@
-﻿using static The_Legend_of_Zelda.Enemy;
+﻿using static The_Legend_of_Zelda.Program;
 
 namespace The_Legend_of_Zelda
 {
@@ -83,6 +83,9 @@ namespace The_Legend_of_Zelda
 
         void DoDamage()
         {
+            if (hit_target)
+                return;
+
             byte width;
             if (single_wide)
                 width = 8;
@@ -110,11 +113,15 @@ namespace The_Legend_of_Zelda
                         continue;
                     }
 
-                    if (this is BoomerangSprite &&
-                        enemy.current_action != Enemy.ActionState.STUNNED)
+                    //TODO: some enemies are vincible to the boomerang!
+                    //TODO: some enemies don't get stunned by the boomerang!
+                    if (this is BoomerangSprite)
                     {
-                        enemy.unstunned_action = enemy.current_action;
-                        enemy.current_action = Enemy.ActionState.STUNNED;
+                        if (enemy.current_action != Enemy.ActionState.STUNNED)
+                        {
+                            enemy.unstunned_action = enemy.current_action;
+                            enemy.current_action = Enemy.ActionState.STUNNED;
+                        }
                     }
                     else
                     {
@@ -124,6 +131,8 @@ namespace The_Legend_of_Zelda
                     hit_target = true;
                     break;
                 }
+
+                return;
             }
 
             // return if not colliding
@@ -234,6 +243,7 @@ namespace The_Legend_of_Zelda
             return local_timer > 2000;
         }
     }
+
 
     internal class StaticHeartSprite : FlickeringSprite
     {
@@ -394,28 +404,6 @@ namespace The_Legend_of_Zelda
             }
         }
     }
-
-    //internal class TriforcePieceSprite : Sprite
-    //{
-    //    public TriforcePieceSprite(int x, int y, bool xflip = false) : base(0x6e, 5)
-    //    {
-    //        this.x = x;
-    //        this.y = y;
-    //        if (!xflip)
-    //            Screen.sprites.Add((Sprite)new TriforcePieceSprite((short)(x + 8), y, true));
-    //        this.xflip = xflip;
-    //    }
-    //    public override void Action()
-    //    {
-    //        if (Program.gTimer % 8 == 0)
-    //        {
-    //            if (palette_index == 5)
-    //                palette_index = 6;
-    //            else
-    //                palette_index = 5;
-    //        }
-    //    }
-    //}
 
     internal class SwordProjectileSprite : ProjectileSprite
     {
@@ -628,7 +616,7 @@ namespace The_Legend_of_Zelda
                         if (!Screen.meta_tiles[metatile_index].special)
                             continue;
 
-                        SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OverworldCode.screens_with_secrets_list, OverworldCode.current_screen), true);
+                        SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, OC.current_screen), true);
                         Screen.meta_tiles[metatile_index].tile_index = 3;
                         int ppu_index = 2 * metatile_index + 2 * (metatile_index & 0xFFFFFF0) + 256;
                         Textures.ppu[ppu_index] = 0x24;
@@ -638,9 +626,9 @@ namespace The_Legend_of_Zelda
                     }
                     else
                     {
-                        if (MemoryExtensions.Contains(DungeonCode.door_metatiles, (byte)metatile_index)) // byte[].Contains marche pas
+                        if (MemoryExtensions.Contains(DC.door_metatiles, (byte)metatile_index)) // byte[].Contains marche pas
                         {
-                            DungeonCode.door_statuses[Array.IndexOf(DungeonCode.door_metatiles, (byte)metatile_index)] = true;
+                            DC.door_statuses[Array.IndexOf(DC.door_metatiles, (byte)metatile_index)] = true;
                         }
                     }
                 }
@@ -655,6 +643,8 @@ namespace The_Legend_of_Zelda
             this.x = x;
             this.y = y;
             this.direction = direction;
+            this.tile_index = 0x5c;
+            this.palette_index = 6;
             counterpart.tile_index = 0x5e;
             counterpart.palette_index = 6;
             counterpart.x = x + 8;
@@ -667,7 +657,11 @@ namespace The_Legend_of_Zelda
 
         public override void ProjSpecificActions()
         {
-            is_from_link = !is_from_link; // fire damages link and ennemies, this makes it so it alternates between calculating dmg for link and enemies every frame
+            // fire damages link and ennemies, this makes it so it alternates between calculating dmg for link and enemies every frame
+            // fire does not damage link for the first 8 frames to prevent damaging him as he throws it. it only happened when he threw it down,
+            // so someone could try to fix it later but this works too
+            if (animation_timer > 8)
+                is_from_link = !is_from_link;
 
             if (animation_timer < 32 && animation_timer % 2 == 1)
             {
@@ -711,7 +705,7 @@ namespace The_Legend_of_Zelda
                     if (!Screen.meta_tiles[metatile_index].special)
                         continue;
 
-                    SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OverworldCode.screens_with_secrets_list, OverworldCode.current_screen), true);
+                    SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, OC.current_screen), true);
                     Screen.meta_tiles[metatile_index].tile_index = 0x15;
                     int ppu_index = 2 * metatile_index + 2 * (metatile_index & 0xFFFFFF0) + 256;
                     Textures.ppu[ppu_index] = 0x70;
@@ -815,6 +809,7 @@ namespace The_Legend_of_Zelda
         bool link_grabbed = false;
         bool second_arrival = true;
         StaticSprite counterpart = new StaticSprite(0x96, 5, 0, 0);
+
         public TornadoSprite(int x, int y) : base(0x94, 5)
         {
             this.x = x;
@@ -828,62 +823,65 @@ namespace The_Legend_of_Zelda
             Screen.sprites.Add(this);
             Screen.sprites.Add(counterpart);
         }
+
         public override void Action()
         {
-            if (Link.can_move)
+            if (!Link.can_move)
+                return;
+
+            if (smoke_stage)
             {
-                if (smoke_stage)
+                SetSmokeGraphic();
+                return;
+            }
+
+            x += 2;
+            counterpart.x += 2;
+
+            byte new_plt_index = (byte)((Program.gTimer % 4) + 4);
+            palette_index = new_plt_index;
+            counterpart.palette_index = new_plt_index;
+            byte swap = tile_index;
+            tile_index = counterpart.tile_index;
+            counterpart.tile_index = swap;
+            xflip = !xflip;
+            counterpart.xflip = !counterpart.xflip;
+
+            if (x > 240 && !link_grabbed)
+            {
+                Menu.tornado_out = false;
+                Screen.sprites.Remove(counterpart);
+                Screen.sprites.Remove(this);
+            }
+            else if (Math.Abs(x - Link.x) <= 2 && Math.Abs(y - Link.y) <= 2 && !link_grabbed)
+            {
+                Link.Show(false);
+                link_grabbed = true;
+                Link.SetPos(x, y);
+            }
+            else if (link_grabbed)
+            {
+                Link.SetPos(x, y);
+                if (x >= 112 && second_arrival)
                 {
-                    SetSmokeGraphic();
+                    Link.Show(true);
+                    Menu.tornado_out = false;
+                    Screen.sprites.Remove(counterpart);
+                    Screen.sprites.Remove(this);
+                    return;
                 }
-                else
+                else if (x > 240)
                 {
-                    x += 2;
-                    counterpart.x += 2;
-                    byte new_plt_index = (byte)((Program.gTimer & 3) + 4);
-                    palette_index = new_plt_index;
-                    counterpart.palette_index = new_plt_index;
-                    byte swap = tile_index;
-                    tile_index = counterpart.tile_index;
-                    counterpart.tile_index = swap;
-                    xflip = !xflip;
-                    counterpart.xflip = !counterpart.xflip;
-                    if (x > 240 && !link_grabbed)
-                    {
-                        Menu.tornado_out = false;
-                        Screen.sprites.Remove(counterpart);
-                        Screen.sprites.Remove(this);
-                    }
-                    else if (Math.Abs(x - Link.x) <= 2 && Math.Abs(y - Link.y) <= 2 && !link_grabbed)
-                    {
-                        Link.Show(false);
-                        link_grabbed = true;
-                        Link.SetPos(x, y);
-                    }
-                    else if (link_grabbed)
-                    {
-                        Link.SetPos(x, y);
-                        if (x >= 112 && second_arrival)
-                        {
-                            Link.Show(true);
-                            Menu.tornado_out = false;
-                            Screen.sprites.Remove(counterpart);
-                            Screen.sprites.Remove(this);
-                            return;
-                        }
-                        else if (x > 240)
-                        {
-                            Link.can_move = false;
-                            shown = false;
-                            counterpart.shown = false;
-                            smoke_stage = true;
-                            smoke_timer = 0;
-                            xflip = false;
-                        }
-                    }
+                    Link.can_move = false;
+                    shown = false;
+                    counterpart.shown = false;
+                    smoke_stage = true;
+                    smoke_timer = 0;
+                    xflip = false;
                 }
             }
         }
+
         public void SetSmokeGraphic()
         {
             if (smoke_timer == 0)
@@ -898,7 +896,7 @@ namespace The_Legend_of_Zelda
                 {
                     x = 0;
                     counterpart.x = 8;
-                    short new_y = OverworldCode.dungeon_location_list[OverworldCode.recorder_destination * 2 + 1];
+                    short new_y = OC.dungeon_location_list[OC.recorder_destination * 2 + 1];
                     y = new_y;
                     counterpart.y = new_y;
                 }
@@ -991,6 +989,7 @@ namespace The_Legend_of_Zelda
             }
             local_timer++;
 
+            //TODO: what about goriya? booreangs are not always thrown by link
             if (returning)
             {
                 // https://www.desmos.com/calculator/esasntj0cm
@@ -1012,7 +1011,14 @@ namespace The_Legend_of_Zelda
 
                 if (Math.Abs(x_dist_from_link) < 8 && Math.Abs(y_dist_from_link) < 8)
                 {
-                    Link.Attack();
+                    if (Link.current_action == Link.Action.WALKING_LEFT)
+                        Link.current_action = Link.Action.ATTACK_LEFT;
+                    else if (Link.current_action == Link.Action.WALKING_UP)
+                        Link.current_action = Link.Action.ATTACK_UP;
+                    else if (Link.current_action == Link.Action.WALKING_DOWN)
+                        Link.current_action = Link.Action.ATTACK_DOWN;
+                    else if (Link.current_action == Link.Action.WALKING_RIGHT)
+                        Link.current_action = Link.Action.ATTACK_RIGHT;
                     Link.using_item = true;
                     Menu.boomerang_out = false;
                     Screen.sprites.Remove(this);

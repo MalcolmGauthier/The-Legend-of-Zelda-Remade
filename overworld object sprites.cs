@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+﻿using static The_Legend_of_Zelda.Program;
 
 namespace The_Legend_of_Zelda
 {
@@ -25,7 +25,7 @@ namespace The_Legend_of_Zelda
                 {
                     used = true;
                     Link.full_heal_flag = true;
-                    OverworldCode.fairy_animation_active = true;
+                    OC.fairy_animation_active = true;
                 }
             }
             else
@@ -40,10 +40,10 @@ namespace The_Legend_of_Zelda
                     for (int i = 0; i < hearts.Length; i++)
                         hearts[i].Kill();
 
-                    OverworldCode.fairy_animation_active = false;
+                    OC.fairy_animation_active = false;
                 }
 
-                if (OverworldCode.fairy_animation_active)
+                if (OC.fairy_animation_active)
                     Link.can_move = false;
                 else
                     Link.can_move = true;
@@ -83,22 +83,22 @@ namespace The_Legend_of_Zelda
 
     internal class RaftSprite : Sprite
     {
-        StaticSprite counterpart = new StaticSprite(0x6c, 4, (short)(Link.x + 8), (short)Link.y, true);
+        StaticSprite counterpart = new StaticSprite(0x6c, 4, Link.x + 8, Link.y, true);
 
         public RaftSprite() : base(0x6c, 4)
         {
-            x = (short)Link.x;
-            y = (short)Link.y;
+            x = Link.x;
+            y = Link.y;
             Screen.sprites.Add(this);
             Screen.sprites.Add(counterpart);
         }
 
         public override void Action()
         {
-            x = (short)Link.x;
-            y = (short)Link.y;
-            counterpart.x = (short)(Link.x + 8);
-            counterpart.y = (short)Link.y;
+            x = Link.x;
+            y = Link.y;
+            counterpart.x = Link.x + 8;
+            counterpart.y = Link.y;
 
             if ((Link.facing_direction == Direction.UP && Link.current_action != Link.Action.WALKING_UP) ||
                 (Link.facing_direction == Direction.DOWN && Link.current_action != Link.Action.WALKING_DOWN))
@@ -110,9 +110,9 @@ namespace The_Legend_of_Zelda
             }
 
             if ((Screen.GetTileIndexAtLocation(Link.x + 8, Link.y - 1) == 0x14 && Link.facing_direction == Direction.DOWN) ||
-                (OverworldCode.scroll_animation_timer < 500 && Link.facing_direction == Direction.UP))
+                (OC.ScrollingDone() && Link.facing_direction == Direction.UP))
             {
-                OverworldCode.raft_flag = false;
+                OC.raft_flag = false;
                 Link.can_move = true;
                 Screen.sprites.Remove(counterpart);
                 Screen.sprites.Remove(this);
@@ -171,7 +171,7 @@ namespace The_Legend_of_Zelda
             counterpart.tile_index = (byte)(new_tile + 2);
             for (byte i = 0; i < 4; i++)
             {
-                Palettes.LoadPalette(7, i, (Color)Palettes.active_palette_list[plt_to_pick * 4 + i]);
+                Palettes.LoadPalette(PaletteID.SP_3, i, (Color)Palettes.active_palette_list[plt_to_pick * 4 + i]);
             }
 
             UpdateTexture();
@@ -208,8 +208,8 @@ namespace The_Legend_of_Zelda
                 bool is_overwolrd = Program.gamemode == Program.Gamemode.OVERWORLD;
                 if (is_overwolrd && moving_tile != MovingTile.TOMBSTONE)
                 {
-                    SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OverworldCode.screens_with_secrets_list, OverworldCode.current_screen), true);
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, OverworldCode.current_screen, 0);
+                    SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, OC.current_screen), true);
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, OC.current_screen, 0);
                 }
 
                 if (moving_tile == MovingTile.TOMBSTONE)

@@ -1,6 +1,7 @@
 ﻿using static The_Legend_of_Zelda.Screen;
 using static The_Legend_of_Zelda.SaveLoad;
-using static The_Legend_of_Zelda.OverworldCode;
+using static The_Legend_of_Zelda.Program;
+
 namespace The_Legend_of_Zelda
 {
     internal static class Menu
@@ -109,6 +110,8 @@ namespace The_Legend_of_Zelda
                         MoveCursor();
                     }
                 }
+
+                can_pause = false;
             }
             else
             {
@@ -242,20 +245,21 @@ namespace The_Legend_of_Zelda
                 AutoSwitchBItem(5);
             }
 
+            map_dot.shown = true;
             if (Program.gamemode == Program.Gamemode.OVERWORLD)
             {
-                if (current_screen != 128)
+                if (OC.current_screen != 128)
                 {
-                    map_dot.x = 17 + ((current_screen % 16) * 4);
-                    map_dot.y = 24 + ((current_screen / 16) * 4);
+                    map_dot.x = 17 + ((OC.current_screen % 16) * 4);
+                    map_dot.y = 24 + ((OC.current_screen / 16) * 4);
                 }
             }
             else
             {
-                if (DungeonCode.room_list[DungeonCode.current_screen] is not (0x2a or 0x2b))
+                if (DC.room_list[DC.current_screen] is not (0x2a or 0x2b))
                 {
-                    map_dot.x = 18 + ((DungeonCode.current_screen % 16) * 8) + map_offsets[DungeonCode.current_dungeon * 2] * 8;
-                    map_dot.y = 24 + ((DungeonCode.current_screen / 16) * 4) + map_offsets[DungeonCode.current_dungeon * 2 + 1] * 4;
+                    map_dot.x = 18 + ((DC.current_screen % 16) * 8) + map_offsets[DC.current_dungeon * 2] * 8;
+                    map_dot.y = 24 + ((DC.current_screen / 16) * 4) + map_offsets[DC.current_dungeon * 2 + 1] * 4;
                 }
             }
 
@@ -681,7 +685,7 @@ namespace The_Legend_of_Zelda
                 {
                     shift -= MASK_BIT_LEN;
                     Textures.ppu[HUD_MAP_OFFSET + i * Textures.PPU_WIDTH + j] = tile_locations[
-                        (hud_dungeon_maps[DungeonCode.current_dungeon, i] & (BIT_MASK << shift)) >> shift
+                        (hud_dungeon_maps[DC.current_dungeon, i] & (BIT_MASK << shift)) >> shift
                     ];
                 }
             }

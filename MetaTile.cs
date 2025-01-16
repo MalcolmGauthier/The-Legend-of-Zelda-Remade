@@ -1,4 +1,5 @@
-﻿using static The_Legend_of_Zelda.OverworldCode;
+﻿using static The_Legend_of_Zelda.Program;
+
 namespace The_Legend_of_Zelda
 {
     public class MetaTile
@@ -29,26 +30,26 @@ namespace The_Legend_of_Zelda
             {
                 special = false;
                 this.tile_index = tile_index;
-                Textures.ppu[index_in_ppu_arr                         ] = DungeonCode.dungeon_tileset_indexes[tile_index, 0];
-                Textures.ppu[index_in_ppu_arr + 1                     ] = DungeonCode.dungeon_tileset_indexes[tile_index, 1];
-                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH    ] = DungeonCode.dungeon_tileset_indexes[tile_index, 2];
-                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = DungeonCode.dungeon_tileset_indexes[tile_index, 3];
+                Textures.ppu[index_in_ppu_arr                         ] = DC.dungeon_tileset_indexes[tile_index, 0];
+                Textures.ppu[index_in_ppu_arr + 1                     ] = DC.dungeon_tileset_indexes[tile_index, 1];
+                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH    ] = DC.dungeon_tileset_indexes[tile_index, 2];
+                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = DC.dungeon_tileset_indexes[tile_index, 3];
                 return;
             }
 
             // screen to check for secrets in. usually the current one
-            byte screen_to_apply_to = current_screen;
+            byte screen_to_apply_to = OC.current_screen;
 
             // if in cave, return screen
-            if (scroll_animation_timer > 500 && current_screen == 128)
+            if (OC.ScrollingDone() && OC.current_screen == 128)
             {
-                screen_to_apply_to = return_screen;
+                screen_to_apply_to = OC.return_screen;
             }
             // if not scrolling up and not in first 2 screens, the scroll dest
             // this exception exists because scrolling up is weird and not like the other scrolls
-            else if (scroll_direction != Direction.UP || id < 176)
+            else if (OC.scroll_direction != Direction.UP || id < 176)
             {
-                screen_to_apply_to = scroll_destination;
+                screen_to_apply_to = OC.scroll_destination;
             }
 
             //TODO: hardcode secrets in list, remove them from map file
@@ -59,21 +60,21 @@ namespace The_Legend_of_Zelda
                 special = true;
                 if (tile_index == 42)
                 {
-                    if (SaveLoad.GetOverworldSecretsFlag((byte)Array.IndexOf(screens_with_secrets_list, screen_to_apply_to)))
+                    if (SaveLoad.GetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, screen_to_apply_to)))
                         tile_index = 3;
                     else
                         tile_index = 0;
                 }
                 else if (tile_index == 43)
                 {
-                    if (SaveLoad.GetOverworldSecretsFlag((byte)Array.IndexOf(screens_with_secrets_list, screen_to_apply_to)))
+                    if (SaveLoad.GetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, screen_to_apply_to)))
                         tile_index = 0x15;
                     else
                         tile_index = 9;
                 }
                 else if (tile_index == 44)
                 {
-                    if (SaveLoad.GetOverworldSecretsFlag((byte)Array.IndexOf(screens_with_secrets_list, screen_to_apply_to)))
+                    if (SaveLoad.GetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, screen_to_apply_to)))
                         tile_index = 0x15;
                     else
                     {
@@ -102,10 +103,10 @@ namespace The_Legend_of_Zelda
             }
 
             this.tile_index = tile_index;
-            Textures.ppu[index_in_ppu_arr]                          = overworld_tileset_indexes[tile_index, 0];
-            Textures.ppu[index_in_ppu_arr + 1]                      = overworld_tileset_indexes[tile_index, 1];
-            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH]     = overworld_tileset_indexes[tile_index, 2];
-            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = overworld_tileset_indexes[tile_index, 3];
+            Textures.ppu[index_in_ppu_arr]                          = OC.overworld_tileset_indexes[tile_index, 0];
+            Textures.ppu[index_in_ppu_arr + 1]                      = OC.overworld_tileset_indexes[tile_index, 1];
+            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH]     = OC.overworld_tileset_indexes[tile_index, 2];
+            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = OC.overworld_tileset_indexes[tile_index, 3];
 
             return;
         }

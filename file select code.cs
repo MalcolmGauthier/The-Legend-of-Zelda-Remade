@@ -61,13 +61,13 @@ namespace The_Legend_of_Zelda
             Palettes.LoadPaletteGroup(PaletteID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
             Palettes.LoadPaletteGroup(PaletteID.SP_1, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
             Palettes.LoadPaletteGroup(PaletteID.SP_2, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
-            Palettes.LoadPalette(7, 1, Color._15_ROSE);
-            Palettes.LoadPalette(2, 0, Color._15_ROSE);
-            Palettes.LoadPalette(2, 1, Color._30_WHITE);
-            Palettes.LoadPalette(3, 0, Color._0F_BLACK);
-            Palettes.LoadPalette(3, 1, Color._15_ROSE);
-            Palettes.LoadPalette(3, 2, Color._27_GOLD);
-            Palettes.LoadPalette(3, 3, Color._30_WHITE);
+            Palettes.LoadPalette(PaletteID.SP_3, 1, Color._15_ROSE);
+            Palettes.LoadPalette(PaletteID.BG_2, 0, Color._15_ROSE);
+            Palettes.LoadPalette(PaletteID.BG_2, 1, Color._30_WHITE);
+            Palettes.LoadPalette(PaletteID.BG_3, 0, Color._0F_BLACK);
+            Palettes.LoadPalette(PaletteID.BG_3, 1, Color._15_ROSE);
+            Palettes.LoadPalette(PaletteID.BG_3, 2, Color._27_GOLD);
+            Palettes.LoadPalette(PaletteID.BG_3, 3, Color._30_WHITE);
 
             Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 9, 0);
             for (byte i = 0; i < 3; i++)
@@ -78,7 +78,7 @@ namespace The_Legend_of_Zelda
                 {
                     sprites.Add(quest_2_swords[i] = new StaticSprite(SpriteID.SWORD, PaletteID.BG_3, 60, (short)(86 + i * 24)));
                     // in the real game, the swords aren't on background layer but are instead just lower priority than link icons,
-                    // but i don't two loops in this already ugly function, so this does the same thing. + there's no background to worry about
+                    // but i don't want two loops in this already ugly function, so this does the same thing. + there's no background to worry about
                     quest_2_swords[i].background = true;
                 }
             }
@@ -103,7 +103,7 @@ namespace The_Legend_of_Zelda
         static void InitRegisterName()
         {
             // color needs to be set back to pink when returning from elimination mode
-            Palettes.LoadPalette(7, 1, Color._15_ROSE);
+            Palettes.LoadPalette(PaletteID.SP_3, 1, Color._15_ROSE);
             Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 10, 0);
 
             // write text to screen
@@ -148,30 +148,30 @@ namespace The_Legend_of_Zelda
             // why would selected_name_letter ever need to be non 0 on registration init? even if we're not selecting a file, it doesn't matter.
             // make sure that removing this code is fine.
 
-            //if (selected_option == Selection.REGISTER_OR_END)
-            //    return;
+            if (selected_option == Selection.REGISTER_OR_END)
+                return;
 
             // ??? when would this ever be true? if we're here, it's because selected option is on an empty file, and yet this checks for a full name
-            //if (file_new_names[(byte)selected_option, 7] != EMPTY_LETTER)
-            //{
-            //    selected_name_letter = 0;
-            //    return;
-            //}
+            if (file_new_names[(byte)selected_option, 7] != EMPTY_LETTER)
+            {
+                selected_name_letter = 0;
+                return;
+            }
 
-            //for (int i = 0; i < 7; i++)
-            //{
-            //    selected_name_letter--;
-            //    if (selected_name_letter == 255)
-            //    {
-            //        selected_name_letter = 0;
-            //        break;
-            //    }
-            //    if (file_new_names[(byte)selected_option, selected_name_letter] != EMPTY_LETTER)
-            //    {
-            //        selected_name_letter++;
-            //        break;
-            //    }
-            //}
+            for (int i = 0; i < 7; i++)
+            {
+                selected_name_letter--;
+                if (selected_name_letter == 255)
+                {
+                    selected_name_letter = 0;
+                    break;
+                }
+                if (file_new_names[(byte)selected_option, selected_name_letter] != EMPTY_LETTER)
+                {
+                    selected_name_letter++;
+                    break;
+                }
+            }
         }
 
         // draw the info for the files on loading file select mode
@@ -185,9 +185,9 @@ namespace The_Legend_of_Zelda
 
             // link icon color (ring status)
             if (file_info.red_ring)
-                Palettes.LoadPalette((byte)(PaletteID.SP_0 + file_index), 1, Color._16_RED_ORANGE);
+                Palettes.LoadPalette(PaletteID.SP_0 + file_index, 1, Color._16_RED_ORANGE);
             else if (file_info.blue_ring)
-                Palettes.LoadPalette((byte)(PaletteID.SP_0 + file_index), 1, Color._32_LIGHTER_INDIGO);
+                Palettes.LoadPalette(PaletteID.SP_0 + file_index, 1, Color._32_LIGHTER_INDIGO);
 
             // file name
             for (int i = 0; i < NAME_LENGTH; i++)
@@ -237,7 +237,7 @@ namespace The_Legend_of_Zelda
                     Program.gamemode = Program.Gamemode.OVERWORLD;
                     SaveLoad.current_save_file = (byte)selected_option;
                     Link.Init();
-                    OverworldCode.Init();
+                    Program.OC.Init();
                     return;
                 }
 
@@ -254,7 +254,7 @@ namespace The_Legend_of_Zelda
 
                 // elimination mode chosen
                 Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 10, 0);
-                Palettes.LoadPalette(7, 1, Color._30_WHITE);
+                Palettes.LoadPalette(PaletteID.SP_3, 1, Color._30_WHITE);
                 for (int i = 0; i < link_icons.Length; i++)
                 {
                     link_icons[i].x = 80 + ((i % 2) * 8);

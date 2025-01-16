@@ -18,7 +18,11 @@ namespace The_Legend_of_Zelda
         static int held_buttons = 0;
         static int pressed_buttons = 0;
 
-        static bool can_screenshot = true;
+        static bool pause_held = false;
+        static bool frame_adv_held = false;
+        static int frame_adv_held_timer = 0;
+        static bool screenshot_held = false;
+        static bool reset_held = false;
 
         static void Push(Buttons button)
         {
@@ -98,14 +102,35 @@ namespace The_Legend_of_Zelda
                                 Push(Buttons.START);
                                 break;
                             case SDL_Keycode.SDLK_TAB:
-                                if (Program.fast_forward_with_tab)
+                                if (Program.fast_forward)
                                     Program.uncap_fps = true;
                                 break;
+                            case SDL_Keycode.SDLK_PERIOD:
+                                frame_adv_held_timer++;
+                                if (Program.frame_advance && (!frame_adv_held || frame_adv_held_timer > 15))
+                                {
+                                    Program.advance_1_frame = true;
+                                    frame_adv_held = true;
+                                }
+                                break;
+                            case SDL_Keycode.SDLK_p:
+                                if (Program.pause_whenever && !pause_held)
+                                {
+                                    Program.full_pause = !Program.full_pause;
+                                    pause_held = true;
+                                }
+                                break;
                             case SDL_Keycode.SDLK_F1:
-                                if (can_screenshot)
+                                if (!screenshot_held)
                                 {
                                     Program.Screenshot();
-                                    can_screenshot = false;
+                                    screenshot_held = true;
+                                }
+                                break;
+                            case SDL_Keycode.SDLK_r:
+                                if (!reset_held)
+                                {
+                                    reset_held = true;
                                 }
                                 break;
                         }
@@ -141,7 +166,21 @@ namespace The_Legend_of_Zelda
                                 Program.uncap_fps = false;
                                 break;
                             case SDL_Keycode.SDLK_F1:
-                                can_screenshot = true;
+                                screenshot_held = false;
+                                break;
+                            case SDL_Keycode.SDLK_PERIOD:
+                                frame_adv_held = false;
+                                frame_adv_held_timer = 0;
+                                break;
+                            case SDL_Keycode.SDLK_p:
+                                pause_held = false;
+                                break;
+                            case SDL_Keycode.SDLK_r:
+                                if (reset_held)
+                                {
+                                    reset_held = false;
+                                    Program.Reset();
+                                }
                                 break;
                         }
                         break;

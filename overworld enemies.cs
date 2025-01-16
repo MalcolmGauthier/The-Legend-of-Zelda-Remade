@@ -1,4 +1,6 @@
-﻿namespace The_Legend_of_Zelda
+﻿using static The_Legend_of_Zelda.Program;
+
+namespace The_Legend_of_Zelda
 {
     internal abstract class Enemy : Sprite
     {
@@ -198,7 +200,7 @@
             if (local_timer == 0)
             {
                 og_palette = palette_index;
-                if (OverworldCode.overworld_screens_side_entrance.Contains(OverworldCode.current_screen) && Program.gamemode == Program.Gamemode.OVERWORLD)
+                if (OC.overworld_screens_side_entrance.Contains(OC.current_screen) && Program.gamemode == Program.Gamemode.OVERWORLD)
                 {
                     SpawnOnEdge();
                     shown = false;
@@ -934,7 +936,7 @@
             palette_index = palette_to_apply;
             counterpart.palette_index = palette_to_apply;
 
-            if (OverworldCode.overworld_screens_side_entrance.Contains(OverworldCode.current_screen) && Program.gamemode == Program.Gamemode.OVERWORLD)
+            if (OC.overworld_screens_side_entrance.Contains(OC.current_screen) && Program.gamemode == Program.Gamemode.OVERWORLD)
             {
                 smoke_appearance = true;
                 appeared = false;
@@ -1929,9 +1931,9 @@
         void ReplaceOGTile()
         {
             int ppu_tile_location = 256 + (metatile_index >> 4) * 64 + (metatile_index % 16) * 2;
-            if (OverworldCode.current_screen == 36 && !SaveLoad.power_bracelet && metatile_index == 78)
+            if (OC.current_screen == 36 && !SaveLoad.power_bracelet && metatile_index == 78)
                 new PowerBraceletSprite(x + 4, y);
-            byte screen = OverworldCode.current_screen;
+            byte screen = OC.current_screen;
             if ((screen == 11 && metatile_index == 75) || (screen == 34 && metatile_index == 67) || (screen == 28 && metatile_index == 75) ||
                 (screen == 52 && metatile_index == 68) || (screen == 61 && metatile_index == 73) || (screen == 78 && metatile_index == 74))
             {

@@ -1,10 +1,9 @@
 ﻿using static SDL2.SDL;
 using static The_Legend_of_Zelda.Textures;
-using System.Reflection;
 
 namespace The_Legend_of_Zelda
 {
-    public static unsafe class Screen
+    public static class Screen
     {
         public static IntPtr render;
         public static IntPtr window_surface;
@@ -28,7 +27,7 @@ namespace The_Legend_of_Zelda
             window_surface = SDL_CreateRGBSurface(0, 256, 240, 8, 0, 0, 0, 0);
             window_display = new SDL_Rect() { x = 0, y = 0, w = 256, h = 240 };
             screen_display = new SDL_Rect() { x = 0, y = 0, w = 256, h = 240 };
-            window_surface_palette = ((SDL_PixelFormat*)((SDL_Surface*)window_surface)->format)->palette;
+            unsafe { window_surface_palette = ((SDL_PixelFormat*)((SDL_Surface*)window_surface)->format)->palette; }
             for (int i = 0; i < tiles.Length; i++)
             {
                 tiles[i] = new Tile(i);
@@ -46,93 +45,66 @@ namespace The_Legend_of_Zelda
             for (int i = 0; i < tiles.Length; i++)
             {
                 tiles[i].Render();
-                //if (scrolling)
-                //    scroll_tiles[i].Render();
             }
+            // oldest sprites rendered last, meaning that they are on top and have priority.
             for (int i = sprites.Count - 1; i >= 0; i--)
             {
                 sprites[i].Render();
             }
 
-            //Scroll();
-
-            byte HUD_start;
-            if (Program.gamemode == Program.Gamemode.OVERWORLD || Program.gamemode == Program.Gamemode.DUNGEON)
+            byte HUD_start = 0;
+            if ((Program.gamemode == Program.Gamemode.OVERWORLD || Program.gamemode == Program.Gamemode.DUNGEON) && !Menu.menu_open)
             {
-                if (Menu.menu_open)
-                    HUD_start = 0;
-                else
-                    HUD_start = 64;
-            }
-            else
-            {
-                HUD_start = 0;
+                HUD_start = 64;
             }
 
-            // POINTERS? IN MMMMYYYYYYY MEMORY-SAFE LANGUAGE? UNACCEPTABLE!!!!!!!!
-            byte* ref_pixel = (byte*)((SDL_Surface*)window_surface)->pixels;
-
-            if (HUD_start == 64)
+            // Pointers? In my memory-safe language? It's more likely than you think!
+            unsafe
             {
-                for (int i = 0; i < 64; i++)
+                // usually you'd use SDL's surface combining functions to add data onto eachother, but having a byte array
+                // as vram is faster, and SDL's functions check for alot of stuff i don't care about, so using pointers was how
+                // i was first able to achieve a stable 60.1fps
+                byte* ref_pixel = (byte*)((SDL_Surface*)window_surface)->pixels;
+
+                for (int i = 0; i < HUD_start; i++)
                 {
-                    for (int j = 0; j < 256; j++)
+                    for (int j = 0; j < Program.NES_OUTPUT_WIDTH; j++)
                     {
-                        ref_pixel[(i << 8) + j] = vram[(i << 9) + j];
+                        ref_pixel[(i * Program.NES_OUTPUT_WIDTH) + j] = vram[(i * Program.NES_OUTPUT_WIDTH * 2) + j];
+                    }
+                }
+
+                for (int i = HUD_start; i < Program.NES_OUTPUT_HEIGHT; i++)
+                {
+                    for (int j = 0; j < Program.NES_OUTPUT_WIDTH; j++)
+                    {
+                        ref_pixel[(i * Program.NES_OUTPUT_WIDTH) + j] = 
+                            vram[(TrueMod(i + y_scroll, Program.NES_OUTPUT_HEIGHT * 2) * Program.NES_OUTPUT_WIDTH * 2) + ((j + x_scroll) % (Program.NES_OUTPUT_WIDTH * 2))];
                     }
                 }
             }
 
-            for (int i = HUD_start; i < 240; i++)
-            {
-                for (int j = 0; j < 256; j++)
-                {
-                    ref_pixel[(i << 8) + j] = vram[(TrueMod(i + y_scroll, 480) << 9) + ((j + x_scroll) & 511)];
-                }
-            }
-
-            #region commented out
-            //if (scrolling)
-            //{
-            //    screen = SDL_CreateTextureFromSurface(render, scroll_surface);
-            //    scroll_display = new SDL_Rect() { w = 256, h = 240 };
-            //    if (scroll_direction == Direction.VERTICAL)
-            //    {
-            //        scroll_display.x = 0;
-            //        scroll_display.y = screen_display.y + 240;
-            //    }
-            //    else
-            //    {
-            //        scroll_display.x = screen_display.x + 256;
-            //        scroll_display.y = 0;
-            //    }
-            //    SDL_RenderCopy(render, screen, ref window_display, ref scroll_display);
-            //    SDL_DestroyTexture(screen);
-            //}
-            //else
-            //{
-            //    screen_display.y = 0;
-            //}
-            #endregion
-
             screen = SDL_CreateTextureFromSurface(render, window_surface);
-            SDL_RenderCopy(render, screen, ref window_display, ref screen_display);
+            SDL_RenderCopy(render, screen, ref window_display, IntPtr.Zero);
             SDL_DestroyTexture(screen);
         }
 
+        // fuck C# for keeping this bullshit from c/c++
         static int TrueMod(int x, int m)
         {
             return (x % m + m) % m;
         }
 
+        // gives tile id of meta tile at location, returns 0 if oob
         public static byte GetTileIndexAtLocation(int x, int y)
-        { // gives tile id of meta tile at location, returns 0 if oob
-            int metatile_index = (y & 0xFFF0) + (x >> 4) - 64;
+        {
+            int metatile_index = (y & (~0xF)) + (x >> 4) - 64;
             if (metatile_index < 0 || metatile_index > meta_tiles.Length)
                 return 0;
             return meta_tiles[metatile_index].tile_index;
         }
 
+        // debug
         public static void ScreenTest()
         {
             if (Program.gTimer % 2 == 0)

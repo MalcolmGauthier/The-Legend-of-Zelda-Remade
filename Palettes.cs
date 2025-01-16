@@ -237,9 +237,9 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        public static void LoadPalette(byte active_plt_index, byte active_plt_color, Color color_index)
+        public static void LoadPalette(PaletteID active_plt_index, byte active_plt_color, Color color_index)
         {
-            active_palette_list[active_plt_index * COLORS_IN_PALETTE + active_plt_color] = (byte)color_index;
+            active_palette_list[(int)active_plt_index * COLORS_IN_PALETTE + active_plt_color] = (byte)color_index;
         }
 
         public static SDL_Color[] GetPalette()

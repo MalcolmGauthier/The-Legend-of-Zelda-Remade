@@ -1,9 +1,23 @@
-﻿namespace The_Legend_of_Zelda
+﻿using static The_Legend_of_Zelda.Program;
+
+namespace The_Legend_of_Zelda
 {
     internal class TriforcePieceSprite : ItemDropSprite
     {
+        enum CollectionAnimState
+        {
+            INIT,
+            WAIT,
+            FLASH,
+            HEAL,
+            WAIT2,
+            ERASE_BG,
+            EXIT
+        }
+
         StaticSprite counterpart = new StaticSprite(0x6e, 6, 128, 144);
-        int triforce_anim_timer = 0;
+        CollectionAnimState anim_state;
+        int anim_row_index = 0;
 
         public TriforcePieceSprite() : base(120, 144, false)
         {
@@ -11,6 +25,7 @@
             palette_index = 6;
             counterpart.xflip = true;
             counterpart.unload_during_transition = true;
+            anim_state = CollectionAnimState.INIT;
             Screen.sprites.Add(counterpart);
         }
 
@@ -27,64 +42,98 @@
                 counterpart.palette_index = 6;
             }
 
-            if (collected)
+            if (!collected)
+                return;
+
+            // freeze link's animation
+            Link.animation_timer = 0;
+
+            switch (anim_state)
             {
-                Link.animation_timer = 0;
-                if (triforce_anim_timer == 0)
-                {
+                case CollectionAnimState.INIT:
                     Link.can_move = false;
                     Link.current_action = Link.Action.ITEM_HELD_UP;
                     Link.SetPos(120, 150);
                     y = Link.y - 16;
                     counterpart.y = Link.y - 16;
                     Sound.PauseMusic();
-                }
-                else if (triforce_anim_timer >= 50 && triforce_anim_timer <= 96)
-                {
-                    if (triforce_anim_timer % 6 == 3)
+                    anim_state = CollectionAnimState.WAIT;
+                    local_timer = 0;
+                    break;
+
+                case CollectionAnimState.WAIT:
+                    if (local_timer >= 50)
+                    {
+                        anim_state = CollectionAnimState.FLASH;
+                        local_timer = 0;
+                    }
+                    break;
+
+                case CollectionAnimState.FLASH:
+                    if (local_timer % 6 == 3)
                     {
                         byte[] indexes = { 9, 10, 11, 13, 14, 15 };
                         foreach (byte i in indexes)
-                            Palettes.active_palette_list[i] = 0x30;
+                            Palettes.active_palette_list[i] = (byte)Color._30_WHITE;
                     }
-                    else if (triforce_anim_timer % 6 == 0)
+                    else if (local_timer % 6 == 0)
                     {
-                        DungeonCode.LoadPalette();
+                        DC.LoadPalette();
                     }
-                }
-                else if (triforce_anim_timer == 97)
-                {
-                    if (Link.hp < SaveLoad.nb_of_hearts)
+
+                    if (local_timer > 46)
                     {
-                        Link.full_heal_flag = true;
-                        triforce_anim_timer--;
+                        anim_state = CollectionAnimState.HEAL;
                     }
-                }
-                else if (triforce_anim_timer == 241)
-                {
-                    DungeonCode.opening_animation_timer -= 2;
-                    triforce_anim_timer--;
-                    Link.Show(true);
-                    if (DungeonCode.opening_animation_timer <= -2)
+                    break;
+
+                case CollectionAnimState.HEAL:
+                    if (Link.hp == SaveLoad.nb_of_hearts)
                     {
-                        DungeonCode.opening_animation_timer = 81;
-                        triforce_anim_timer++;
+                        anim_state = CollectionAnimState.WAIT2;
+                        local_timer = 0;
                     }
-                }
-                else if (triforce_anim_timer > 370)
-                {
-                    OverworldCode.opening_animation_timer = 0;
-                    OverworldCode.black_square_stairs_return_flag = true;
-                    OverworldCode.current_screen = OverworldCode.return_screen;
-                    SaveLoad.SetTriforceFlag(DungeonCode.current_dungeon, true);
+                    Link.full_heal_flag = true;
+                    break;
+
+                case CollectionAnimState.WAIT2:
+                    if (local_timer >= 144)
+                    {
+                        anim_state = CollectionAnimState.ERASE_BG;
+                    }
+                    break;
+
+                case CollectionAnimState.ERASE_BG:
+                    if (local_timer % 5 == 0)
+                    {
+                        const int left_index_start = Textures.PPU_WIDTH * 8;
+                        const int right_index_start = Textures.PPU_WIDTH * 9 - 1;
+
+                        for (int j = 0; j < 22; j++)
+                        {
+                            Textures.ppu[left_index_start + j * Textures.PPU_WIDTH + anim_row_index] = 0x24;
+                            Textures.ppu[right_index_start + j * Textures.PPU_WIDTH - anim_row_index] = 0x24;
+                        }
+
+                        anim_row_index++;
+
+                        if (left_index_start + anim_row_index > right_index_start + anim_row_index)
+                        {
+                            anim_state = CollectionAnimState.EXIT;
+                        }
+                    }
+                    break;
+
+                case CollectionAnimState.EXIT:
+                    OC.black_square_stairs_return_flag = true;
+                    OC.current_screen = OC.return_screen;
+                    SaveLoad.SetTriforceFlag(DC.current_dungeon, true);
                     Program.gamemode = Program.Gamemode.OVERWORLD;
-                    OverworldCode.Init();
+                    OC.Init();
                     Link.SetBGState(true);
                     Screen.sprites.Remove(counterpart);
                     Screen.sprites.Remove(this);
-                    return;
-                }
-                triforce_anim_timer++;
+                    break;
             }
         }
     }
@@ -100,7 +149,7 @@
         {
             if (collected)
             {
-                SaveLoad.SetMapFlag(DungeonCode.current_dungeon, true);
+                SaveLoad.SetMapFlag(DC.current_dungeon, true);
                 Menu.DrawHudMap();
                 Screen.sprites.Remove(this);
             }
