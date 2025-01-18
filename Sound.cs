@@ -9,6 +9,9 @@ namespace The_Legend_of_Zelda
 {
     public static class Sound
     {
+        const float VOLUME = 0.02f;
+        readonly static byte _volume = (byte)(Math.Abs(VOLUME) * SDL_MIX_MAXVOLUME);
+
         public enum Songs
         {
             SPLASH,
@@ -42,7 +45,7 @@ namespace The_Legend_of_Zelda
         public static IntPtr music = IntPtr.Zero;
         public static IntPtr[] SFX = new IntPtr[4] {IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero};
         static byte[] sfx_order = new byte[4] { 0, 0, 0, 0 };
-        static sbyte recorder_sfx_channel = -1;
+        static int recorder_sfx_channel = -1;
         public static bool recorder_playing = false;
 
 
@@ -50,7 +53,7 @@ namespace The_Legend_of_Zelda
         {
             {Songs.SPLASH, @"Data\MUSIC\splash.ogg"},
             {Songs.OVERWORLD, @"Data\MUSIC\overworld.ogg"},
-            {Songs.DUNGEON, @"Data\MUSIC\overworld.ogg"},
+            {Songs.DUNGEON, @"Data\MUSIC\dungeon.ogg"},
             {Songs.DEATH_MOUNTAIN, @"Data\MUSIC\death_mountain.ogg"},
             {Songs.DEATH, @"Data\MUSIC\death.ogg"},
             {Songs.CREDITS, @"Data\MUSIC\credits.ogg"}
@@ -82,10 +85,9 @@ namespace The_Legend_of_Zelda
                 return;
 
             Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, 2048);
-            Mix_VolumeMusic(7);
+
             if (Program.gamemode != Program.Gamemode.SCREENTEST)
-                music = Mix_LoadMUS(@"Data\MUSIC\splash.ogg");
-            Mix_PlayMusic(music, 1);
+                PlaySong(Songs.SPLASH, false);
 
             Mix_AllocateChannels(4);
         }
@@ -95,7 +97,7 @@ namespace The_Legend_of_Zelda
             if (Program.mute_sound)
                 return;
 
-            sbyte loops;
+            int loops;
             if (loop)
                 loops = -1;
             else
@@ -107,6 +109,7 @@ namespace The_Legend_of_Zelda
             if (path == null)
                 return;
             music = Mix_LoadMUS(path);
+            Mix_VolumeMusic(_volume);
             Mix_PlayMusic(music, loops);
         }
 
@@ -131,12 +134,13 @@ namespace The_Legend_of_Zelda
                     sfx_order[oldest_channel] = 0;
                     i = oldest_channel;
                 }
+
                 if (Mix_Playing(i) == 0)
                 {
                     if (sfx_to_play == SoundEffects.RECORDER)
                     {
                         recorder_playing = true;
-                        recorder_sfx_channel = (sbyte)i;
+                        recorder_sfx_channel = i;
                     }
                     string? path;
                     sfx_list.TryGetValue(sfx_to_play, out path);
@@ -146,7 +150,7 @@ namespace The_Legend_of_Zelda
                     SFX[i] = Mix_LoadWAV(path);
                     if (SFX[i] == IntPtr.Zero)
                         return;
-                    Mix_VolumeChunk(SFX[i], 5);
+                    Mix_VolumeChunk(SFX[i], _volume);
                     Mix_PlayChannel(i, SFX[i], 0);
                     for (byte j = 0; j < SFX.Length; j++)
                     {
@@ -178,13 +182,12 @@ namespace The_Legend_of_Zelda
 
         public static bool IsMusicPlaying()
         {
+            // needs to be checked before calling Mix_PlayingMusic, because when sound is muted, 
+            // SDL_Mixer is not initialized and thus gives an error upon calling any of its functions
             if (Program.mute_sound)
-                return false;
-
-            if (Mix_PlayingMusic() == 0)
-                return false;
-            else
                 return true;
+
+            return Mix_PlayingMusic() != 0;
         }
 
         public static void JumpTo(float timestamp)

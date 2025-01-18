@@ -39,42 +39,43 @@ namespace The_Legend_of_Zelda
             STUNNED,
         }
 
-        public int local_timer = 0;
-        public int target_x;
-        public int target_y;
+        protected int local_timer = 0;
+        protected int target_x;
+        protected int target_y;
         int time_when_stunned = -1;
 
-        public bool pause_animation = false;
+        protected bool pause_animation = false;
+        protected bool can_damage_link = true;
+        protected bool appeared = false;
+        protected bool smoke_appearance = false;
+        protected bool stronger = false;
+        protected bool spawn_hidden = false;
+        protected bool stunnable = true;
         public bool invincible = false;
-        public bool can_damage_link = true;
-        public bool appeared = false;
-        public bool smoke_appearance = false;
-        public bool stronger = false;
-        public bool spawn_hidden = false;
-        public bool stunnable = true;
+        public bool bomb_death = false;
         bool target_antilink = false;
 
-        public byte smoke_random_appearance = 1;
-        public byte frames_between_anim = 0;
-        public byte iframes_timer = 0;
-        public byte knockback_timer = 0;
-        public byte drop_category = 0;
-        public byte tile_location_1 = 0;
-        public byte tile_location_2 = 0;
+        protected byte smoke_random_appearance = 1;
+        protected byte frames_between_anim = 0;
+        protected byte iframes_timer = 0;
+        protected byte knockback_timer = 0;
+        protected byte drop_category = 0;
+        protected byte tile_location_1 = 0;
+        protected byte tile_location_2 = 0;
         byte nb_of_times_moved = 0;
         byte og_palette;
 
-        public float HP = 0;
-        public float speed = 0;
-        public float damage = 0;
+        protected float HP = 0;
+        protected float speed = 0;
+        protected float damage = 0;
 
-        public Direction facing_direction;
-        public Direction knockback_direction;
+        protected Direction facing_direction;
+        protected Direction knockback_direction;
         public ActionState current_action = ActionState.DEFAULT;
-        public ActionState unstunned_action;
+        public ActionState unstunned_action = ActionState.DEFAULT;
         AnimationMode animation_mode;
 
-        public StaticSprite counterpart = new StaticSprite(SpriteID.BLANK, 0, 0, 0);
+        protected StaticSprite counterpart = new StaticSprite(SpriteID.BLANK, 0, 0, 0);
 
         public Enemy(AnimationMode animation_mode, byte tile_location_1, byte tile_location_2, bool stronger, bool smoke_appearance, 
             byte frames_between_animation_frames, float speed, byte drop_category, bool set_spawn = false) : base(0, 0)
@@ -232,14 +233,18 @@ namespace The_Legend_of_Zelda
 
         public void SpawnOnEdge()
         {
-            byte count = 0;
-            bool valid_pos = false;
+            int count = 0;
             bool care_about_dir = true;
-            while (!valid_pos)
+            while (true)
             {
                 count++;
+
+                // after 100 tries, stop caring about if the enemies spawn on the same side as link
                 if (count == 100)
+                {
                     care_about_dir = false;
+                }
+                // after 200 tries, give up entirely and kill the enemy
                 else if (count > 200)
                 {
                     HP = 0;
@@ -270,9 +275,9 @@ namespace The_Legend_of_Zelda
                         break;
                 }
 
-                if (IsValidTile(Screen.GetTileIndexAtLocation(x, y)) && !IsWithinLink() && 
-                    (care_about_dir ? facing_direction != (Direction)Link.facing_direction : true))
-                    valid_pos = true;
+                if (IsValidTile(Screen.GetTileIndexAtLocation(x, y)) && !IsWithinLink() &&
+                    (care_about_dir ? facing_direction != Link.facing_direction : true))
+                    break;
             }
         }
 
@@ -457,8 +462,8 @@ namespace The_Legend_of_Zelda
         {
             int new_x;
             int new_y;
-            byte counter = 0;
 
+            int counter = 0;
             while (true)
             {
                 new_x = Program.RNG.Next(2, 14);
@@ -836,6 +841,13 @@ namespace The_Legend_of_Zelda
 
             if (local_timer == 20)
             {
+                if (this is not Zora)
+                {
+                    if (Program.gamemode == Gamemode.OVERWORLD)
+                        OC.AddToKillQueue(OC.current_screen);
+                    else
+                        DC.AddToKillQueue(DC.current_screen);
+                }
                 Link.nb_of_ens_killed++;
                 Link.nb_of_ens_killed_damageless++;
                 DropItem();

@@ -37,6 +37,9 @@
     <None Update="Data\CHR_OVERWORLD.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Data\MUSIC\dungeon.ogg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\MUSIC\overworld.ogg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

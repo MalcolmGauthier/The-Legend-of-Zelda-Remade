@@ -96,7 +96,9 @@ namespace The_Legend_of_Zelda
         public const int PPU_WIDTH = 32;
         public const int PPU_HEIGHT = 30;
         public const int PPU_SCREENS = 4;
-        public const int SCREEN_TILES = PPU_WIDTH * PPU_HEIGHT;
+        public const int SCREEN_TILES = PPU_WIDTH * PPU_HEIGHT; // 960
+        public const int VRAM_WIDTH = PPU_WIDTH * 8 * 2; // 512
+        public const int VRAM_HEIGHT = PPU_HEIGHT * 8 * 2; // 480
         public const int PIXELS_PER_TILE = 64;
         public const int BYTES_PER_CHR_TILE = 16;
         public const int CHR_TILESET_SIZE = 256;
@@ -112,6 +114,24 @@ namespace The_Legend_of_Zelda
             OVERWORLD,
             DUNGEON,
             OTHER
+        }
+
+        public enum OtherPPUPages
+        {
+            TITLE,
+            EMPTY,
+            STORY,
+            INTRO_1,
+            INTRO_2,
+            INTRO_3,
+            INTRO_4,
+            INTRO_5,
+            INTRO_6,
+            FILE_SELECT,
+            REGISTER_NAME,
+            OVERWORLD_MENU,
+            DUNGEON_MENU,
+            GAME_OVER
         }
 
         public enum ROMData
@@ -219,15 +239,18 @@ namespace The_Legend_of_Zelda
             return texture;
         }
 
+        public static void LoadPPUPage(PPUDataGroup group, OtherPPUPages page, byte screen_index) => LoadPPUPage(group, (byte)page, screen_index);
         public static void LoadPPUPage(PPUDataGroup group, byte page, byte screen_index)
         {
+            int ppu_start_index = screen_index * SCREEN_TILES;
+
             switch (group)
             {
                 case PPUDataGroup.OVERWORLD:
                     using (Stream stream = File.OpenRead(@"Data\TILES_OVERWORLD.bin"))
                     {
                         BinaryReader reader = new BinaryReader(stream);
-                        stream.Seek(page * 0xb0, SeekOrigin.Begin);
+                        stream.Seek(page * 176, SeekOrigin.Begin);
                         for (int i = screen_index * 176; i < screen_index * 176 + 176; i++)
                         {
                             Screen.meta_tiles[i].SetPPUValues(reader.ReadByte());
@@ -254,10 +277,10 @@ namespace The_Legend_of_Zelda
                         for (int i = start; i < lim; i++)
                         {
                             a = reader.ReadByte();
-                            ppu_plt[i * 4 + 0 + screen_index * 960] = (byte)((a & 0b11000000) >> 6);
-                            ppu_plt[i * 4 + 1 + screen_index * 960] = (byte)((a & 0b00110000) >> 4);
-                            ppu_plt[i * 4 + 2 + screen_index * 960] = (byte)((a & 0b00001100) >> 2);
-                            ppu_plt[i * 4 + 3 + screen_index * 960] = (byte)(a & 0b00000011);
+                            ppu_plt[i * 4 + 0 + ppu_start_index] = (byte)((a & 0b11000000) >> 6);
+                            ppu_plt[i * 4 + 1 + ppu_start_index] = (byte)((a & 0b00110000) >> 4);
+                            ppu_plt[i * 4 + 2 + ppu_start_index] = (byte)((a & 0b00001100) >> 2);
+                            ppu_plt[i * 4 + 3 + ppu_start_index] = (byte)(a & 0b00000011);
                         }
                     }
                     break;
@@ -266,21 +289,23 @@ namespace The_Legend_of_Zelda
                     using (Stream stream = File.OpenRead(@"Data\TILES_DUNGEON.bin"))
                     {
                         BinaryReader reader = new BinaryReader(stream);
+
                         // IF TOP DOWN
-                        if (DC.room_list[page] < 0x2a)
+                        if (DC.room_list[page] is not (0x2a or 0x2b))
                         {
                             int screen_1_exception = 0;
                             if (screen_index == 1)
                                 screen_1_exception = -256;
-                            int lim = ppu.Length / 4 + screen_index * 960 + screen_1_exception;
+                            int lim = ppu.Length / 4 + ppu_start_index + screen_1_exception;
 
-                            for (int i = 256 + screen_index * 960 + screen_1_exception; i < lim; i++)
+                            for (int i = 256 + ppu_start_index + screen_1_exception; i < lim; i++)
                             {
                                 ppu[i] = reader.ReadByte();
                                 ppu_plt[i] = 2;
                             }
 
-                            for (int i = 256 + 128 + screen_1_exception + screen_index * 960; i < 832 + screen_1_exception + screen_index * 960; i++)
+                            // draw border around dungeon room
+                            for (int i = 256 + 128 + screen_1_exception + ppu_start_index; i < 832 + screen_1_exception + ppu_start_index; i++)
                             {
                                 byte palette = 2;
                                 if (i % 32 >= 4 && i % 32 <= 0x1b)
@@ -292,6 +317,7 @@ namespace The_Legend_of_Zelda
                                 }
                                 ppu_plt[i] = palette;
                             }
+                            // find and draw inside of room, depending on its room type
                             stream.Seek(0x420 + (12 * 7) * DC.room_list[page], SeekOrigin.Begin);
                             for (int i = 2; i < 9; i++)
                             {
@@ -315,8 +341,8 @@ namespace The_Legend_of_Zelda
                             {
                                 Screen.meta_tiles[i].SetPPUValues(reader.ReadByte());
                             }
-                            int lim = ppu.Length / 4 + screen_index * 960;
-                            for (int i = 256 + screen_index * 960; i < lim; i++)
+                            int lim = ppu.Length / 4 + ppu_start_index;
+                            for (int i = 256 + ppu_start_index; i < lim; i++)
                             {
                                 ppu_plt[i] = 2;
                             }
@@ -346,42 +372,6 @@ namespace The_Legend_of_Zelda
                             ppu_plt[i * 4 + 1 + screen_index * 960] = (byte)((a & 0b00110000) >> 4);
                             ppu_plt[i * 4 + 2 + screen_index * 960] = (byte)((a & 0b00001100) >> 2);
                             ppu_plt[i * 4 + 3 + screen_index * 960] = (byte)((a & 0b00000011) >> 0);
-                        }
-                    }
-                    break;
-            }
-        }
-
-        //TODO: remove
-        public static void ScrollPPU_V(PPUDataGroup group, int row_index, int ppu_index)
-        {
-            switch (group)
-            {
-                case PPUDataGroup.OVERWORLD:
-                case PPUDataGroup.DUNGEON:
-                    break;
-                case PPUDataGroup.OTHER:
-                    using (Stream stream = File.OpenRead(@"Data\TILES_OTHER.bin"))
-                    {
-                        BinaryReader reader = new BinaryReader(stream);
-                        stream.Seek(row_index, SeekOrigin.Begin);
-                        for (int i = 0; i < 32; i++)
-                        {
-                            ppu[i + (ppu_index % 60) * 32] = reader.ReadByte();
-                        }
-                    }
-                    using (Stream stream = File.OpenRead(@"Data\PLT_OTHER.bin"))
-                    {
-                        BinaryReader reader = new BinaryReader(stream);
-                        stream.Seek(row_index / 4, SeekOrigin.Begin);
-                        byte a;
-                        for (int i = 0; i < 8; i++)
-                        {
-                            a = reader.ReadByte();
-                            ppu_plt[i * 4 +     32 * (ppu_index % 60)] = (byte)((a & 0b11000000) >> 6);
-                            ppu_plt[i * 4 + 1 + 32 * (ppu_index % 60)] = (byte)((a & 0b00110000) >> 4);
-                            ppu_plt[i * 4 + 2 + 32 * (ppu_index % 60)] = (byte)((a & 0b00001100) >> 2);
-                            ppu_plt[i * 4 + 3 + 32 * (ppu_index % 60)] = (byte) (a & 0b00000011);
                         }
                     }
                     break;
@@ -433,7 +423,7 @@ namespace The_Legend_of_Zelda
 
         public static void DrawMenu()
         {
-            int page_index = Program.gamemode == Program.Gamemode.OVERWORLD ? 11 : 12;
+            int page_index = Program.gamemode == Program.Gamemode.OVERWORLD ? (int)OtherPPUPages.OVERWORLD_MENU : (int)OtherPPUPages.DUNGEON_MENU;
 
             using (Stream stream = File.OpenRead(@"Data\TILES_OTHER.bin"))
             {

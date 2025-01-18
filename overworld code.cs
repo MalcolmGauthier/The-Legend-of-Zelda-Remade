@@ -1,4 +1,5 @@
-﻿using static The_Legend_of_Zelda.SaveLoad;
+﻿using System.Diagnostics.CodeAnalysis;
+using static The_Legend_of_Zelda.SaveLoad;
 using static The_Legend_of_Zelda.Screen;
 
 namespace The_Legend_of_Zelda
@@ -25,7 +26,7 @@ namespace The_Legend_of_Zelda
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 119;
+        public const byte DEFAULT_SPAWN_ROOM = 116;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;
@@ -45,7 +46,7 @@ namespace The_Legend_of_Zelda
         public int recorder_destination = 0;
 
         // list of rooms with stairs in them
-        public readonly byte[] stair_list = {
+        readonly byte[] stair_list = {
             11, 34, 26, 98, 28, 73, 29, 33, 35, 40, 52, 61, 66, 109, 70, 71, 72, 75, 77, 78, 81, 86, 91, 99, 104, 106, 107, 120, 121
         };
         // list of rooms with black squares in them
@@ -110,7 +111,7 @@ namespace The_Legend_of_Zelda
             109, 96, //8
         };
         // list of all ennemies for each room, refer to enemy spawning function to learn to decipher this
-        public readonly int[] overworld_enemy_list =
+        readonly int[] overworld_enemy_list =
         {
             0x000000, 0x999900, 0x999900, 0xeee000, 0xaaaaaa, 0xaa9956, 0xaa99ff, 0x900000, 0xeee000, 0x000000, 0xa00000, 0x500000, 0x333333, 0x333333, 0x000000, 0x000000,
             0xaaaa00, 0xaa99ff, 0xaaaaaa, 0xaa9900, 0x999900, 0xaa99ff, 0xeee000, 0xeee000, 0xeee000, 0xeee000, 0x333333, 0x000000, 0x000000, 0xffffff, 0x333333, 0xffffff,
@@ -125,13 +126,20 @@ namespace The_Legend_of_Zelda
         public readonly byte[] overworld_screens_side_entrance = {
             75, 77, 78, 82, 87, 88, 91, 92, 93, 97, 98, 104, 107, 108, 109, 110, 113, 114, 115, 120
         };
+        // screens with water
+        //TODO: these are only the screens with zora. find which ones have sea noise
+        readonly byte[] screens_with_water =
+        {
+            10, 23, 24, 25, 26, 30, 38, 39, 40, 45, 46, 53, 54, 56, 62, 63, 69, 71, 72, 73, 79,
+            84, 85, 86, 89, 90, 95, 101, 105, 106, 111, 117, 123, 124, 125, 126, 127
+        };
 
         public void Init()
         {
             Menu.draw_hud_objects = false;
+            Menu.map_dot.shown = false;
             x_scroll = 0;
             y_scroll = 0;
-            Menu.map_dot.shown = false;
             
             Textures.DrawHUDBG();
             Palettes.LoadPaletteGroup(PaletteID.BG_0, Palettes.PaletteGroups.GRAVEYARD_HUD1);
@@ -148,6 +156,7 @@ namespace The_Legend_of_Zelda
             Palettes.LoadPaletteGroup(PaletteID.SP_3, Palettes.PaletteGroups.OVERWORLD_DARK_ENEMIES);
             Textures.LoadNewRomData(Textures.ROMData.CHR_SURFACE);
             Menu.InitHUD();
+            UpdateBGMusic(Sound.Songs.OVERWORLD, 5.1f);
             //Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, current_screen, 0);
             Link.can_move = false;
             Link.Show(false);
@@ -173,186 +182,61 @@ namespace The_Legend_of_Zelda
                 }
                 else
                 {
-                    Scroll();
+                    Scroll(raft_flag);
                 }
             }
 
             Level7EntranceAnimation();
         }
 
-        void Scroll()
+        protected override bool SpecificScrollCode(bool scroll_finished)
         {
-            if (scroll_animation_timer >= OPENING_ANIMATION_DONE)
+            if (scroll_finished)
             {
-                if (Link.y < 64 && (Control.IsHeld(Buttons.UP) || raft_flag))
-                {
-                    scroll_destination = (byte)(current_screen - 16);
-                    scroll_animation_timer = 0;
-                    scroll_direction = Direction.UP;
-                }
-                else if (Link.y > 223 && (Control.IsHeld(Buttons.DOWN) || raft_flag))
-                {
-                    scroll_destination = (byte)(current_screen + 16);
-                    scroll_animation_timer = 0;
-                    scroll_direction = Direction.DOWN;
-                }
-                else if (Link.x < 1 && Control.IsHeld(Buttons.LEFT))
-                {
-                    scroll_destination = (byte)(current_screen - 1);
-                    scroll_animation_timer = 0;
-                    scroll_direction = Direction.LEFT;
-                }
-                else if (Link.x > 239 && (Control.IsHeld(Buttons.RIGHT) || Menu.tornado_out))
-                {
-                    scroll_destination = (byte)(current_screen + 1);
-                    scroll_animation_timer = 0;
-                    scroll_direction = Direction.RIGHT;
-                }
-
-                return;
-            }
-
-            if (scroll_animation_timer == 0)
-            {
-                if (Menu.tornado_out)
-                {
-                    scroll_destination = ChangeRecorderDestination(false);
-                }
-                Menu.can_open_menu = false;
-                UnloadSpritesRoomTransition();
-                ResetLinkPowerUps();
-
-                // special screen. going right, up or down loops, going left exits and going up 4 times in a row exits
-                if (current_screen == 27)
-                {
-                    const int NUM_OF_SCROLLS_TO_EXIT = 4;
-
-                    if (scroll_direction == Direction.UP)
-                        level_5_entrance_count++;
-
-                    if (scroll_direction != Direction.LEFT || (scroll_direction == Direction.UP && level_5_entrance_count < NUM_OF_SCROLLS_TO_EXIT))
-                        scroll_destination = 27;
-
-                    if (scroll_direction != Direction.UP || level_5_entrance_count >= NUM_OF_SCROLLS_TO_EXIT)
-                        level_5_entrance_count = 0;
-                }
-
-                // special screen. going left, up or down loops, going right exits, and going up->left->down->left exits
-                if (current_screen == 97)
-                {
-                    Direction[] LOST_FOREST_CODE = { Direction.UP, Direction.LEFT, Direction.DOWN, Direction.LEFT};
-
-                    if (scroll_direction == LOST_FOREST_CODE[lost_woods_count])
-                        lost_woods_count++;
-                    else
-                        lost_woods_count = 0;
-
-                    if (scroll_direction != Direction.RIGHT || (scroll_direction == Direction.LEFT && lost_woods_count == LOST_FOREST_CODE.Length))
-                        scroll_destination = 97;
-
-                    if (lost_woods_count >= LOST_FOREST_CODE.Length)
-                        lost_woods_count = 0;
-                }
-
-                if (scroll_direction == Direction.DOWN)
-                {
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, scroll_destination, 1);
-                }
-                else if (scroll_direction == Direction.UP)
-                {
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, current_screen, 1);
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, scroll_destination, 0);
-                    y_scroll = 176;
-                    Link.SetPos(new_y: 240);
-                }
-                else
-                {
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, scroll_destination, 2);
-                }
-                Link.can_move = false;
-            }
-
-            if (scroll_direction == Direction.UP || scroll_direction == Direction.DOWN)
-            {
-                if ((Program.gTimer % 2) == 0)
-                {
-                    if (scroll_direction == Direction.UP)
-                    {
-                        y_scroll -= 7;
-                        if (Program.gTimer % 3 == 0)
-                            Link.SetPos(new_y: Link.y - 2);
-                    }
-                    else
-                    {
-                        y_scroll += 7;
-                        if (Program.gTimer % 3 == 0)
-                            Link.SetPos(new_y: Link.y + 2);
-                        if (Link.y < 65)
-                            Link.SetPos(new_y: 65);
-                    }
-                }
-
-                if (scroll_animation_timer == 50)
-                {
-                    EndScroll();
-                }
-            }
-            else
-            {
-                if (scroll_direction == Direction.LEFT)
-                {
-                    x_scroll -= 4;
-                    if (Program.gTimer % 8 == 0)
-                        Link.SetPos(new_x: Link.x - 2);
-                    if (Link.x > 239)
-                        Link.SetPos(new_x: 239);
-                }
-                else
-                {
-                    x_scroll += 4;
-                    if (Program.gTimer % 4 == 0)
-                        Link.SetPos(new_x: Link.x + 1);
-                    if (Link.x < 1)
-                        Link.SetPos(new_x: 1);
-                }
-
-                if (scroll_animation_timer == 64)
-                {
-                    EndScroll();
-                }
-            }
-
-            if ((int)scroll_direction < 2)
-                Link.current_action = (Link.Action)scroll_direction + 2;
-            else
-                Link.current_action = (Link.Action)scroll_direction - 2;
-
-            scroll_animation_timer++;
-            Link.animation_timer++;
-
-            void EndScroll()
-            {
-                x_scroll = 0;
-                y_scroll = 0;
-                Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, scroll_destination, 0);
-                current_screen = scroll_destination;
-                Link.can_move = true;
-                Menu.blue_candle_limit_reached = false;
-                if (scroll_direction == Direction.UP)
-                    Link.SetPos(new_y: 223);
-                else if (scroll_direction == Direction.DOWN)
-                    Link.SetPos(new_y: 65);
-                else if (scroll_direction == Direction.LEFT)
-                    Link.SetPos(new_x: 239);
-                else
-                    Link.SetPos(new_x: 1);
-                scroll_animation_timer = SCROLL_ANIMATION_DONE;
-                Menu.can_open_menu = true;
-
                 SpawnEnemies();
                 if (current_screen == 95 && !GetHeartContainerFlag(12))
                     new HeartContainerSprite(192, 144, 12);
+                return false;
             }
+
+            if (Menu.tornado_out)
+            {
+                scroll_destination = RecorderDestination(false);
+            }
+
+            // special screen. going right, up or down loops, going left exits and going up 4 times in a row exits
+            if (current_screen == 27)
+            {
+                const int NUM_OF_SCROLLS_TO_EXIT = 4;
+
+                if (scroll_direction == Direction.UP)
+                    level_5_entrance_count++;
+
+                if (scroll_direction != Direction.LEFT || (scroll_direction == Direction.UP && level_5_entrance_count < NUM_OF_SCROLLS_TO_EXIT))
+                    scroll_destination = 27;
+
+                if (scroll_direction != Direction.UP || level_5_entrance_count >= NUM_OF_SCROLLS_TO_EXIT)
+                    level_5_entrance_count = 0;
+            }
+
+            // special screen. going left, up or down loops, going right exits, and going up->left->down->left exits
+            if (current_screen == 97)
+            {
+                Direction[] LOST_FOREST_CODE = { Direction.UP, Direction.LEFT, Direction.DOWN, Direction.LEFT };
+
+                if (scroll_direction == LOST_FOREST_CODE[lost_woods_count])
+                    lost_woods_count++;
+                else
+                    lost_woods_count = 0;
+
+                if (scroll_direction != Direction.RIGHT || (scroll_direction == Direction.LEFT && lost_woods_count == LOST_FOREST_CODE.Length))
+                    scroll_destination = 97;
+
+                if (lost_woods_count >= LOST_FOREST_CODE.Length)
+                    lost_woods_count = 0;
+            }
+
+            return true;
         }
 
         // spawn ennemies depending on current screen. most enemies are stored in overworld_enemy_list as ints where each 4 bits is the code of an enemy.
@@ -372,9 +256,19 @@ namespace The_Legend_of_Zelda
             int enemies = overworld_enemy_list[current_screen];
             int right_shift_ammount = (NUM_ENS_PER_SCRREN - 1) * ENS_MEM_SIZE_BITS;
             int enemy_mask = ((int)Math.Pow(2, ENS_MEM_SIZE_BITS) - 1) << right_shift_ammount; // (2^4)<<20 == 15728640 == 0xF00000 <- mask
+            List<int> ignore_list = new();
 
             for (int i = 0; i < NUM_ENS_PER_SCRREN; i++)
             {
+                int kq = IsInKillQueue(current_screen, ignore_list.ToArray());
+                if (kq != -1)
+                {
+                    ignore_list.Add(kq);
+                    right_shift_ammount -= ENS_MEM_SIZE_BITS;
+                    enemy_mask >>= 4;
+                    continue;
+                }
+
                 switch ((OverworldEnemies)((enemies & enemy_mask) >> right_shift_ammount))
                 {
                     case OverworldEnemies.NONE:
@@ -437,17 +331,14 @@ namespace The_Legend_of_Zelda
                 enemy_mask >>= 4;
             }
 
-            //TODO: find a better way of checking for water. like, a readonly list
-            if ((meta_tiles[1].tile_index == 0xa || meta_tiles[14].tile_index == 0xa || meta_tiles[161].tile_index == 0xa || meta_tiles[174].tile_index == 0xa ||
-                meta_tiles[69].tile_index == 0xa || meta_tiles[70].tile_index == 0xc || meta_tiles[64].tile_index == 0x11 || meta_tiles[166].tile_index == 0xa)
-                && current_screen != 14)
+            if (screens_with_water.Contains(current_screen))
             {
                 new Zora();
             }
         }
 
         // returns current recorder destination, and changes it if change_value is set
-        public byte ChangeRecorderDestination(bool change_the_value)
+        public byte RecorderDestination(bool change_the_value)
         {
             for (byte i = 0; i < 8; i++)
             {
@@ -463,7 +354,7 @@ namespace The_Legend_of_Zelda
 
                 if (GetTriforceFlag(i))
                 {
-                    return dungeon_location_list[recorder_destination * 2]; // returns y coord of dungeon entrance
+                    return dungeon_location_list[recorder_destination * 2]; // returns room id of dungeon entrance
                 }
             }
 
@@ -636,7 +527,7 @@ namespace The_Legend_of_Zelda
                     }
                     else
                     {
-                        Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
+                        Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
                         return_x = Link.x;
                         return_y = Link.y;
                         Link.SetPos(120, 223);

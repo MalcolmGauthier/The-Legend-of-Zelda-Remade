@@ -132,7 +132,7 @@ namespace The_Legend_of_Zelda
             y = self.y;
             
             // debug section
-            hp = 3f;
+            //hp = 3f;
             blue_candle = true;
             magical_key = true;
             recorder = true;
@@ -402,7 +402,7 @@ namespace The_Legend_of_Zelda
 
                     if (self.shown)
                     {
-                        OC.ChangeRecorderDestination(true);
+                        OC.RecorderDestination(true);
                     }
 
                     // IF LEVEL 7 ENTRANCE

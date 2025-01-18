@@ -102,7 +102,7 @@
             this.y = y;
             unload_during_transition = true;
             counterpart.unload_during_transition = true;
-            counterpart.x = (short)(x + 8);
+            counterpart.x = x + 8;
             counterpart.y = y;
             Screen.sprites.Add(counterpart);
             smoke_timer = 30;
@@ -196,7 +196,7 @@
             }
             unload_during_transition = true;
             counterpart.unload_during_transition = true;
-            counterpart.x = (short)(x + 8);
+            counterpart.x = x + 8;
             counterpart.y = y;
             Screen.sprites.Add(counterpart);
             smoke_timer = 30;

@@ -231,6 +231,8 @@ namespace The_Legend_of_Zelda
             Link.knockback_timer = 0;
             Link.iframes_timer = 0;
             Link.facing_direction = Direction.UP;
+            x_scroll = 0;
+            y_scroll = 0;
 
             Menu.InitHUD();
             // set number in hud "LEVEL-X"
@@ -246,6 +248,7 @@ namespace The_Legend_of_Zelda
 
             LoadPalette();
             Textures.LoadNewRomData(Textures.ROMData.CHR_DUNGEON);
+            UpdateBGMusic(Sound.Songs.DUNGEON, 0);
 
             if (current_dungeon is 1 or 2 or 7)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_127);
@@ -278,7 +281,7 @@ namespace The_Legend_of_Zelda
             if (link_walk_animation_timer > 0)
                 LinkWalkAnimation();
 
-            if (scroll_animation_timer > 500)
+            if (scroll_animation_timer >= SCROLL_ANIMATION_DONE)
                 DoorCode();
 
             CheckForWarp();
@@ -286,52 +289,9 @@ namespace The_Legend_of_Zelda
             if (!Menu.menu_open)
             {
                 if (dark_room_animation_timer == 0 && link_walk_animation_timer == 0)
-                    Scroll();
+                    Scroll(false);
                 else
                     DarkeningAnimation();
-            }
-        }
-
-        void OpeningAnimation()
-        {
-            opening_animation_timer++;
-
-            if (opening_animation_timer >= OPENING_ANIMATION_DONE)
-            {
-                Link.Show(true);
-                Menu.can_open_menu = true;
-                Menu.draw_hud_objects = true;
-                Sound.PlaySong(Sound.Songs.DUNGEON);
-                Program.can_pause = true;
-                Menu.map_dot.shown = true;
-                return;
-            }
-
-            Menu.can_open_menu = false;
-            Link.can_move = false;
-            Link.Show(false);
-            Menu.draw_hud_objects = false;
-
-            if (opening_animation_timer % 5 != 0)
-                return;
-
-            int num_rows_to_erase = 16 - opening_animation_timer / 5;
-            if (num_rows_to_erase <= 0)
-            {
-                opening_animation_timer = OPENING_ANIMATION_DONE - 1;
-            }
-
-            Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, current_screen, 0);
-            int left_index_start = Textures.PPU_WIDTH * 8;
-            int right_index_start = Textures.PPU_WIDTH * 9 - 1;
-
-            for (int i = 0; i < num_rows_to_erase; i++)
-            {
-                for (int j = 0; j < 22; j++)
-                {
-                    Textures.ppu[left_index_start + j * Textures.PPU_WIDTH + i] = 0x24;
-                    Textures.ppu[right_index_start + j * Textures.PPU_WIDTH - i] = 0x24;
-                }
             }
         }
 
@@ -384,281 +344,41 @@ namespace The_Legend_of_Zelda
                 Palettes.LoadPalette(PaletteID.BG_3, 1, Color._12_SMEI_DARK_BLUE);
         }
 
-        public DoorType GetDoorType(byte room_id, Direction door_direction)
+        protected override bool SpecificScrollCode(bool scroll_finished)
         {
-            // door_types must be cleared before use
-            if (door_types[(int)door_direction] != DoorType.NONE)
-                return door_types[(int)door_direction];
-
-            int connection_id = 2 * room_id;
-            int connection_index;
-            if (door_direction == Direction.LEFT)
-                connection_id--;
-            else if (door_direction == Direction.RIGHT)
-                connection_id++;
-            else if (door_direction == Direction.UP)
-                connection_id -= 32;
-
-            if (connection_id < 0 || connection_id >= connection_IDs.Length * 2)
-                return DoorType.NONE;
-
-            connection_index = connection_id;
-
-            float connection_location = connection_id / 2f;
-            byte bit_mask = 0xF0;
-            if (connection_location % 1 != 0)
+            if (scroll_finished)
             {
-                bit_mask >>= 4;
-                connection_location -= 0.5f;
+                LinkWalkAnimation();
+                return false;
             }
-            connection_id = connection_IDs[(int)connection_location] & bit_mask;
-            if (bit_mask == 0xF0)
-                connection_id >>= 4;
 
-            if (connection_id >= 4 && connection_id <= 0xc && door_statuses[(int)door_direction])
-                return DoorType.OPEN;
-
-            switch (connection_id)
-            {
-                case 0:
-                    return DoorType.NONE;
-                case 1:
-                    return DoorType.OPEN;
-                case 2:
-                    if (SaveLoad.GetOpenedKeyDoorsFlag((byte)Array.IndexOf(key_door_connections, (short)connection_index)))
-                        return DoorType.OPEN;
-                    else
-                        return DoorType.KEY;
-                case 3:
-                    return DoorType.BOMBABLE;
-                case 4:
-                    if (door_direction == Direction.UP || door_direction == Direction.LEFT) // will likely have to flip conditions of a-b
-                        return DoorType.CLOSED_PUSH;
-                    else
-                        return DoorType.OPEN;
-                case 5:
-                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
-                        return DoorType.CLOSED_ENEMY;
-                    else
-                        return DoorType.OPEN;
-                case 6:
-                    if (door_direction == Direction.UP || door_direction == Direction.LEFT)
-                        return DoorType.CLOSED_ENEMY;
-                    else
-                        return DoorType.OPEN;
-                case 7 or 8:
-                    return DoorType.CLOSED_ENEMY;
-                case 9:
-                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
-                        return DoorType.CLOSED_PUSH;
-                    else
-                        return DoorType.OPEN;
-                case 0xa:
-                    if (door_direction == Direction.UP || door_direction == Direction.LEFT)
-                        return DoorType.CLOSED_ALWAYS;
-                    else
-                        return DoorType.OPEN;
-                case 0xb:
-                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
-                        return DoorType.CLOSED_ALWAYS;
-                    else
-                        return DoorType.OPEN;
-                case 0xc:
-                    return DoorType.CLOSED_TRIFORCE;
-                case 0xd:
-                    return DoorType.WALK_THROUGH;
-                case 0xe:
-                    if (door_direction == Direction.UP || door_direction == Direction.LEFT)
-                        return DoorType.WALK_THROUGH;
-                    else
-                        return DoorType.NONE;
-                case 0xf:
-                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
-                        return DoorType.WALK_THROUGH;
-                    else
-                        return DoorType.NONE;
-                default:
-                    return DoorType.NONE;
-            }
-        }
-
-        // get connection ID of connection between two rooms, found with direction relative to room id
-        public int getConnectionID(byte room_id, Direction door_direction)
-        {
-            int connection_id = 2 * room_id;
-            if (door_direction == Direction.LEFT)
-                connection_id--;
-            else if (door_direction == Direction.RIGHT)
-                connection_id++;
-            else if (door_direction == Direction.UP)
-                connection_id -= 32;
-
-            if (connection_id < 0 || connection_id >= connection_IDs.Length * 2)
-                return 0;
-            else
-                return connection_id;
-        }
-
-        void Scroll()
-        {
             // no scrolling in the side view rooms!
             if (room_list[current_screen] >= 0x2a)
-                return;
-
-            if (scroll_animation_timer > 500)
             {
-                if (Link.y < 64 && (Control.IsHeld(Buttons.UP)))
-                {
-                    scroll_destination = (byte)(current_screen - 16);
-                    scroll_animation_timer = 0;
-                    scroll_direction = Direction.UP;
-                }
-                else if (Link.y > 223 && (Control.IsHeld(Buttons.DOWN)))
-                {
-                    scroll_destination = (byte)(current_screen + 16);
-                    scroll_animation_timer = 0;
-                    scroll_direction = Direction.DOWN;
-                }
-                else if (Link.x < 1 && Control.IsHeld(Buttons.LEFT))
-                {
-                    scroll_destination = (byte)(current_screen - 1);
-                    scroll_animation_timer = 0;
-                    scroll_direction = Direction.LEFT;
-                }
-                else if (Link.x > 239 && (Control.IsHeld(Buttons.RIGHT) || Menu.tornado_out))
-                {
-                    scroll_destination = (byte)(current_screen + 1);
-                    scroll_animation_timer = 0;
-                    scroll_direction = Direction.RIGHT;
-                }
-
-                return;
+                return false;
             }
 
-            if (scroll_animation_timer == 0)
+            // check if dungeon entrance. load overworld and return if going down
+            if (room_list[current_screen] == 1 && scroll_direction == Direction.DOWN)
             {
+                Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
+                Program.gamemode = Program.Gamemode.OVERWORLD;
                 Link.Show(false);
-                Menu.can_open_menu = false;
-                UnloadSpritesRoomTransition();
-                ResetLinkPowerUps();
-
-                if (room_list[current_screen] == 1 && scroll_direction == Direction.DOWN)
-                {
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
-                    Program.gamemode = Program.Gamemode.OVERWORLD;
-                    OC.black_square_stairs_return_flag = true;
-                    Link.Show(false);
-                    Link.SetPos(-16, -16);
-                    OC.Init();
-                    OC.current_screen = OC.return_screen;
-                    scroll_animation_timer = SCROLL_ANIMATION_DONE;
-                    return;
-                }
-
-                LinkWalkAnimation();
-                if (GetRoomDarkness(scroll_destination) && !is_dark)
-                {
-                    is_dark = true;
-                    dark_room_animation_timer = 22;
-                }
-
-                if (scroll_direction == Direction.DOWN)
-                {
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 1);
-                }
-                else if (scroll_direction == Direction.UP)
-                {
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, current_screen, 1);
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 0);
-                    y_scroll = 176;
-                    Link.SetPos(new_y: 240);
-                }
-                else
-                {
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 2);
-                }
-                Link.can_move = false;
+                Link.SetPos(-16, -16);
+                OC.Init();
+                OC.black_square_stairs_return_flag = true;
+                OC.current_screen = OC.return_screen;
+                return false;
             }
 
-            if (scroll_direction == Direction.UP || scroll_direction == Direction.DOWN)
+            LinkWalkAnimation();
+            if (GetRoomDarkness(scroll_destination) && !is_dark)
             {
-                if ((Program.gTimer % 4) == 0)
-                {
-                    if (scroll_direction == Direction.UP)
-                    {
-                        y_scroll -= 8;
-                        if (Program.gTimer % 3 == 0)
-                            Link.SetPos(new_y: Link.y - 2);
-                    }
-                    else
-                    {
-                        y_scroll += 8;
-                        if (Program.gTimer % 3 == 0)
-                            Link.SetPos(new_y: Link.y + 2);
-                        if (Link.y < 65)
-                            Link.SetPos(new_y: 65);
-                    }
-                }
-
-                if (scroll_animation_timer == 88)
-                {
-                    EndScroll();
-                }
-            }
-            else
-            {
-                if (scroll_direction == Direction.LEFT)
-                {
-                    x_scroll -= 2;
-                    if (Program.gTimer % 4 == 0)
-                        Link.SetPos(new_x: Link.x - 2);
-                    if (Link.x > 239)
-                        Link.SetPos(new_x: 239);
-                }
-                else
-                {
-                    x_scroll += 2;
-                    if (Program.gTimer % 2 == 0)
-                        Link.SetPos(new_x: Link.x + 1);
-                    if (Link.x < 1)
-                        Link.SetPos(new_x: 1);
-                }
-
-                if (scroll_animation_timer == 128)
-                {
-                    EndScroll();
-                }
+                is_dark = true;
+                dark_room_animation_timer = 22;
             }
 
-            if ((int)scroll_direction < 2)
-                Link.current_action = (Link.Action)scroll_direction + 2;
-            else
-                Link.current_action = (Link.Action)scroll_direction - 2;
-
-            scroll_animation_timer++;
-            Link.animation_timer++;
-
-            void EndScroll()
-            {
-                Link.Show(true);
-                x_scroll = 0;
-                y_scroll = 0;
-                Menu.blue_candle_limit_reached = false;
-                Textures.LoadPPUPage(Textures.PPUDataGroup.DUNGEON, scroll_destination, 0);
-                current_screen = scroll_destination;
-                if (scroll_direction == Direction.UP)
-                    Link.SetPos(new_y: 223);
-                else if (scroll_direction == Direction.DOWN)
-                    Link.SetPos(new_y: 65);
-                else if (scroll_direction == Direction.LEFT)
-                    Link.SetPos(new_x: 239);
-                else
-                    Link.SetPos(new_x: 1);
-                scroll_animation_timer += 1000;
-                Menu.can_open_menu = true;
-
-                LinkWalkAnimation();
-            }
+            return true;
         }
 
         // plays the room darkening animation, either forwards or backwards depending on dark room enter or exit
@@ -714,6 +434,12 @@ namespace The_Legend_of_Zelda
                     LoadPalette();
                     break;
             }
+        }
+
+        public bool GetRoomDarkness(byte room)
+        {
+            int value = dark_rooms[room >> 4] & (1 << (15 - (room % 16)));
+            return value > 0;
         }
 
         // spawn ennemies and or bosses in a simillar way to overworld
@@ -859,6 +585,175 @@ namespace The_Legend_of_Zelda
             }
         }
 
+        public void LinkWalkAnimation()
+        {
+            const byte ANIM_LEN = 10;
+            if (link_walk_animation_timer == 0)
+            {
+                //TODO: extend animation if exiting bomb hole or door that's about to lock
+                link_walk_animation_timer = ANIM_LEN;
+            }
+
+            if (link_walk_animation_timer == ANIM_LEN)
+            {
+                if (is_dark && !GetRoomDarkness(current_screen))
+                {
+                    dark_room_animation_timer = -22;
+                    is_dark = false;                   
+                }
+                Link.can_move = false;
+                UnloadSpritesRoomTransition();
+                if (dark_room_animation_timer != 0)
+                {
+                    DarkeningAnimation();
+                    return;
+                }
+            }
+            else if (link_walk_animation_timer == 1)
+            {
+                Link.can_move = scroll_animation_timer >= SCROLL_ANIMATION_DONE;
+                SpawnEnemies();
+                SpawnItems();
+                SaveLoad.SetDungeonVisitedRoomFlag(current_screen, true);
+            }
+
+            Link.animation_timer++;
+            int x_add = 0, y_add = 0;
+
+            if (Link.facing_direction == Direction.UP)
+                y_add = -1;
+            else if (Link.facing_direction == Direction.DOWN)
+                y_add = 1;
+            else if (Link.facing_direction == Direction.LEFT)
+                x_add = -1;
+            else
+                x_add = 1;
+
+            if (Program.gTimer % 2 == 0)
+            {
+                x_add *= 2;
+                y_add *= 2;
+            }
+            Link.SetPos(Link.x + x_add, Link.y + y_add);
+
+            link_walk_animation_timer--;
+        }
+
+        public DoorType GetDoorType(byte room_id, Direction door_direction)
+        {
+            // door_types must be cleared before use
+            if (door_types[(int)door_direction] != DoorType.NONE)
+                return door_types[(int)door_direction];
+
+            int connection_id = 2 * room_id;
+            int connection_index;
+            if (door_direction == Direction.LEFT)
+                connection_id--;
+            else if (door_direction == Direction.RIGHT)
+                connection_id++;
+            else if (door_direction == Direction.UP)
+                connection_id -= 32;
+
+            if (connection_id < 0 || connection_id >= connection_IDs.Length * 2)
+                return DoorType.NONE;
+
+            connection_index = connection_id;
+
+            float connection_location = connection_id / 2f;
+            byte bit_mask = 0xF0;
+            if (connection_location % 1 != 0)
+            {
+                bit_mask >>= 4;
+                connection_location -= 0.5f;
+            }
+            connection_id = connection_IDs[(int)connection_location] & bit_mask;
+            if (bit_mask == 0xF0)
+                connection_id >>= 4;
+
+            if (connection_id >= 4 && connection_id <= 0xc && door_statuses[(int)door_direction])
+                return DoorType.OPEN;
+
+            switch (connection_id)
+            {
+                case 0:
+                    return DoorType.NONE;
+                case 1:
+                    return DoorType.OPEN;
+                case 2:
+                    if (SaveLoad.GetOpenedKeyDoorsFlag((byte)Array.IndexOf(key_door_connections, (short)connection_index)))
+                        return DoorType.OPEN;
+                    else
+                        return DoorType.KEY;
+                case 3:
+                    return DoorType.BOMBABLE;
+                case 4:
+                    if (door_direction == Direction.UP || door_direction == Direction.LEFT) // will likely have to flip conditions of a-b
+                        return DoorType.CLOSED_PUSH;
+                    else
+                        return DoorType.OPEN;
+                case 5:
+                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
+                        return DoorType.CLOSED_ENEMY;
+                    else
+                        return DoorType.OPEN;
+                case 6:
+                    if (door_direction == Direction.UP || door_direction == Direction.LEFT)
+                        return DoorType.CLOSED_ENEMY;
+                    else
+                        return DoorType.OPEN;
+                case 7 or 8:
+                    return DoorType.CLOSED_ENEMY;
+                case 9:
+                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
+                        return DoorType.CLOSED_PUSH;
+                    else
+                        return DoorType.OPEN;
+                case 0xa:
+                    if (door_direction == Direction.UP || door_direction == Direction.LEFT)
+                        return DoorType.CLOSED_ALWAYS;
+                    else
+                        return DoorType.OPEN;
+                case 0xb:
+                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
+                        return DoorType.CLOSED_ALWAYS;
+                    else
+                        return DoorType.OPEN;
+                case 0xc:
+                    return DoorType.CLOSED_TRIFORCE;
+                case 0xd:
+                    return DoorType.WALK_THROUGH;
+                case 0xe:
+                    if (door_direction == Direction.UP || door_direction == Direction.LEFT)
+                        return DoorType.WALK_THROUGH;
+                    else
+                        return DoorType.NONE;
+                case 0xf:
+                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
+                        return DoorType.WALK_THROUGH;
+                    else
+                        return DoorType.NONE;
+                default:
+                    return DoorType.NONE;
+            }
+        }
+
+        // get connection ID of connection between two rooms, found with direction relative to room id
+        public int getConnectionID(byte room_id, Direction door_direction)
+        {
+            int connection_id = 2 * room_id;
+            if (door_direction == Direction.LEFT)
+                connection_id--;
+            else if (door_direction == Direction.RIGHT)
+                connection_id++;
+            else if (door_direction == Direction.UP)
+                connection_id -= 32;
+
+            if (connection_id < 0 || connection_id >= connection_IDs.Length * 2)
+                return 0;
+            else
+                return connection_id;
+        }
+
         public void DrawDoors(byte room, byte screen_index, bool redraw = false)
         {
             int screen_index_offset = screen_index * 0x3c0;
@@ -997,54 +892,6 @@ namespace The_Legend_of_Zelda
             }
         }
 
-        public void LinkWalkAnimation()
-        {
-            const byte ANIM_LEN = 10;
-            if (link_walk_animation_timer == 0)
-                link_walk_animation_timer = ANIM_LEN;
-
-            if (link_walk_animation_timer == ANIM_LEN)
-            {
-                if (is_dark && !GetRoomDarkness(current_screen))
-                {
-                    dark_room_animation_timer = -22;
-                    is_dark = false;                   
-                }
-                Link.can_move = false;
-                UnloadSpritesRoomTransition();
-                if (dark_room_animation_timer != 0)
-                {
-                    DarkeningAnimation();
-                    return;
-                }
-            }
-            else if (link_walk_animation_timer == 1)
-            {
-                Link.can_move = true;
-                SpawnEnemies();
-                SpawnItems();
-                SaveLoad.SetDungeonVisitedRoomFlag(current_screen, true);
-            }
-
-            Link.animation_timer++;
-            int x_add = 0, y_add = 0;
-
-            if (Link.facing_direction == Direction.UP)
-                y_add = -1;
-            else if (Link.facing_direction == Direction.DOWN)
-                y_add = 1;
-            else if (Link.facing_direction == Direction.LEFT)
-                x_add = -1;
-            else
-                x_add = 1;
-
-            Link.SetPos(Link.x + x_add, Link.y + y_add);
-            if (Program.gTimer % 2 == 0)
-                Link.SetPos(Link.x + x_add, Link.y + y_add);
-
-            link_walk_animation_timer--;
-        }
-
         void DoorCode()
         {
             bool redraw = false;
@@ -1159,12 +1006,6 @@ namespace The_Legend_of_Zelda
                     break;
             }
             return gift_metatile;
-        }
-
-        public bool GetRoomDarkness(byte room)
-        {
-            int value = dark_rooms[room >> 4] & (1 << (15 - (room % 16)));
-            return value > 0;
         }
     }
 }

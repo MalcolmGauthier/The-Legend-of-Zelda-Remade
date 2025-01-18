@@ -4,8 +4,6 @@ namespace The_Legend_of_Zelda
 {
     internal static class TitlescreenCode
     {
-        static byte intro_scroll_counter = 0;
-
         public static void Tick()
         {
             Triforce_shine();
@@ -176,51 +174,54 @@ namespace The_Legend_of_Zelda
                     Palettes.LoadPalette(PaletteID.BG_3, 1, Color._29_LIGHT_GREEN);
                     Palettes.LoadPalette(PaletteID.BG_3, 2, Color._1A_SEMI_LIGHT_GREEN);
                     Palettes.LoadPalette(PaletteID.BG_3, 3, Color._09_DARK_GREEN);
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 2, 1);
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.STORY, 1);
                     break;
                 case 1425:
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 2, 0);
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.STORY, 0);
                     break;
                 case 1684:
                     y_scroll = 0;
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_1, 1);
                     break;
             }
 
             if (!Sound.IsMusicPlaying() && !mute_sound)
             {
-                y_scroll = 0;
-                Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 0, 0);
-                Palettes.LoadPaletteGroup(PaletteID.BG_0, Palettes.PaletteGroups.TITLESCREEN_1);
-                Palettes.LoadPaletteGroup(PaletteID.BG_1, Palettes.PaletteGroups.TITLESCREEN_2);
-                Palettes.LoadPaletteGroup(PaletteID.BG_2, Palettes.PaletteGroups.TITLESCREEN_3);
-                Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.TITLESCREEN_4);
-                Palettes.LoadPaletteGroup(PaletteID.SP_1, Palettes.PaletteGroups.TITLESCREEN_2);
-                Palettes.LoadPaletteGroup(PaletteID.SP_2, Palettes.PaletteGroups.TITLESCREEN_3);
-                Palettes.LoadPaletteGroup(PaletteID.SP_3, Palettes.PaletteGroups.TITLESCREEN_4);
-                Sound.PlaySong(Sound.Songs.SPLASH, false);
-                sprites.Clear();
-                intro_scroll_counter = 0;
-                gTimer = 0;
+                Program.Reset();
                 return;
             }
 
-            if ((gTimer > 1684 && gTimer < 4500) && (gTimer % 2 == 0))
+            switch (gTimer)
             {
-                y_scroll++;
-                if (gTimer % 16 == 0)
-                {
-                    Textures.ScrollPPU_V(Textures.PPUDataGroup.OTHER, 0x780 + 0x20 * intro_scroll_counter, intro_scroll_counter + 1);
-                    intro_scroll_counter++;
-                }
+                case 2150:
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_2, 0);
+                    break;
+                case 2650:
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_3, 1);
+                    break;
+                case 3150:
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_4, 0);
+                    break;
+                case 3600:
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_5, 1);
+                    break;
+                case 4120:
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_6, 0);
+                    break;
             }
-            else if ((gTimer > 945 && gTimer < 1425) && (gTimer % 2 == 0))
+
+            if (gTimer % 2 != 0)
+                return;
+
+            if (gTimer > 1684 && gTimer < 4500)
             {
                 y_scroll++;
-                if (gTimer % 16 == 0)
-                {
-                    intro_scroll_counter++;
-                }
+
+            }
+            else if (gTimer > 945 && gTimer < 1425)
+            {
+                y_scroll++;
             }
         }
 

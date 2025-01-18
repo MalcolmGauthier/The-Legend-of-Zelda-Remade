@@ -43,10 +43,12 @@ namespace The_Legend_of_Zelda
         // debug
         static long last_fps_display = DateTime.Now.Ticks;
         static ushort fps_count = 0, last_fps_count;
+        private static List<(object val, string info)> debug_draw_vals = new();
         public static bool advance_1_frame = false;
         public static bool full_pause = false;
+        // DEBUG FLAGS
         public static bool show_fps = false, input_display = false, uncap_fps = false, mute_sound = true, screentest = false, 
-            fast_forward = true, pause_whenever = true, frame_advance = true, reset = true;
+            fast_forward = true, pause_whenever = true, frame_advance = true, reset = true, logger = true;
 
         static void Main()
         {
@@ -87,9 +89,6 @@ namespace The_Legend_of_Zelda
             Screen.Init();
             SDL_SetRenderDrawColor(Screen.render, 0, 0, 0, 255);
             SDL_RenderPresent(Screen.render);
-
-            if (uncap_fps)
-                mute_sound = true;
 
             if (screentest)
                 gamemode = Gamemode.SCREENTEST;
@@ -191,8 +190,23 @@ namespace The_Legend_of_Zelda
                 screenshot_message_timer--;
                 DebugText.DisplayText($"saved screenshot at {screenshot_file_name}", 10, 10, 1, 0xff0000);
             }
-            //Text.DisplayText(SDL_GetError(), 1, 200, 1);
-            //Text.DisplayText(gTimer.ToString(), 10, 40, 1);
+            if (logger)
+            {
+                for (int i = 0; i < debug_draw_vals.Count; i++)
+                {
+                    string info = debug_draw_vals[i].info + (string.IsNullOrEmpty(debug_draw_vals[i].info) ? "" : ": ");
+                    DebugText.DisplayText(info + debug_draw_vals[i].val.ToString() ?? "null",
+                        10, 15 * i + 10, 1, 0xff00ff);
+                }
+
+                if (!full_pause || !advance_1_frame)
+                    debug_draw_vals.Clear();
+            }
+            string err = SDL_GetError();
+            if (err != "")
+            {
+                DebugText.DisplayText("///sdl error/// " + err, 10, 10, 1, RNG.Next() % 0xffffff);
+            }
         }
 
         static bool Paused()
@@ -299,6 +313,18 @@ namespace The_Legend_of_Zelda
             advance_1_frame = false;
             Screen.x_scroll = 0;
             Screen.y_scroll = 0;
+            OC = new();
+            DC = new();
+            Sound.PlaySong(Sound.Songs.SPLASH, false);
+        }
+
+        public static void DebugLog(string message, object obj)
+        {
+            debug_draw_vals.Add((obj, message));
+        }
+        public static void DebugLog(object message)
+        {
+            debug_draw_vals.Add((message, ""));
         }
     }
 
@@ -327,13 +353,13 @@ namespace The_Legend_of_Zelda
         //
         // toutes ces valeures peuvent êtres complètements différentes d'une image à l'autre, mais marchent mieux avec un changement lent.
         private static short extra_y = 0;
-        private static int ret_length = 0, text_tick = 0;
+        private static int ret_length = 0;
         static int w, h;
         private static void DisplayChar(char charac, int x, int y, byte size, short i, byte r, byte g, byte b, byte a)
         {
             SDL_SetRenderDrawColor(Screen.render, r, g, b, a);
             y += extra_y;
-            x -= (short)ret_length;
+            x -= ret_length;
             if (x + size * 5 > w)
             {
                 extra_y += (short)(13 * size);

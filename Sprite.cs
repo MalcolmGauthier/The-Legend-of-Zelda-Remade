@@ -33,7 +33,7 @@ namespace The_Legend_of_Zelda
                 return;
 
             byte pixel_color, x_count = 0, y_count = 0;
-            sbyte i, j, i_inc = 1, j_inc = 1, i_start = 0, j_start = -1;
+            int i, j, i_inc = 1, j_inc = 1, i_start = 0, j_start = -1;
             bool link_mask_flag = false;
 
             // order of pixel readings changes when flipped
@@ -62,11 +62,11 @@ namespace The_Legend_of_Zelda
                 {
                     j += j_inc;
 
-                    pixel_color = pixels[(i << 3) + j];
+                    pixel_color = pixels[(i * 8) + j];
                     if (pixel_color == 0) // check for transparency
                         continue;
 
-                    int location = TrueMod(((y + (y_count - 1)) << 9) + (x_count - 1) + x, 245760);
+                    int location = TrueMod(((y + (y_count - 1)) * Textures.VRAM_WIDTH) + (x_count - 1) + x, Textures.vram.Length);
 
                     if (link_mask_flag)
                         if ((y + (y_count - 1)) <= 80 || (y + (y_count - 1)) >= 224 || (x_count - 1) + x <= 16 || (x_count - 1) + x >= 240)
@@ -77,7 +77,7 @@ namespace The_Legend_of_Zelda
                         if ((Textures.vram[location] & 3) != 0)
                             continue;
 
-                    Textures.vram[location] = (byte)(pixel_color + (palette_index << 2));
+                    Textures.vram[location] = (byte)(pixel_color + (palette_index * 4));
                 }
                 x_count = 0;
                 i += i_inc;

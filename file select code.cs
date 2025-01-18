@@ -26,7 +26,7 @@ namespace The_Legend_of_Zelda
 
         static FileSelectMode mode = FileSelectMode.FILESELECT;
         static Selection selected_option = 0;
-        static sbyte selected_character = 0;
+        static int selected_character = 0;
         static byte selected_name_letter = 0;
         static StaticSprite cursor = new(SpriteID.BLANK, PaletteID.SP_3, 40, 92);
         static StaticSprite[] link_icons = new StaticSprite[6];
@@ -69,14 +69,14 @@ namespace The_Legend_of_Zelda
             Palettes.LoadPalette(PaletteID.BG_3, 2, Color._27_GOLD);
             Palettes.LoadPalette(PaletteID.BG_3, 3, Color._30_WHITE);
 
-            Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 9, 0);
+            Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.FILE_SELECT, 0);
             for (byte i = 0; i < 3; i++)
             {
                 SaveLoad.LoadFile(i);
                 DrawFileInfo(i);
                 if (SaveLoad.second_quest[i])
                 {
-                    sprites.Add(quest_2_swords[i] = new StaticSprite(SpriteID.SWORD, PaletteID.BG_3, 60, (short)(86 + i * 24)));
+                    sprites.Add(quest_2_swords[i] = new StaticSprite(SpriteID.SWORD, PaletteID.BG_3, 60, 86 + i * 24));
                     // in the real game, the swords aren't on background layer but are instead just lower priority than link icons,
                     // but i don't want two loops in this already ugly function, so this does the same thing. + there's no background to worry about
                     quest_2_swords[i].background = true;
@@ -104,7 +104,7 @@ namespace The_Legend_of_Zelda
         {
             // color needs to be set back to pink when returning from elimination mode
             Palettes.LoadPalette(PaletteID.SP_3, 1, Color._15_ROSE);
-            Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 10, 0);
+            Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.REGISTER_NAME, 0);
 
             // write text to screen
             for (int i = 0; i < register_name_text.Length; i++)
@@ -232,7 +232,7 @@ namespace The_Legend_of_Zelda
             {
                 if (selected_option <= Selection.FILE_3)
                 {
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 1, 0);
+                    Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
                     sprites.Clear();
                     Program.gamemode = Program.Gamemode.OVERWORLD;
                     SaveLoad.current_save_file = (byte)selected_option;
@@ -253,7 +253,7 @@ namespace The_Legend_of_Zelda
                 }
 
                 // elimination mode chosen
-                Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 10, 0);
+                Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.REGISTER_NAME, 0);
                 Palettes.LoadPalette(PaletteID.SP_3, 1, Color._30_WHITE);
                 for (int i = 0; i < link_icons.Length; i++)
                 {
@@ -414,7 +414,7 @@ namespace The_Legend_of_Zelda
                 if (selected_option != Selection.REGISTER_OR_END)
                     Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = new_plt;
 
-                SetRegistrationChrBackground(selected_character, (sbyte)new_plt);
+                SetRegistrationChrBackground(selected_character, new_plt);
             }
 
             // move character selector
@@ -508,7 +508,7 @@ namespace The_Legend_of_Zelda
         }
 
         // sets character's background to certain palette. returns character at index, so set palette to invalid value to not change palette.
-        static byte SetRegistrationChrBackground(sbyte selected_character, sbyte palette)
+        static byte SetRegistrationChrBackground(int selected_character, int palette)
         {
             int index = 0x226 + (selected_character % 11) * 2 + (selected_character / 11 * 0x40);
             if (palette >= 0 && palette <= 7)

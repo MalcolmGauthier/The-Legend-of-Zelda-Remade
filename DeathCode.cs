@@ -162,7 +162,7 @@ namespace The_Legend_of_Zelda
                 Screen.y_scroll = 8;
                 Screen.sprites.Clear();
                 Screen.sprites.Add(selector);
-                Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, 12, 0);
+                Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.GAME_OVER, 0);
                 Sound.PlaySong(Sound.Songs.DEATH, true);
                 select_menu = true;
                 selector.use_chr_rom = true;

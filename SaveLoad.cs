@@ -691,6 +691,7 @@
         }
         public static bool GetDungeonVisitedRoomFlag(byte room_index)
         {
+            // 4 int64s to make up the 256 bits needed to store the info, the upper 2 bits of the byte indicate which int64 to check
             int index_in_number = room_index & 0b111111;
             return ((dungeon_rooms_visited_flags[current_save_file, room_index >> 6] & (1L << index_in_number)) >> index_in_number) == 1;
         }

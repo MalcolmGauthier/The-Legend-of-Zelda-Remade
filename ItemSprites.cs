@@ -487,7 +487,7 @@ namespace The_Legend_of_Zelda
                 shown = false;
                 for (int i = 0; i < explosion_effects.Length; i++)
                 {
-                    explosion_effects[i] = new StaticSprite(0x30, 4, x, (short)(y + 4));
+                    explosion_effects[i] = new StaticSprite(0x30, 4, x, y + 4);
                     if (i % 2 == 0)
                         explosion_effects[i].xflip = true;
                     if (i > 1)
@@ -530,6 +530,18 @@ namespace The_Legend_of_Zelda
     {
         byte explosion_timer = 86;
         StaticSprite[] smoke = new StaticSprite[8];
+        static readonly int[,] smoke_init_pos = new int[8, 2]
+        {
+            { -20, 0},
+            { -12, 0},
+            { -12, 16},
+            { -4, 16},
+            { -4, 0},
+            { 4, 0},
+            { 4, -16},
+            { 12, -16}
+        };
+
         public BombSprite(int x, int y) : base(true, true, 4)
         {
             direction = Link.facing_direction;
@@ -541,10 +553,9 @@ namespace The_Legend_of_Zelda
             for (int i = 0; i < smoke.Length; i++)
             {
                 smoke[i] = new StaticSprite(0x70, 5, x, y);
-                if (i % 2 == 1)
-                    smoke[i].xflip = true;
-                smoke[i].x = x + (((i - 5) >> 1) * 8) + 4;
-                smoke[i].y = y - 16 * Math.Abs((i >> 1) - 1) + 16;
+                smoke[i].xflip = (i % 2) == 1;
+                smoke[i].x = x + smoke_init_pos[i, 0];
+                smoke[i].y = y + smoke_init_pos[i, 1];
                 smoke[i].unload_during_transition = true;
             }
             Sound.PlaySFX(Sound.SoundEffects.BOMB_PLACE);
@@ -592,7 +603,7 @@ namespace The_Legend_of_Zelda
             {
                 for (int i = 0; i < smoke.Length; i++)
                 {
-                    smoke[i].x = (short)(x - smoke[i].x + x);
+                    smoke[i].x = x - smoke[i].x + x;
                     smoke[i].xflip = !smoke[i].xflip;
                 }
             }
@@ -602,11 +613,11 @@ namespace The_Legend_of_Zelda
         void UncoverHoles()
         {
             int metatile_index;
-            for (sbyte i = -16; i < 17; i += 16)
+            for (int i = -16; i < 17; i += 16)
             {
-                for (sbyte j = -16; j < 17; j += 16)
+                for (int j = -16; j < 17; j += 16)
                 {
-                    metatile_index = ((y + i) & 0xFFF0) + ((x + j) >> 4) - 64;
+                    metatile_index = ((y + i) & (~0xF)) + ((x + j) >> 4) - 64;
 
                     if (metatile_index < 0 || metatile_index > Screen.meta_tiles.Length)
                         continue;
@@ -817,7 +828,7 @@ namespace The_Legend_of_Zelda
             //unload_during_transition = true;
             //counterpart.unload_during_transition = true;
             counterpart.y = y;
-            counterpart.x = (short)(x + 8);
+            counterpart.x = x + 8;
             shown = false;
             counterpart.shown = false;
             Screen.sprites.Add(this);

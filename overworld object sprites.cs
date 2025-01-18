@@ -61,6 +61,7 @@ namespace The_Legend_of_Zelda
         {
             byte heart_index;
             OverworldFairySprite host;
+
             public FairyHeartSprite(byte heart_index, OverworldFairySprite host) : base(0xf2, 6)
             {
                 use_chr_rom = true;
@@ -69,11 +70,13 @@ namespace The_Legend_of_Zelda
                 this.host = host;
                 Screen.sprites.Add(this);
             }
+
             public override void Action()
             {
-                x = (short)(-53 * (MathF.Sin((host.animation_timer - 11 * heart_index) / 88f * 2 * MathF.PI)) + 126);
-                y = (short)(-53 * (MathF.Cos((host.animation_timer - 11 * heart_index) / 88f * 2 * MathF.PI)) + 150);
+                x = -53 * (int)MathF.Sin((host.animation_timer - 11 * heart_index) / 88f * 2 * MathF.PI) + 126;
+                y = -53 * (int)MathF.Cos((host.animation_timer - 11 * heart_index) / 88f * 2 * MathF.PI) + 150;
             }
+
             public void Kill()
             {
                 Screen.sprites.Remove(this);
@@ -236,7 +239,7 @@ namespace The_Legend_of_Zelda
 
                 // TODO: play secret sfx
 
-                sbyte offset;
+                int offset;
                 if (direction == Direction.UP)
                     offset = -16;
                 else if (direction == Direction.DOWN)

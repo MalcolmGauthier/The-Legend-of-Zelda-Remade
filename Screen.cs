@@ -42,6 +42,7 @@ namespace The_Legend_of_Zelda
         {
             Palettes.CheckForBGColorChange();
 
+            //TODO: you don't need to render everything.
             for (int i = 0; i < tiles.Length; i++)
             {
                 tiles[i].Render();
@@ -70,7 +71,7 @@ namespace The_Legend_of_Zelda
                 {
                     for (int j = 0; j < Program.NES_OUTPUT_WIDTH; j++)
                     {
-                        ref_pixel[(i * Program.NES_OUTPUT_WIDTH) + j] = vram[(i * Program.NES_OUTPUT_WIDTH * 2) + j];
+                        ref_pixel[(i * Program.NES_OUTPUT_WIDTH) + j] = vram[(i * Textures.VRAM_WIDTH) + j];
                     }
                 }
 
@@ -79,7 +80,7 @@ namespace The_Legend_of_Zelda
                     for (int j = 0; j < Program.NES_OUTPUT_WIDTH; j++)
                     {
                         ref_pixel[(i * Program.NES_OUTPUT_WIDTH) + j] = 
-                            vram[(TrueMod(i + y_scroll, Program.NES_OUTPUT_HEIGHT * 2) * Program.NES_OUTPUT_WIDTH * 2) + ((j + x_scroll) % (Program.NES_OUTPUT_WIDTH * 2))];
+                            vram[(TrueMod(i + y_scroll, Textures.VRAM_HEIGHT) * Textures.VRAM_WIDTH) + TrueMod(j + x_scroll, Textures.VRAM_WIDTH)];
                     }
                 }
             }
@@ -112,8 +113,10 @@ namespace The_Legend_of_Zelda
             else
                 Palettes.LoadPaletteGroup(0, Palettes.PaletteGroups.BLACK);
 
-            LoadPPUPage(PPUDataGroup.OTHER, 0, 0);
-            LoadPPUPage(PPUDataGroup.OTHER, 2, 2);
+            y_scroll = 8;
+            Palettes.background_color = Color._00_DARK_GRAY;
+            LoadPPUPage(PPUDataGroup.OTHER, Textures.OtherPPUPages.TITLE, 0);
+            LoadPPUPage(PPUDataGroup.OTHER, Textures.OtherPPUPages.TITLE, 2);
             x_scroll++;
         }
     }

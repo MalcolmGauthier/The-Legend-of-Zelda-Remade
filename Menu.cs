@@ -75,7 +75,7 @@ namespace The_Legend_of_Zelda
              0b1111111111111111,
              0b0011101111101100},
         };
-        public static readonly sbyte[] map_offsets = {
+        public static readonly int[] map_offsets = {
             -8, 0,
             -2, 0,
             0, 0,
@@ -123,57 +123,7 @@ namespace The_Legend_of_Zelda
                 }
             }
 
-            if (menu_animation_timer == 0)
-            {
-                Textures.DrawMenu();
-                Link.Show(false);
-                Link.can_move = false;
-                draw_hud_objects = false;
-                y_scroll--;
-                hud_B_item.x -= 60;
-                hud_B_item.y += 328;
-                if (Program.gamemode == Program.Gamemode.OVERWORLD)
-                    DrawTriforce();
-                else
-                    DrawMap();
-            }
-            else if (menu_animation_timer == 58)
-            {
-                menu_animation_timer = 201;
-                can_open_menu = true;
-                InitMenu();
-                current_B_item = menu_item_list[selected_menu_index];
-                MoveCursor();
-            }
-            else if (menu_animation_timer == 100)
-            {
-                can_open_menu = false;
-                hud_B_item.x += 60;
-                hud_B_item.y -= 328;
-                hud_B_item.shown = false;
-                y_scroll++;
-                if (current_B_item == menu_item_list[0] && !(boomerang || magical_boomerang))
-                    current_B_item = 0;
-                RemoveMenu();
-            }
-            else if (menu_animation_timer == 158)
-            {
-                Link.Show(true);
-                Link.can_move = true;
-                can_open_menu = true;
-                menu_open = false;
-                draw_hud_objects = true;
-                menu_animation_timer = 201;
-                Program.can_pause = true;
-            }
-
-            if (menu_animation_timer < 58)
-                y_scroll -= 3;
-            else if (menu_animation_timer >= 100 && menu_animation_timer < 158)
-                y_scroll += 3;
-
-            if (menu_animation_timer < 200)
-                menu_animation_timer++;
+            MenuAnimation();
         }
 
         public static void InitHUD()
@@ -258,7 +208,7 @@ namespace The_Legend_of_Zelda
             {
                 if (DC.room_list[DC.current_screen] is not (0x2a or 0x2b))
                 {
-                    map_dot.x = 18 + ((DC.current_screen % 16) * 8) + map_offsets[DC.current_dungeon * 2] * 8;
+                    map_dot.x = 10 + ((DC.current_screen % 16) * 8) + map_offsets[DC.current_dungeon * 2] * 8;
                     map_dot.y = 24 + ((DC.current_screen / 16) * 4) + map_offsets[DC.current_dungeon * 2 + 1] * 4;
                 }
             }
@@ -345,6 +295,7 @@ namespace The_Legend_of_Zelda
                     Textures.ppu[0xd6 + i + ((i >> 3) * -40)] = 0x66;
             }
 
+            //TODO: this shit
             void DisplayBItem()
             {
                 if (current_B_item == 0)
@@ -394,7 +345,7 @@ namespace The_Legend_of_Zelda
         }
 
         // adds in all of the other static sprites that exist inside the full screen menu
-        static void InitMenu()
+        static void InitMenuSprites()
         {
             sprites.Add(menu_selection_left);
             sprites.Add(menu_selection_right);
@@ -495,6 +446,62 @@ namespace The_Legend_of_Zelda
                     sprites.Add(menu_sprites[i]);
                 }
             }
+        }
+
+        static void MenuAnimation()
+        {
+            if (menu_animation_timer == 0)
+            {
+                Textures.DrawMenu();
+                Link.Show(false);
+                Link.can_move = false;
+                draw_hud_objects = false;
+                y_scroll--;
+                hud_B_item.x -= 60;
+                hud_B_item.y += 328;
+                if (Program.gamemode == Program.Gamemode.OVERWORLD)
+                    DrawTriforce();
+                else
+                    DrawMap();
+            }
+            else if (menu_animation_timer == 58)
+            {
+                menu_animation_timer = 201;
+                can_open_menu = true;
+                InitMenuSprites();
+                current_B_item = menu_item_list[selected_menu_index];
+                MoveCursor();
+            }
+            else if (menu_animation_timer == 100)
+            {
+                can_open_menu = false;
+                hud_B_item.x += 60;
+                hud_B_item.y -= 328;
+                hud_B_item.shown = false;
+                y_scroll++;
+                //???
+                if (current_B_item == menu_item_list[0] && !(boomerang || magical_boomerang))
+                    current_B_item = 0;
+                RemoveMenu();
+            }
+            else if (menu_animation_timer == 158)
+            {
+                Link.Show(true);
+                Link.can_move = true;
+                can_open_menu = true;
+                menu_open = false;
+                draw_hud_objects = true;
+                menu_animation_timer = 201;
+                Program.can_pause = true;
+            }
+
+            if (menu_animation_timer < 58)
+                y_scroll -= 3;
+            else if (menu_animation_timer >= 100 && menu_animation_timer < 158)
+                y_scroll += 3;
+
+            if (menu_animation_timer < 200)
+                menu_animation_timer++;
         }
 
         // remove all menu sprites, used when menu closes
@@ -678,9 +685,9 @@ namespace The_Legend_of_Zelda
             const int HUD_MAP_HEIGHT = 4;
             const int HUD_MAP_OFFSET = 0x62;
 
-            int shift = (HUD_MAP_WIDTH - 1) * MASK_BIT_LEN;
             for (int i = 0; i < HUD_MAP_HEIGHT; i++)
             {
+                int shift = (HUD_MAP_WIDTH - 1) * MASK_BIT_LEN;
                 for (int j = 0; j < HUD_MAP_WIDTH; j++)
                 {
                     shift -= MASK_BIT_LEN;
