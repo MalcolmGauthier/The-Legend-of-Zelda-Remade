@@ -1,5 +1,5 @@
 ﻿using static SDL2.SDL;
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Rendering
 {
     public enum Color : byte
     {

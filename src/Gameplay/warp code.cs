@@ -1,6 +1,8 @@
-﻿using static The_Legend_of_Zelda.Program;
+﻿using The_Legend_of_Zelda.Rendering;
+using The_Legend_of_Zelda.Sprites;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Gameplay
 {
     public static class WarpCode
     {
@@ -76,7 +78,7 @@ namespace The_Legend_of_Zelda
             // always create 3 items, because most of the cave types contain collectables
             for (int i = 0; i < items.Length; i++)
             {
-                items[i] = new StaticSprite(0x00, 4, 92 + (i * 32), 152);
+                items[i] = new StaticSprite(0x00, 4, 92 + i * 32, 152);
                 items[i].shown = false;
                 items[i].unload_during_transition = true;
             }
@@ -126,8 +128,8 @@ namespace The_Legend_of_Zelda
                     current_npc = NPC.OLD_WOMAN;
                     if (SaveLoad.potion_shop_activated)
                     {
-                        text_row_1 = new byte[19] {0xb,0x1e,0x22,0x24,0x16,0xe,0xd,0x12,0xc,0x12,0x17,0xe,0x24,0xb,0xe,0xf,0x18,0x1b,0xe}; // BUY MEDICINE BEFORE
-                        text_row_2 = new byte[19] {0x22,0x18,0x1e,0x24,0x10,0x18,0x2c,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24,0x24}; // YOU GO.
+                        text_row_1 = new byte[19] { 0xb, 0x1e, 0x22, 0x24, 0x16, 0xe, 0xd, 0x12, 0xc, 0x12, 0x17, 0xe, 0x24, 0xb, 0xe, 0xf, 0x18, 0x1b, 0xe }; // BUY MEDICINE BEFORE
+                        text_row_2 = new byte[19] { 0x22, 0x18, 0x1e, 0x24, 0x10, 0x18, 0x2c, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24 }; // YOU GO.
 
                         for (int i = 0; i < items.Length; i += 2)
                         {
@@ -149,15 +151,15 @@ namespace The_Legend_of_Zelda
 
                 case WarpType.GAMBLING:
                     current_npc = NPC.OLD_MAN;
-                    text_row_1 = new byte[17] {0x15,0xe,0x1d,0x2a,0x1c,0x24,0x19,0x15,0xa,0x22,0x24,0x16,0x18,0x17,0xe,0x22,0x24}; // LET'S PLAY MONEY 
-                    text_row_2 = new byte[17] {0x16,0xa,0x14,0x12,0x17,0x10,0x24,0x10,0xa,0x16,0xe,0x2c,0x24,0x24,0x24,0x24,0x24}; // MAKING GAME.    
+                    text_row_1 = new byte[17] { 0x15, 0xe, 0x1d, 0x2a, 0x1c, 0x24, 0x19, 0x15, 0xa, 0x22, 0x24, 0x16, 0x18, 0x17, 0xe, 0x22, 0x24 }; // LET'S PLAY MONEY 
+                    text_row_2 = new byte[17] { 0x16, 0xa, 0x14, 0x12, 0x17, 0x10, 0x24, 0x10, 0xa, 0x16, 0xe, 0x2c, 0x24, 0x24, 0x24, 0x24, 0x24 }; // MAKING GAME.    
 
                     Screen.sprites.Add(side_rupee);
                     Textures.ppu[0x2c8] = 0x21; // "x"
 
                     for (int i = 0; i < items.Length; i++)
                     {
-                        items[i] = new FlickeringSprite(0x32, 6, 92 + (i * 32), 152, 8, 0x32, second_palette_index: 5);
+                        items[i] = new FlickeringSprite(0x32, 6, 92 + i * 32, 152, 8, 0x32, second_palette_index: 5);
                         items[i].unload_during_transition = true;
                         Screen.sprites.Add(items[i]);
                     }
@@ -173,7 +175,7 @@ namespace The_Legend_of_Zelda
 
                 case WarpType.TAKE_ANY_ROAD:
                     current_npc = NPC.OLD_MAN;
-                    text_row_1 = new byte[23] {0x1d,0xa,0x14,0xe,0x24,0xa,0x17,0x22,0x24,0x1b,0x18,0xa,0xd,0x24,0x22,0x18,0x1e,0x24,0x20,0xa,0x17,0x1d,0x2c}; // TAKE ANY ROAD YOU WANT.
+                    text_row_1 = new byte[23] { 0x1d, 0xa, 0x14, 0xe, 0x24, 0xa, 0x17, 0x22, 0x24, 0x1b, 0x18, 0xa, 0xd, 0x24, 0x22, 0x18, 0x1e, 0x24, 0x20, 0xa, 0x17, 0x1d, 0x2c }; // TAKE ANY ROAD YOU WANT.
 
                     // add the three staircases to the screen
                     Screen.meta_tiles[101].tile_index = 0x15;
@@ -197,14 +199,14 @@ namespace The_Legend_of_Zelda
                     Screen.sprites.Add(side_rupee);
                     Textures.ppu[0x2c8] = 0x21; // "x"
 
-                    if (warp_info is (WarpType.SHOP_SHIELD_BAIT_HEART or WarpType.SHOP_KEY_RING_BAIT))
+                    if (warp_info is WarpType.SHOP_SHIELD_BAIT_HEART or WarpType.SHOP_KEY_RING_BAIT)
                     {
-                        text_row_1 = new byte[12] {0xb,0x18,0x22,0x28,0x24,0x1d,0x11,0x12,0x1c,0x24,0x12,0x1c}; // BOY, THIS IS
-                        text_row_2 = new byte[17] {0x1b,0xe,0xa,0x15,0x15,0x22,0x24,0xe,0x21,0x19,0xe,0x17,0x1c,0x12,0x1f,0xe,0x29}; // REALLY EXPENSIVE!
+                        text_row_1 = new byte[12] { 0xb, 0x18, 0x22, 0x28, 0x24, 0x1d, 0x11, 0x12, 0x1c, 0x24, 0x12, 0x1c }; // BOY, THIS IS
+                        text_row_2 = new byte[17] { 0x1b, 0xe, 0xa, 0x15, 0x15, 0x22, 0x24, 0xe, 0x21, 0x19, 0xe, 0x17, 0x1c, 0x12, 0x1f, 0xe, 0x29 }; // REALLY EXPENSIVE!
                     }
                     else
                     {
-                        text_row_1 = new byte[22] {0xb,0x1e,0x22,0x24,0x1c,0x18,0x16,0xe,0x1d,0x11,0x12,0x17,0x2a,0x24,0x20,0x12,0x15,0x15,0x24,0x22,0xa,0x29}; // BUY SOMETHIN' WILL YA!
+                        text_row_1 = new byte[22] { 0xb, 0x1e, 0x22, 0x24, 0x1c, 0x18, 0x16, 0xe, 0x1d, 0x11, 0x12, 0x17, 0x2a, 0x24, 0x20, 0x12, 0x15, 0x15, 0x24, 0x22, 0xa, 0x29 }; // BUY SOMETHIN' WILL YA!
                     }
 
                     if (warp_info == WarpType.SHOP_KEY_RING_BAIT)
@@ -272,7 +274,7 @@ namespace The_Legend_of_Zelda
                         Textures.ppu[0x2cc + i * 4] = 0;
                     }
 
-                    for (int i = 0; i < items.Length; i ++)
+                    for (int i = 0; i < items.Length; i++)
                     {
                         items[i].shown = true;
                         Screen.sprites.Add(items[i]);
@@ -281,10 +283,10 @@ namespace The_Legend_of_Zelda
 
                 case WarpType.ITEM_GIVEAWAY:
                     // if item gotten, empty cave
-                    if ((OC.return_screen == 10 && SaveLoad.white_sword) ||
-                        (OC.return_screen == 33 && SaveLoad.magical_sword) ||
-                        (OC.return_screen == 119 && SaveLoad.wooden_sword) ||
-                        (OC.return_screen == 14 && SaveLoad.letter))
+                    if (OC.return_screen == 10 && SaveLoad.white_sword ||
+                        OC.return_screen == 33 && SaveLoad.magical_sword ||
+                        OC.return_screen == 119 && SaveLoad.wooden_sword ||
+                        OC.return_screen == 14 && SaveLoad.letter)
                     {
                         break;
                     }
@@ -300,8 +302,8 @@ namespace The_Legend_of_Zelda
                     switch (OC.return_screen)
                     {
                         case 10 or 33:
-                            if ((SaveLoad.white_sword && OC.return_screen == 10) ||
-                                (SaveLoad.magical_sword && OC.return_screen == 33))
+                            if (SaveLoad.white_sword && OC.return_screen == 10 ||
+                                SaveLoad.magical_sword && OC.return_screen == 33)
                                 break;
 
                             text_row_1 = new byte[19] { 0x16, 0xa, 0x1c, 0x1d, 0xe, 0x1b, 0x24, 0x1e, 0x1c, 0x12, 0x17, 0x10, 0x24, 0x12, 0x1d, 0x24, 0xa, 0x17, 0xd }; // MASTER USING IT AND
@@ -343,13 +345,13 @@ namespace The_Legend_of_Zelda
 
                 case WarpType.PAID_INFO:
                     current_npc = NPC.OLD_WOMAN;
-                    text_row_1 = new byte[22] {0x24,0x19,0xa,0x22,0x24,0x16,0xe,0x24,0xa,0x17,0xd,0x24,0x12,0x2a,0x15,0x15,0x24,0x1d,0xa,0x15,0x14,0x2c}; //  PAY ME AND I'LL TALK.
+                    text_row_1 = new byte[22] { 0x24, 0x19, 0xa, 0x22, 0x24, 0x16, 0xe, 0x24, 0xa, 0x17, 0xd, 0x24, 0x12, 0x2a, 0x15, 0x15, 0x24, 0x1d, 0xa, 0x15, 0x14, 0x2c }; //  PAY ME AND I'LL TALK.
                     Screen.sprites.Add(side_rupee);
                     Textures.ppu[0x2c8] = 0x21;
 
                     for (int i = 0; i < items.Length; i++)
                     {
-                        items[i] = new FlickeringSprite(0x32, 6, 92 + (i * 32), 152, 8, 0x32, second_palette_index: 5);
+                        items[i] = new FlickeringSprite(0x32, 6, 92 + i * 32, 152, 8, 0x32, second_palette_index: 5);
                         Screen.sprites.Add(items[i]);
                     }
 
@@ -368,7 +370,7 @@ namespace The_Legend_of_Zelda
                     {
                         for (int i = 0; i < 3; i++)
                         {
-                            Textures.ppu[0x2cb + i * 3 + (i / 2)] = 0x62;
+                            Textures.ppu[0x2cb + i * 3 + i / 2] = 0x62;
                             Textures.ppu[0x2cc + i * 4] = 0;
                         }
                         Textures.ppu[0x2cc] = 5;
@@ -381,19 +383,19 @@ namespace The_Legend_of_Zelda
                     if (OC.return_screen == 117)
                     {
                         current_npc = NPC.OLD_WOMAN;
-                        text_row_1 = new byte[16] {0x16,0xe,0xe,0x1d,0x24,0x1d,0x11,0xe,0x24,0x18,0x15,0xd,0x24,0x16,0xa,0x17}; // MEET THE OLD MAN
-                        text_row_2 = new byte[13] {0xa,0x1d,0x24,0x1d,0x11,0xe,0x24,0x10,0x1b,0xa,0x1f,0xe,0x2c}; // AT THE GRAVE.
+                        text_row_1 = new byte[16] { 0x16, 0xe, 0xe, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x18, 0x15, 0xd, 0x24, 0x16, 0xa, 0x17 }; // MEET THE OLD MAN
+                        text_row_2 = new byte[13] { 0xa, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x10, 0x1b, 0xa, 0x1f, 0xe, 0x2c }; // AT THE GRAVE.
                     }
                     else
                     {
                         current_npc = NPC.OLD_MAN;
-                        text_row_1 = new byte[21] {0x1c,0xe,0xc,0x1b,0xe,0x1d,0x24,0x12,0x1c,0x24,0x12,0x17,0x24,0x1d,0x11,0xe,0x24,0x1d,0x1b,0xe,0xe}; // SECRET IS IN THE TREE
-                        text_row_2 = new byte[16] {0xa,0x1d,0x24,0x1d,0x11,0xe,0x24,0xd,0xe,0xa,0xd,0x2f,0xe,0x17,0xd,0x2c}; // AT THE DEAD-END.
+                        text_row_1 = new byte[21] { 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d, 0x24, 0x12, 0x1c, 0x24, 0x12, 0x17, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x1d, 0x1b, 0xe, 0xe }; // SECRET IS IN THE TREE
+                        text_row_2 = new byte[16] { 0xa, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0xd, 0xe, 0xa, 0xd, 0x2f, 0xe, 0x17, 0xd, 0x2c }; // AT THE DEAD-END.
                     }
                     break;
 
                 case WarpType.DUNGEON:
-                    Program.gamemode = Program.Gamemode.DUNGEON;
+                    gamemode = Gamemode.DUNGEON;
                     DC.Init((byte)Array.IndexOf(dungeon_locations, OC.return_screen));
                     return;
 
@@ -413,13 +415,13 @@ namespace The_Legend_of_Zelda
                         Screen.sprites.Add(items[i]);
                     }
                     items[0].tile_index = 0x40;
-                    text_row_1 = new byte[22] {0x1d,0xa,0x14,0xe,0x24,0xa,0x17,0x22,0x24,0x18,0x17,0xe,0x24,0x22,0x18,0x1e,0x24,0x20,0xa,0x17,0x1d,0x2c}; // TAKE ANY ONE YOU WANT.
+                    text_row_1 = new byte[22] { 0x1d, 0xa, 0x14, 0xe, 0x24, 0xa, 0x17, 0x22, 0x24, 0x18, 0x17, 0xe, 0x24, 0x22, 0x18, 0x1e, 0x24, 0x20, 0xa, 0x17, 0x1d, 0x2c }; // TAKE ANY ONE YOU WANT.
                     break;
             }
 
             // ppu index for which the first text character will be on
-            starting_byte_1 = 0x1b0 - (text_row_1.Length / 2);
-            starting_byte_2 = 0x1d0 - (text_row_2.Length / 2);
+            starting_byte_1 = 0x1b0 - text_row_1.Length / 2;
+            starting_byte_2 = 0x1d0 - text_row_2.Length / 2;
 
             // removal needed for when re-initializating cave after activating potion shop (and also reality check)
             Screen.sprites.Remove(cave_npc);
@@ -435,7 +437,7 @@ namespace The_Legend_of_Zelda
 
             // link can only move if the text is done scrolling and the fire has appeared
             if (Link.current_action is not (Link.Action.ITEM_GET or Link.Action.ITEM_HELD_UP) && !Menu.menu_open)
-                Link.can_move = (text_counter >= text_row_1.Length + text_row_2.Length && fire_appeared);
+                Link.can_move = text_counter >= text_row_1.Length + text_row_2.Length && fire_appeared;
 
             // check for item collection
             LinkItemCollection();
@@ -457,7 +459,7 @@ namespace The_Legend_of_Zelda
         // advances text forward if not finished
         static void TextTick()
         {
-            if (Program.gTimer % 6 != 0 || !fire_appeared)
+            if (gTimer % 6 != 0 || !fire_appeared)
                 return;
 
             if (text_counter < text_row_1.Length)
@@ -562,7 +564,7 @@ namespace The_Legend_of_Zelda
             {
                 for (int i = 0; i < items.Length; i++)
                     if (items[i].y == 152)
-                        items[i].shown = (Program.gTimer % 2) == 0;
+                        items[i].shown = gTimer % 2 == 0;
 
                 return;
             }
@@ -601,15 +603,15 @@ namespace The_Legend_of_Zelda
                         break;
 
                     int[] rupee_values = new int[3];
-                    int winner_rupee = Program.RNG.Next(0, 3);
+                    int winner_rupee = RNG.Next(0, 3);
                     // winning prize is either 20 or 50
-                    rupee_values[winner_rupee] = 20 + 30 * Program.RNG.Next(0, 2);
+                    rupee_values[winner_rupee] = 20 + 30 * RNG.Next(0, 2);
                     // losing prize is either -10 or -40
                     // however, at least one of the losing prizes needs to be -10
-                    int small_loss_index = Program.RNG.Next(0, 2);
+                    int small_loss_index = RNG.Next(0, 2);
                     rupee_values[(winner_rupee + small_loss_index + 1) % 3] = -10;
                     // ^1 flips 0 to 1 and vice versa
-                    rupee_values[(winner_rupee + (small_loss_index ^ 1) + 1) % 3] = -10 - 30 * Program.RNG.Next(0, 2);
+                    rupee_values[(winner_rupee + (small_loss_index ^ 1) + 1) % 3] = -10 - 30 * RNG.Next(0, 2);
 
                     Link.AddRupees(rupee_values[chosen_item - 1]);
 
@@ -718,8 +720,8 @@ namespace The_Legend_of_Zelda
                         text_row_2 = data.row2;
                         side_rupee.shown = false;
 
-                        starting_byte_1 = 0x1b0 - (text_row_1.Length / 2);
-                        starting_byte_2 = 0x1d0 - (text_row_2.Length / 2);
+                        starting_byte_1 = 0x1b0 - text_row_1.Length / 2;
+                        starting_byte_2 = 0x1d0 - text_row_2.Length / 2;
                     }
                     break;
 
@@ -744,7 +746,7 @@ namespace The_Legend_of_Zelda
             }
 
             // of all the cases this function is used for, only the secret money doesn't make the NPC go away on collection
-            if ((warp_info is not (WarpType.SECRET_10 or WarpType.SECRET_30 or WarpType.SECRET_100)) && able_to_get_item)
+            if (warp_info is not (WarpType.SECRET_10 or WarpType.SECRET_30 or WarpType.SECRET_100) && able_to_get_item)
             {
                 cave_npc.flash_timer = 0;
                 EraseText();
@@ -763,7 +765,7 @@ namespace The_Legend_of_Zelda
                     Textures.ppu[0x184 + i * Textures.PPU_WIDTH + j] = EMPTY_TILE;
                 }
             }
-            
+
             Screen.sprites.Remove(side_rupee);
         }
     }

@@ -1,4 +1,6 @@
-﻿using static SDL2.SDL;
+﻿using The_Legend_of_Zelda.Gameplay;
+using static SDL2.SDL;
+
 namespace The_Legend_of_Zelda
 {
     internal enum Buttons
@@ -29,7 +31,7 @@ namespace The_Legend_of_Zelda
             int index = 1 << (int)button;
 
             // if button is in both pressed buttons and held buttons, then it's been held for more than 1 frame, so it's no longer pressed
-            if (((pressed_buttons & index) != 0) && ((held_buttons & index) != 0))
+            if ((pressed_buttons & index) != 0 && (held_buttons & index) != 0)
                 pressed_buttons -= index;
 
             // if button is not in held buttons, that means it just got pressed. put it in pressed and held buttons
@@ -53,12 +55,12 @@ namespace The_Legend_of_Zelda
 
         public static bool IsPressed(Buttons button)
         {
-            return ((pressed_buttons & (1 << (int)button)) > 0);
+            return (pressed_buttons & 1 << (int)button) > 0;
         }
 
         public static bool IsHeld(Buttons button)
         {
-            return ((held_buttons & (1 << (int)button)) > 0);
+            return (held_buttons & 1 << (int)button) > 0;
         }
 
         public static void Poll()

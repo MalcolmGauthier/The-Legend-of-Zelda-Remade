@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using The_Legend_of_Zelda.Rendering;
+using The_Legend_of_Zelda.Sprites;
 using static The_Legend_of_Zelda.SaveLoad;
-using static The_Legend_of_Zelda.Screen;
+using static The_Legend_of_Zelda.Rendering.Screen;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Gameplay
 {
     public sealed class OverworldCode : GameplayCode
     {
@@ -26,7 +28,7 @@ namespace The_Legend_of_Zelda
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 116;
+        public const byte DEFAULT_SPAWN_ROOM = 85;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;
@@ -130,7 +132,7 @@ namespace The_Legend_of_Zelda
         //TODO: these are only the screens with zora. find which ones have sea noise
         readonly byte[] screens_with_water =
         {
-            10, 23, 24, 25, 26, 30, 38, 39, 40, 45, 46, 53, 54, 56, 62, 63, 69, 71, 72, 73, 79,
+            10, 23, 24, 25, 26, 30, 38, 39, 40, 45, 46, 53, 54, 56, 62, 63, 68, 70, 71, 72, 79,
             84, 85, 86, 89, 90, 95, 101, 105, 106, 111, 117, 123, 124, 125, 126, 127
         };
 
@@ -140,7 +142,7 @@ namespace The_Legend_of_Zelda
             Menu.map_dot.shown = false;
             x_scroll = 0;
             y_scroll = 0;
-            
+
             Textures.DrawHUDBG();
             Palettes.LoadPaletteGroup(PaletteID.BG_0, Palettes.PaletteGroups.GRAVEYARD_HUD1);
             Palettes.LoadPaletteGroup(PaletteID.BG_1, Palettes.PaletteGroups.HUD2);
@@ -212,7 +214,7 @@ namespace The_Legend_of_Zelda
                 if (scroll_direction == Direction.UP)
                     level_5_entrance_count++;
 
-                if (scroll_direction != Direction.LEFT || (scroll_direction == Direction.UP && level_5_entrance_count < NUM_OF_SCROLLS_TO_EXIT))
+                if (scroll_direction != Direction.LEFT || scroll_direction == Direction.UP && level_5_entrance_count < NUM_OF_SCROLLS_TO_EXIT)
                     scroll_destination = 27;
 
                 if (scroll_direction != Direction.UP || level_5_entrance_count >= NUM_OF_SCROLLS_TO_EXIT)
@@ -229,7 +231,7 @@ namespace The_Legend_of_Zelda
                 else
                     lost_woods_count = 0;
 
-                if (scroll_direction != Direction.RIGHT || (scroll_direction == Direction.LEFT && lost_woods_count == LOST_FOREST_CODE.Length))
+                if (scroll_direction != Direction.RIGHT || scroll_direction == Direction.LEFT && lost_woods_count == LOST_FOREST_CODE.Length)
                     scroll_destination = 97;
 
                 if (lost_woods_count >= LOST_FOREST_CODE.Length)
@@ -255,7 +257,7 @@ namespace The_Legend_of_Zelda
 
             int enemies = overworld_enemy_list[current_screen];
             int right_shift_ammount = (NUM_ENS_PER_SCRREN - 1) * ENS_MEM_SIZE_BITS;
-            int enemy_mask = ((int)Math.Pow(2, ENS_MEM_SIZE_BITS) - 1) << right_shift_ammount; // (2^4)<<20 == 15728640 == 0xF00000 <- mask
+            int enemy_mask = (int)Math.Pow(2, ENS_MEM_SIZE_BITS) - 1 << right_shift_ammount; // (2^4)<<20 == 15728640 == 0xF00000 <- mask
             List<int> ignore_list = new();
 
             for (int i = 0; i < NUM_ENS_PER_SCRREN; i++)
@@ -368,7 +370,7 @@ namespace The_Legend_of_Zelda
                 BlackSquareLinkAnimation(false);
                 return;
             }
-            
+
             if (black_square_stairs_flag)
             {
                 BlackSquareLinkAnimation(true);
@@ -569,7 +571,7 @@ namespace The_Legend_of_Zelda
                 Link.SetPos(new_y: Link.y + (entering ? 1 : -1));
 
             if (warp_animation_timer > 64)
-                Link.SetPos(new_y: Link.y - 1 - (Program.gTimer % 2));
+                Link.SetPos(new_y: Link.y - 1 - Program.gTimer % 2);
 
             Link.animation_timer++;
             warp_animation_timer++;

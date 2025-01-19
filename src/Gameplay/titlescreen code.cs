@@ -1,6 +1,7 @@
-﻿using static The_Legend_of_Zelda.Program;
-using static The_Legend_of_Zelda.Screen;
-namespace The_Legend_of_Zelda
+﻿using static The_Legend_of_Zelda.Gameplay.Program;
+using static The_Legend_of_Zelda.Rendering.Screen;
+using The_Legend_of_Zelda.Rendering;
+namespace The_Legend_of_Zelda.Gameplay
 {
     internal static class TitlescreenCode
     {
@@ -22,11 +23,11 @@ namespace The_Legend_of_Zelda
             {
                 Palettes.LoadPalette(PaletteID.BG_1, 2, Color._37_BEIGE);
             }
-            else if ((gTimer % 56 == 0) || (gTimer % 56 == 18))
+            else if (gTimer % 56 == 0 || gTimer % 56 == 18)
             {
                 Palettes.LoadPalette(PaletteID.BG_1, 2, Color._27_GOLD);
             }
-            else if ((gTimer % 56 == 24) || (gTimer % 56 == 40))
+            else if (gTimer % 56 == 24 || gTimer % 56 == 40)
             {
                 Palettes.LoadPalette(PaletteID.BG_1, 2, Color._17_DARK_GOLD);
             }
@@ -188,7 +189,7 @@ namespace The_Legend_of_Zelda
 
             if (!Sound.IsMusicPlaying() && !mute_sound)
             {
-                Program.Reset();
+                Reset();
                 return;
             }
 
@@ -395,7 +396,7 @@ namespace The_Legend_of_Zelda
                     break;
             }
 
-            if ((gTimer % 128 == 0) && (gTimer > 2430) && (gTimer < 4700))
+            if (gTimer % 128 == 0 && gTimer > 2430 && gTimer < 4700)
             {
                 sprites.RemoveRange(0, 2);
             }

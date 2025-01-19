@@ -1,7 +1,9 @@
-﻿using static SDL2.SDL;
-using static The_Legend_of_Zelda.Textures;
+﻿using The_Legend_of_Zelda.Gameplay;
+using The_Legend_of_Zelda.Sprites;
+using static SDL2.SDL;
+using static The_Legend_of_Zelda.Rendering.Textures;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Rendering
 {
     public static class Screen
     {
@@ -71,7 +73,7 @@ namespace The_Legend_of_Zelda
                 {
                     for (int j = 0; j < Program.NES_OUTPUT_WIDTH; j++)
                     {
-                        ref_pixel[(i * Program.NES_OUTPUT_WIDTH) + j] = vram[(i * Textures.VRAM_WIDTH) + j];
+                        ref_pixel[i * Program.NES_OUTPUT_WIDTH + j] = vram[i * VRAM_WIDTH + j];
                     }
                 }
 
@@ -79,8 +81,8 @@ namespace The_Legend_of_Zelda
                 {
                     for (int j = 0; j < Program.NES_OUTPUT_WIDTH; j++)
                     {
-                        ref_pixel[(i * Program.NES_OUTPUT_WIDTH) + j] = 
-                            vram[(TrueMod(i + y_scroll, Textures.VRAM_HEIGHT) * Textures.VRAM_WIDTH) + TrueMod(j + x_scroll, Textures.VRAM_WIDTH)];
+                        ref_pixel[i * Program.NES_OUTPUT_WIDTH + j] =
+                            vram[TrueMod(i + y_scroll, VRAM_HEIGHT) * VRAM_WIDTH + TrueMod(j + x_scroll, VRAM_WIDTH)];
                     }
                 }
             }
@@ -99,7 +101,7 @@ namespace The_Legend_of_Zelda
         // gives tile id of meta tile at location, returns 0 if oob
         public static byte GetTileIndexAtLocation(int x, int y)
         {
-            int metatile_index = (y & (~0xF)) + (x >> 4) - 64;
+            int metatile_index = (y & ~0xF) + (x >> 4) - 64;
             if (metatile_index < 0 || metatile_index > meta_tiles.Length)
                 return 0;
             return meta_tiles[metatile_index].tile_index;
@@ -115,8 +117,8 @@ namespace The_Legend_of_Zelda
 
             y_scroll = 8;
             Palettes.background_color = Color._00_DARK_GRAY;
-            LoadPPUPage(PPUDataGroup.OTHER, Textures.OtherPPUPages.TITLE, 0);
-            LoadPPUPage(PPUDataGroup.OTHER, Textures.OtherPPUPages.TITLE, 2);
+            LoadPPUPage(PPUDataGroup.OTHER, OtherPPUPages.TITLE, 0);
+            LoadPPUPage(PPUDataGroup.OTHER, OtherPPUPages.TITLE, 2);
             x_scroll++;
         }
     }

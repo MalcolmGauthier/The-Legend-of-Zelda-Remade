@@ -1,4 +1,7 @@
-﻿namespace The_Legend_of_Zelda
+﻿using The_Legend_of_Zelda.Gameplay;
+using The_Legend_of_Zelda.Rendering;
+
+namespace The_Legend_of_Zelda.Sprites
 {
     public class StaticSprite : Sprite
     {
@@ -23,7 +26,7 @@
         }
     }
 
-    internal class FlickeringSprite : Sprite
+    public class FlickeringSprite : Sprite
     {
         byte frames_per_flicker;
         byte second_tile_index;
@@ -40,7 +43,7 @@
             this.frames_per_flicker = frames_per_flicker;
             first_tile_index = tile_index;
             this.second_tile_index = second_tile_index;
-            this.first_palette_index = palette_index;
+            first_palette_index = palette_index;
             if (second_palette_index != 255)
                 this.second_palette_index = second_palette_index;
             else
@@ -65,7 +68,7 @@
         }
     }
 
-    internal class WaterFallSprite : Sprite
+    public class WaterFallSprite : Sprite
     {
         public WaterFallSprite(byte tile_index, byte palette_index, int x, int y) : base(tile_index, palette_index)
         {
@@ -87,7 +90,7 @@
         }
     }
 
-    internal class UndergroundFireSprite : Sprite, ISmokeSpawn
+    public class UndergroundFireSprite : Sprite, ISmokeSpawn
     {
         public int smoke_timer { get; set; } = Program.RNG.Next(0, 120);
         public bool smoke_stage { get; set; } = true;
@@ -173,7 +176,7 @@
         }
     }
 
-    internal class CaveNPC : Sprite, ISmokeSpawn
+    public class CaveNPC : Sprite, ISmokeSpawn
     {
         public int smoke_timer { get; set; } = Program.RNG.Next(0, 120);
         public bool smoke_stage { get; set; } = true;
@@ -276,7 +279,7 @@
         public void FlashDissapear()
         {
             flash_timer++;
-            if ((flash_timer % 2) == 1)
+            if (flash_timer % 2 == 1)
             {
                 shown = true;
                 counterpart.shown = true;
@@ -289,7 +292,7 @@
         }
     }
 
-    internal class StaticFairySprite : FairySprite
+    public class StaticFairySprite : FairySprite
     {
         public StaticFairySprite(int x, int y) : base(x, y)
         {

@@ -1,6 +1,8 @@
-﻿using static The_Legend_of_Zelda.Program;
+﻿using The_Legend_of_Zelda.Rendering;
+using The_Legend_of_Zelda.Sprites;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Gameplay
 {
     public static class DeathCode
     {
@@ -225,13 +227,13 @@ namespace The_Legend_of_Zelda
             {
                 if (died_in_dungeon)
                 {
-                    Program.gamemode = Program.Gamemode.DUNGEON;
+                    gamemode = Gamemode.DUNGEON;
                     DC.Init(DC.current_dungeon);
                 }
                 else
                 {
                     OC.current_screen = OverworldCode.DEFAULT_SPAWN_ROOM;
-                    Program.gamemode = Program.Gamemode.OVERWORLD;
+                    gamemode = Gamemode.OVERWORLD;
                     Link.Init();
                     OC.Init();
                 }
@@ -248,7 +250,7 @@ namespace The_Legend_of_Zelda
                 SaveLoad.LoadFile(SaveLoad.current_save_file);
             }
 
-            Program.gamemode = Program.Gamemode.FILESELECT;
+            gamemode = Gamemode.FILESELECT;
             FileSelectCode.InitFileSelect();
 
             return;

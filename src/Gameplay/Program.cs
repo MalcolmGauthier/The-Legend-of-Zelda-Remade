@@ -1,9 +1,10 @@
 ﻿using System.IO;
 using System.Runtime.CompilerServices;
+using The_Legend_of_Zelda.Rendering;
 using static SDL2.SDL;
 using static SDL2.SDL_mixer;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Gameplay
 {
     public static unsafe class Program
     {
@@ -47,7 +48,7 @@ namespace The_Legend_of_Zelda
         public static bool advance_1_frame = false;
         public static bool full_pause = false;
         // DEBUG FLAGS
-        public static bool show_fps = false, input_display = false, uncap_fps = false, mute_sound = true, screentest = false, 
+        public static bool show_fps = false, input_display = false, uncap_fps = false, mute_sound = true, screentest = false,
             fast_forward = true, pause_whenever = true, frame_advance = true, reset = true, logger = true;
 
         static void Main()
@@ -243,7 +244,7 @@ namespace The_Legend_of_Zelda
         }
 
         public static void Screenshot()
-        { 
+        {
             // little endian >:(
             byte[] bmp_header =
             {
@@ -363,7 +364,7 @@ namespace The_Legend_of_Zelda
             if (x + size * 5 > w)
             {
                 extra_y += (short)(13 * size);
-                ret_length = (int)((i + 1) * 8 * size);
+                ret_length = (i + 1) * 8 * size;
             }
             switch (charac)
             {
@@ -587,7 +588,7 @@ namespace The_Legend_of_Zelda
                     break;
                 case '\n':
                     extra_y += (short)(13 * size);
-                    ret_length = (int)((i + 1) * 8 * size);
+                    ret_length = (i + 1) * 8 * size;
                     break;
                 case ',':
                     SDL_RenderDrawLine(Screen.render, x + 2 * size, y + 8 * size, x, y + 10 * size);
@@ -673,7 +674,7 @@ namespace The_Legend_of_Zelda
             if (x == short.MinValue)
                 x = (short)(128 - (8 * size * text.Length - 1) / 2);
             if (y == short.MinValue)
-                y = (short)(128 - (10 * size) / 2);
+                y = (short)(128 - 10 * size / 2);
 
             text = text.ToLower();
             for (short i = 0; i < scroll; i++)

@@ -1,13 +1,13 @@
-﻿using static SDL2.SDL;
-using static The_Legend_of_Zelda.Textures;
-namespace The_Legend_of_Zelda
+﻿using The_Legend_of_Zelda.Gameplay;
+using static SDL2.SDL;
+using static The_Legend_of_Zelda.Rendering.Textures;
+
+namespace The_Legend_of_Zelda.Rendering
 {
     public unsafe class Tile
     {
         public int id;
         public byte tile_index = 0;
-
-        private byte previous_tile_index = 0;
 
         public Tile(int id)
         {
@@ -58,16 +58,16 @@ namespace The_Legend_of_Zelda
             // screens 1 and 3.
             int vram_id = id % (ppu.Length / 2);
             // if location on screen 3 or 4, add 1 screen to x pos
-            int offset = id < (ppu.Length / 2) ? 0 : Program.NES_OUTPUT_WIDTH;
+            int offset = id < ppu.Length / 2 ? 0 : Program.NES_OUTPUT_WIDTH;
 
-            int tile_x_pos = (vram_id % 32) * 8 + offset;
-            int tile_y_pos = (vram_id / 32) * 8;
+            int tile_x_pos = vram_id % 32 * 8 + offset;
+            int tile_y_pos = vram_id / 32 * 8;
 
             for (int i = 0; i < 8; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    vram[((i + tile_y_pos) * Textures.VRAM_WIDTH) + tile_x_pos + j] = (byte)(texture_pixels[(i * 8) + j] + (ppu_plt[id] * 4));
+                    vram[(i + tile_y_pos) * VRAM_WIDTH + tile_x_pos + j] = (byte)(texture_pixels[i * 8 + j] + ppu_plt[id] * 4);
                 }
             }
         }

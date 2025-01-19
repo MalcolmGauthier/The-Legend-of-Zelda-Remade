@@ -1,6 +1,7 @@
-﻿using static The_Legend_of_Zelda.Program;
+﻿using The_Legend_of_Zelda.Sprites;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Rendering
 {
     public class MetaTile
     {
@@ -18,21 +19,21 @@ namespace The_Legend_of_Zelda
         public void SetPPUValues(byte tile_index)
         {
             // x and y of top left tile in tile grid
-            int x = (id % METATILES_PER_ROW) * 2;
-            int y = (id / METATILES_PER_ROW) * 2;
+            int x = id % METATILES_PER_ROW * 2;
+            int y = id / METATILES_PER_ROW * 2;
 
             //TODO: ????? magic numbers
             int y_offset = id < 352 ? 8 : 24;
 
             int index_in_ppu_arr = (y + y_offset) * Textures.PPU_WIDTH + x;
 
-            if (Program.gamemode == Program.Gamemode.DUNGEON)
+            if (gamemode == Gamemode.DUNGEON)
             {
                 special = false;
                 this.tile_index = tile_index;
-                Textures.ppu[index_in_ppu_arr                         ] = DC.dungeon_tileset_indexes[tile_index, 0];
-                Textures.ppu[index_in_ppu_arr + 1                     ] = DC.dungeon_tileset_indexes[tile_index, 1];
-                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH    ] = DC.dungeon_tileset_indexes[tile_index, 2];
+                Textures.ppu[index_in_ppu_arr] = DC.dungeon_tileset_indexes[tile_index, 0];
+                Textures.ppu[index_in_ppu_arr + 1] = DC.dungeon_tileset_indexes[tile_index, 1];
+                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH] = DC.dungeon_tileset_indexes[tile_index, 2];
                 Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = DC.dungeon_tileset_indexes[tile_index, 3];
                 return;
             }
@@ -103,9 +104,9 @@ namespace The_Legend_of_Zelda
             }
 
             this.tile_index = tile_index;
-            Textures.ppu[index_in_ppu_arr]                          = OC.overworld_tileset_indexes[tile_index, 0];
-            Textures.ppu[index_in_ppu_arr + 1]                      = OC.overworld_tileset_indexes[tile_index, 1];
-            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH]     = OC.overworld_tileset_indexes[tile_index, 2];
+            Textures.ppu[index_in_ppu_arr] = OC.overworld_tileset_indexes[tile_index, 0];
+            Textures.ppu[index_in_ppu_arr + 1] = OC.overworld_tileset_indexes[tile_index, 1];
+            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH] = OC.overworld_tileset_indexes[tile_index, 2];
             Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = OC.overworld_tileset_indexes[tile_index, 3];
 
             return;

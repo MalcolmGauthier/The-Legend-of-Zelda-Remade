@@ -1,6 +1,7 @@
-﻿using static The_Legend_of_Zelda.Program;
+﻿using The_Legend_of_Zelda.Rendering;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Sprites
 {
     internal abstract class Enemy : Sprite
     {
@@ -77,7 +78,7 @@ namespace The_Legend_of_Zelda
 
         protected StaticSprite counterpart = new StaticSprite(SpriteID.BLANK, 0, 0, 0);
 
-        public Enemy(AnimationMode animation_mode, byte tile_location_1, byte tile_location_2, bool stronger, bool smoke_appearance, 
+        public Enemy(AnimationMode animation_mode, byte tile_location_1, byte tile_location_2, bool stronger, bool smoke_appearance,
             byte frames_between_animation_frames, float speed, byte drop_category, bool set_spawn = false) : base(0, 0)
         {
             this.animation_mode = animation_mode;
@@ -93,7 +94,7 @@ namespace The_Legend_of_Zelda
             counterpart.unload_during_transition = true;
             if (!set_spawn)
                 FindValidSpawnLocation();
-            target_antilink = Program.RNG.Next() % 2 == 0;
+            target_antilink = RNG.Next() % 2 == 0;
 
             Screen.sprites.Add(this);
             Screen.sprites.Add(counterpart);
@@ -172,7 +173,7 @@ namespace The_Legend_of_Zelda
 
         bool IsWithinLink()
         {
-            return x + 12 >= Link.x && x - 12 <= Link.x && 
+            return x + 12 >= Link.x && x - 12 <= Link.x &&
                    y + 12 >= Link.y && y - 12 <= Link.y;
         }
 
@@ -181,12 +182,12 @@ namespace The_Legend_of_Zelda
             if (x % 16 < 8)
                 x -= x % 16;
             else
-                x += 16 - (x % 16);
+                x += 16 - x % 16;
 
             if (y % 16 < 8)
                 y -= y % 16;
             else
-                y += 16 - (y % 16);
+                y += 16 - y % 16;
         }
 
         void SetSmokeGraphic()
@@ -201,13 +202,13 @@ namespace The_Legend_of_Zelda
             if (local_timer == 0)
             {
                 og_palette = palette_index;
-                if (OC.overworld_screens_side_entrance.Contains(OC.current_screen) && Program.gamemode == Program.Gamemode.OVERWORLD)
+                if (OC.overworld_screens_side_entrance.Contains(OC.current_screen) && gamemode == Gamemode.OVERWORLD)
                 {
                     SpawnOnEdge();
                     shown = false;
                     counterpart.shown = false;
                 }
-                smoke_random_appearance = (byte)Program.RNG.Next(10, 90);
+                smoke_random_appearance = (byte)RNG.Next(10, 90);
                 palette_index = 5;
                 counterpart.palette_index = 5;
                 tile_index = 0x70;
@@ -251,26 +252,26 @@ namespace The_Legend_of_Zelda
                     return;
                 }
 
-                switch ((Direction)Program.RNG.Next(4))
+                switch ((Direction)RNG.Next(4))
                 {
                     case Direction.UP:
-                        x = Program.RNG.Next(1, 15) * 16;
+                        x = RNG.Next(1, 15) * 16;
                         y = 64;
                         facing_direction = Direction.DOWN;
                         break;
                     case Direction.DOWN:
-                        x = Program.RNG.Next(1, 15) * 16;
+                        x = RNG.Next(1, 15) * 16;
                         y = 224;
                         facing_direction = Direction.UP;
                         break;
                     case Direction.LEFT:
                         x = 0;
-                        y = Program.RNG.Next(6, 14) * 16;
+                        y = RNG.Next(6, 14) * 16;
                         facing_direction = Direction.RIGHT;
                         break;
                     case Direction.RIGHT:
                         x = 240;
-                        y = Program.RNG.Next(6, 14) * 16;
+                        y = RNG.Next(6, 14) * 16;
                         facing_direction = Direction.LEFT;
                         break;
                 }
@@ -323,12 +324,12 @@ namespace The_Legend_of_Zelda
                     if (flip)
                     {
                         tile_index = tile_location_1;
-                        counterpart.tile_index = (byte)(tile_location_1);
+                        counterpart.tile_index = tile_location_1;
                     }
                     else
                     {
                         tile_index = tile_location_2;
-                        counterpart.tile_index = (byte)(tile_location_2);
+                        counterpart.tile_index = tile_location_2;
                     }
                     break;
 
@@ -352,12 +353,12 @@ namespace The_Legend_of_Zelda
                     if (flip)
                     {
                         tile_index = tile_location_1;
-                        counterpart.tile_index = (byte)(tile_location_1);
+                        counterpart.tile_index = tile_location_1;
                     }
                     else
                     {
                         tile_index = tile_location_2;
-                        counterpart.tile_index = (byte)(tile_location_2);
+                        counterpart.tile_index = tile_location_2;
                     }
                     break;
 
@@ -408,7 +409,7 @@ namespace The_Legend_of_Zelda
 
                     if (facing_direction == Direction.UP)
                         tile_to_use += 8;
-                    
+
                     tile_index = (byte)(tile_location_1 + tile_to_use);
                     counterpart.tile_index = (byte)(tile_location_1 + 2 + tile_to_use);
                     break;
@@ -466,8 +467,8 @@ namespace The_Legend_of_Zelda
             int counter = 0;
             while (true)
             {
-                new_x = Program.RNG.Next(2, 14);
-                new_y = Program.RNG.Next(2, 9);
+                new_x = RNG.Next(2, 14);
+                new_y = RNG.Next(2, 9);
 
                 byte tile = Screen.meta_tiles[new_y * 16 + new_x].tile_index;
                 if (IsValidTile(tile))
@@ -486,7 +487,7 @@ namespace The_Legend_of_Zelda
 
         bool IsValidTile(byte tile)
         {
-            return tile == 1 || tile == 3 || (tile >= 0x14 && tile <= 0x16) || (tile >= 0x26 && tile <= 0x29);
+            return tile == 1 || tile == 3 || tile >= 0x14 && tile <= 0x16 || tile >= 0x26 && tile <= 0x29;
         }
 
         public void Walk()
@@ -500,7 +501,7 @@ namespace The_Legend_of_Zelda
                 nb_of_times_moved = 0;
                 SetPosMod16();
                 // 1/4 chance to roll for direction change towards target
-                if (Program.RNG.Next(4) == 0)
+                if (RNG.Next(4) == 0)
                 {
                     List<Direction> possible_directions = new List<Direction> { Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT };
                     //possible_directions.Remove(facing_direction);
@@ -518,7 +519,7 @@ namespace The_Legend_of_Zelda
                     if (possible_directions.Count == 0)
                         possible_directions.Add(facing_direction);
 
-                    facing_direction = possible_directions[Program.RNG.Next(possible_directions.Count)];
+                    facing_direction = possible_directions[RNG.Next(possible_directions.Count)];
                 }
                 CheckIfTurn();
             }
@@ -526,7 +527,7 @@ namespace The_Legend_of_Zelda
             // every time an enemy moves 1 tile, it has a 1/64 chance of switching its target from link to anti-link and vice versa
             if (x % 16 == 0 && y % 16 == 0)
             {
-                if (Program.RNG.Next(64) == 0)
+                if (RNG.Next(64) == 0)
                     target_antilink = !target_antilink;
             }
 
@@ -593,7 +594,7 @@ namespace The_Legend_of_Zelda
                     test_y = y + 8;
 
                 if (!IsPositionValid(test_x, test_y) || test_x < 0 || test_x > 256 || test_y < 64 || test_y > 240)
-                    facing_direction = (Direction)(((int)facing_direction + Program.RNG.Next(1, 4)) % 4);
+                    facing_direction = (Direction)(((int)facing_direction + RNG.Next(1, 4)) % 4);
                 else
                     valid_direction = true;
             }
@@ -606,7 +607,7 @@ namespace The_Legend_of_Zelda
             if (iframes_timer == 1)
                 new_palette = og_palette;
             else
-                new_palette = (byte)((Program.gTimer >> 1) % 4 + 4);
+                new_palette = (byte)((gTimer >> 1) % 4 + 4);
 
             palette_index = new_palette;
             counterpart.palette_index = new_palette;
@@ -663,7 +664,7 @@ namespace The_Legend_of_Zelda
             {
                 iframes_timer = 48;
                 // if aligned on grid
-                if (((int)knockback_direction < 2 && x % 16 == 0) || ((int)knockback_direction >= 2 && y % 16 == 0))
+                if ((int)knockback_direction < 2 && x % 16 == 0 || (int)knockback_direction >= 2 && y % 16 == 0)
                     knockback_timer = 8;
             }
             og_palette = palette_index;
@@ -679,9 +680,9 @@ namespace The_Legend_of_Zelda
         public void Stunned()
         {
             if (time_when_stunned == -1)
-                time_when_stunned = Program.gTimer;
+                time_when_stunned = gTimer;
 
-            if (Program.gTimer >= time_when_stunned + 180 || !stunnable)
+            if (gTimer >= time_when_stunned + 180 || !stunnable)
             {
                 current_action = unstunned_action;
                 time_when_stunned = -1;
@@ -745,7 +746,7 @@ namespace The_Legend_of_Zelda
                 case 0:
                     break;
                 case 1:
-                    if (Program.RNG.Next(100) > 30)
+                    if (RNG.Next(100) > 30)
                         break;
 
                     switch (Link.nb_of_ens_killed % 10)
@@ -762,7 +763,7 @@ namespace The_Legend_of_Zelda
                     }
                     break;
                 case 2:
-                    if (Program.RNG.Next(100) > 40)
+                    if (RNG.Next(100) > 40)
                         break;
 
                     switch (Link.nb_of_ens_killed % 10)
@@ -782,26 +783,26 @@ namespace The_Legend_of_Zelda
                     }
                     break;
                 case 3:
-                    if (Program.RNG.Next(100) > 60)
+                    if (RNG.Next(100) > 60)
 
-                    switch (Link.nb_of_ens_killed % 10)
-                    {
-                        case 6:
-                            new ClockItemSprite(x, y);
-                            break;
-                        case 2 or 5:
-                            new HeartItemSprite(x + 4, y);
-                            break;
-                        case 4 or 0:
-                            new RupySprite(x + 4, y, true);
-                            break;
-                        default:
-                            new RupySprite(x + 4, y, false);
-                            break;
-                    }
+                        switch (Link.nb_of_ens_killed % 10)
+                        {
+                            case 6:
+                                new ClockItemSprite(x, y);
+                                break;
+                            case 2 or 5:
+                                new HeartItemSprite(x + 4, y);
+                                break;
+                            case 4 or 0:
+                                new RupySprite(x + 4, y, true);
+                                break;
+                            default:
+                                new RupySprite(x + 4, y, false);
+                                break;
+                        }
                     break;
                 case 4:
-                    if (Program.RNG.Next(100) > 40)
+                    if (RNG.Next(100) > 40)
                         break;
 
                     switch (Link.nb_of_ens_killed % 10)
@@ -843,7 +844,7 @@ namespace The_Legend_of_Zelda
             {
                 if (this is not Zora)
                 {
-                    if (Program.gamemode == Gamemode.OVERWORLD)
+                    if (gamemode == Gamemode.OVERWORLD)
                         OC.AddToKillQueue(OC.current_screen);
                     else
                         DC.AddToKillQueue(DC.current_screen);
@@ -861,15 +862,15 @@ namespace The_Legend_of_Zelda
     {
         int when_to_shoot;
 
-        public Octorok (bool stronger) : base(AnimationMode.TWOFRAMES_DMDMLL, 0xb0, 0xb2, stronger, true, 6, 0.5f, 1)
+        public Octorok(bool stronger) : base(AnimationMode.TWOFRAMES_DMDMLL, 0xb0, 0xb2, stronger, true, 6, 0.5f, 1)
         {
-            when_to_shoot = Program.RNG.Next(30, 100);
+            when_to_shoot = RNG.Next(30, 100);
             damage = 0.5f;
-            facing_direction = (Direction)Program.RNG.Next(4);
+            facing_direction = (Direction)RNG.Next(4);
             CheckIfTurn();
             current_action = ActionState.WALKING;
 
-            if (Program.RNG.Next(5) == 0)
+            if (RNG.Next(5) == 0)
                 speed = 1;
 
             if (!stronger)
@@ -901,7 +902,7 @@ namespace The_Legend_of_Zelda
                     {
                         current_action = ActionState.WALKING;
                         local_timer = 0;
-                        when_to_shoot = Program.RNG.Next(180, 600);
+                        when_to_shoot = RNG.Next(180, 600);
                     }
                     break;
                 case ActionState.WALKING:
@@ -926,9 +927,9 @@ namespace The_Legend_of_Zelda
 
         public Moblin(bool stronger) : base(AnimationMode.TWOFRAMES_RRDU, 0xf0, 0xf8, stronger, false, 6, 0.5f, 1)
         {
-            when_to_shoot = Program.RNG.Next(30, 60);
+            when_to_shoot = RNG.Next(30, 60);
             damage = 0.5f;
-            facing_direction = (Direction)Program.RNG.Next(4);
+            facing_direction = (Direction)RNG.Next(4);
             CheckIfTurn();
             current_action = ActionState.WALKING;
             appeared = true;
@@ -948,7 +949,7 @@ namespace The_Legend_of_Zelda
             palette_index = palette_to_apply;
             counterpart.palette_index = palette_to_apply;
 
-            if (OC.overworld_screens_side_entrance.Contains(OC.current_screen) && Program.gamemode == Program.Gamemode.OVERWORLD)
+            if (OC.overworld_screens_side_entrance.Contains(OC.current_screen) && gamemode == Gamemode.OVERWORLD)
             {
                 smoke_appearance = true;
                 appeared = false;
@@ -965,13 +966,13 @@ namespace The_Legend_of_Zelda
 
                 if (local_timer == 36)
                 {
-                    new ArrowSprite(x + 4, y, (Direction)facing_direction, false);
+                    new ArrowSprite(x + 4, y, facing_direction, false);
                 }
                 else if (local_timer >= 54)
                 {
                     current_action = ActionState.WALKING;
                     local_timer = 0;
-                    when_to_shoot = Program.RNG.Next(180, 600);
+                    when_to_shoot = RNG.Next(180, 600);
                 }
             }
             else if (current_action == ActionState.WALKING)
@@ -996,7 +997,7 @@ namespace The_Legend_of_Zelda
 
         public Lynel(bool stronger) : base(AnimationMode.TWOFRAMES_RRDU, 0xce, 0xd6, stronger, true, 6, 0.5f, 4)
         {
-            when_to_shoot = Program.RNG.Next(30, 60);
+            when_to_shoot = RNG.Next(30, 60);
             byte palette;
             if (stronger)
             {
@@ -1013,7 +1014,7 @@ namespace The_Legend_of_Zelda
             }
             palette_index = palette;
             counterpart.palette_index = palette;
-            facing_direction = (Direction)Program.RNG.Next(4);
+            facing_direction = (Direction)RNG.Next(4);
             CheckIfTurn();
             current_action = ActionState.WALKING;
         }
@@ -1027,13 +1028,13 @@ namespace The_Legend_of_Zelda
 
                 if (local_timer == 36)
                 {
-                    new SwordProjectileSprite(x + 4, y - 4, (Direction)facing_direction, false);
+                    new SwordProjectileSprite(x + 4, y - 4, facing_direction, false);
                 }
                 else if (local_timer >= 54)
                 {
                     current_action = ActionState.WALKING;
                     local_timer = 0;
-                    when_to_shoot = Program.RNG.Next(180, 600);
+                    when_to_shoot = RNG.Next(180, 600);
                 }
             }
             else if (current_action == ActionState.WALKING)
@@ -1139,8 +1140,8 @@ namespace The_Legend_of_Zelda
                 if (counter > 300)
                     return;
 
-                new_x = Program.RNG.Next(0, 16) * 16;
-                new_y = Program.RNG.Next(4, 15) * 16;
+                new_x = RNG.Next(0, 16) * 16;
+                new_y = RNG.Next(4, 15) * 16;
                 if (IsTileValid(Screen.GetTileIndexAtLocation(new_x, new_y)))
                 {
                     valid_location_found = true;
@@ -1224,7 +1225,7 @@ namespace The_Legend_of_Zelda
                     {
                         shown = false;
                         counterpart.shown = false;
-                        if (Program.RNG.Next(30) != 0)
+                        if (RNG.Next(30) != 0)
                             local_timer--;
                     }
                     else if (local_timer == 25)
@@ -1268,8 +1269,8 @@ namespace The_Legend_of_Zelda
             {
                 while (true)
                 {
-                    new_x = Program.RNG.Next(1, 15) * 16;
-                    new_y = Program.RNG.Next(5, 14) * 16;
+                    new_x = RNG.Next(1, 15) * 16;
+                    new_y = RNG.Next(5, 14) * 16;
                     if (IsValidTile(Screen.GetTileIndexAtLocation(new_x, new_y)))
                         break;
                 }
@@ -1279,7 +1280,7 @@ namespace The_Legend_of_Zelda
             {
                 new_x = 0;
                 new_y = 0;
-                    
+
                 if (Link.facing_direction == Direction.UP)
                     new_y = 48;
                 else if (Link.facing_direction == Direction.DOWN)
@@ -1360,7 +1361,7 @@ namespace The_Legend_of_Zelda
             shown = false;
             counterpart.shown = false;
             current_action = ActionState.DEFAULT;
-            go_left = Convert.ToBoolean(Program.RNG.Next(2));
+            go_left = Convert.ToBoolean(RNG.Next(2));
             Spawn();
         }
 
@@ -1371,7 +1372,7 @@ namespace The_Legend_of_Zelda
                 case ActionState.RESTING:
                     if (local_timer == 1)
                     {
-                        when_to_drop = Program.RNG.Next(2, 64);
+                        when_to_drop = RNG.Next(2, 64);
                     }
                     else if (local_timer > when_to_drop)
                     {
@@ -1410,7 +1411,7 @@ namespace The_Legend_of_Zelda
                 case ActionState.DEFAULT:
                     if (local_timer == 1)
                     {
-                        when_to_drop = Program.RNG.Next(2, 120);
+                        when_to_drop = RNG.Next(2, 120);
                         shown = false;
                         counterpart.shown = false;
                     }
@@ -1429,13 +1430,13 @@ namespace The_Legend_of_Zelda
         void Spawn()
         {
             y = 64;
-            x = Program.RNG.Next(1, 239);
+            x = RNG.Next(1, 239);
         }
 
         // heavy bias towards link
         void PickNewDirection()
         {
-            bool value = Program.RNG.Next(5) != 0;
+            bool value = RNG.Next(5) != 0;
             if (x < Link.x)
                 value = !value;
             go_left = value;
@@ -1475,7 +1476,7 @@ namespace The_Legend_of_Zelda
                 case ActionState.JUMPING:
                     if (local_timer == 1)
                     {
-                        jump_height = Program.RNG.Next(20, 45);
+                        jump_height = RNG.Next(20, 45);
                     }
 
                     if (local_timer < 50 - jump_height)
@@ -1494,14 +1495,14 @@ namespace The_Legend_of_Zelda
                         {
                             local_timer = 1;
                             if (y < 64)
-                                jump_height = Program.RNG.Next(40, 50);
+                                jump_height = RNG.Next(40, 50);
                             else
-                                jump_height = Program.RNG.Next(10, 20);
+                                jump_height = RNG.Next(10, 20);
                             break;
                         }
 
                         local_timer = 0;
-                        if (!second_jump && Program.RNG.Next(2) == 0 && !stronger)
+                        if (!second_jump && RNG.Next(2) == 0 && !stronger)
                         {
                             second_jump = true;
                             break;
@@ -1524,9 +1525,9 @@ namespace The_Legend_of_Zelda
                     {
                         frames_between_anim = 16;
                         if (!stronger)
-                            when_to_stop = Program.RNG.Next(45, 90);
+                            when_to_stop = RNG.Next(45, 90);
                         else
-                            when_to_stop = Program.RNG.Next(90, 180);
+                            when_to_stop = RNG.Next(90, 180);
                     }
                     else if (local_timer > when_to_stop)
                     {
@@ -1539,7 +1540,7 @@ namespace The_Legend_of_Zelda
 
         void PickNewDirection()
         {
-            bool value = Convert.ToBoolean(Program.RNG.Next(7));
+            bool value = Convert.ToBoolean(RNG.Next(7));
             if (x < target_x)
                 value = !value;
             go_left = value;
@@ -1579,7 +1580,7 @@ namespace The_Legend_of_Zelda
                     }
                     if (local_timer <= 48)
                     {
-                        if ((local_timer <= 24 && local_timer % 4 == 0) || (local_timer > 24 && local_timer % 8 == 0))
+                        if (local_timer <= 24 && local_timer % 4 == 0 || local_timer > 24 && local_timer % 8 == 0)
                         {
                             Move8D();
                         }
@@ -1590,7 +1591,7 @@ namespace The_Legend_of_Zelda
                     {
                         frames_between_anim = 0;
                         invincible = false;
-                        when_to_stop = Program.RNG.Next(120, 240);
+                        when_to_stop = RNG.Next(120, 240);
                     }
                     else if (local_timer > when_to_stop + 49)
                     {
@@ -1611,14 +1612,14 @@ namespace The_Legend_of_Zelda
                     }
                     else if (local_timer == 55)
                     {
-                        direction = (EightDirection)Program.RNG.Next(8);
-                        when_to_stop = Program.RNG.Next(60, 120);
+                        direction = (EightDirection)RNG.Next(8);
+                        when_to_stop = RNG.Next(60, 120);
                         frames_between_anim = 2;
                     }
 
                     if (local_timer <= 54)
                     {
-                        if ((local_timer <= 24 && local_timer % 8 == 0) || (local_timer > 24 && local_timer % 4 == 0))
+                        if (local_timer <= 24 && local_timer % 8 == 0 || local_timer > 24 && local_timer % 4 == 0)
                             Move8D();
 
                         break;
@@ -1627,7 +1628,7 @@ namespace The_Legend_of_Zelda
                     if (local_timer > 56 + when_to_stop)
                     {
                         num_times_turned++;
-                        if (num_times_turned < 5 || Program.RNG.Next(8) != 0)
+                        if (num_times_turned < 5 || RNG.Next(8) != 0)
                         {
                             local_timer = 54;
                         }
@@ -1664,7 +1665,7 @@ namespace The_Legend_of_Zelda
             if (local_timer % 2 != 0)
                 return;
 
-            if (direction == EightDirection.UP || direction == EightDirection.UPLEFT || 
+            if (direction == EightDirection.UP || direction == EightDirection.UPLEFT ||
                 direction == EightDirection.UPRIGHT)
             {
                 y--;
@@ -1774,7 +1775,7 @@ namespace The_Legend_of_Zelda
                     }
                     if (local_timer <= 48)
                     {
-                        if ((local_timer <= 24 && local_timer % 4 == 0) || (local_timer > 24 && local_timer % 8 == 0))
+                        if (local_timer <= 24 && local_timer % 4 == 0 || local_timer > 24 && local_timer % 8 == 0)
                         {
                             Move8D();
                         }
@@ -1784,7 +1785,7 @@ namespace The_Legend_of_Zelda
                     if (local_timer == 49)
                     {
                         frames_between_anim = 0;
-                        when_to_stop = Program.RNG.Next(60, 120);
+                        when_to_stop = RNG.Next(60, 120);
                     }
                     else if (local_timer > when_to_stop + 49)
                     {
@@ -1804,14 +1805,14 @@ namespace The_Legend_of_Zelda
                     }
                     else if (local_timer == 55)
                     {
-                        direction = (EightDirection)Program.RNG.Next(8);
-                        when_to_stop = Program.RNG.Next(60, 120);
+                        direction = (EightDirection)RNG.Next(8);
+                        when_to_stop = RNG.Next(60, 120);
                         frames_between_anim = 2;
                     }
 
                     if (local_timer <= 54)
                     {
-                        if ((local_timer <= 24 && local_timer % 8 == 0) || (local_timer > 24 && local_timer % 4 == 0))
+                        if (local_timer <= 24 && local_timer % 8 == 0 || local_timer > 24 && local_timer % 4 == 0)
                             Move8D();
 
                         break;
@@ -1820,7 +1821,7 @@ namespace The_Legend_of_Zelda
                     if (local_timer > 56 + when_to_stop)
                     {
                         num_times_turned++;
-                        if (num_times_turned < 5 || Program.RNG.Next(8) != 0)
+                        if (num_times_turned < 5 || RNG.Next(8) != 0)
                         {
                             local_timer = 54;
                         }
@@ -1906,7 +1907,7 @@ namespace The_Legend_of_Zelda
             HP = 3;
             target_x = Link.x;
             target_y = Link.y;
-            speed = Program.RNG.Next(1, 5) / 2f;
+            speed = RNG.Next(1, 5) / 2f;
             facing_direction = Direction.DOWN;
             this.x = x;
             this.y = y;
@@ -1942,12 +1943,12 @@ namespace The_Legend_of_Zelda
 
         void ReplaceOGTile()
         {
-            int ppu_tile_location = 256 + (metatile_index >> 4) * 64 + (metatile_index % 16) * 2;
+            int ppu_tile_location = 256 + (metatile_index >> 4) * 64 + metatile_index % 16 * 2;
             if (OC.current_screen == 36 && !SaveLoad.power_bracelet && metatile_index == 78)
                 new PowerBraceletSprite(x + 4, y);
             byte screen = OC.current_screen;
-            if ((screen == 11 && metatile_index == 75) || (screen == 34 && metatile_index == 67) || (screen == 28 && metatile_index == 75) ||
-                (screen == 52 && metatile_index == 68) || (screen == 61 && metatile_index == 73) || (screen == 78 && metatile_index == 74))
+            if (screen == 11 && metatile_index == 75 || screen == 34 && metatile_index == 67 || screen == 28 && metatile_index == 75 ||
+                screen == 52 && metatile_index == 68 || screen == 61 && metatile_index == 73 || screen == 78 && metatile_index == 74)
             {
                 Screen.meta_tiles[metatile_index].tile_index = 0x15;
                 Textures.ppu[ppu_tile_location] = 0x70;

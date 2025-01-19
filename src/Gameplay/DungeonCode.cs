@@ -1,10 +1,17 @@
-﻿using static The_Legend_of_Zelda.Screen;
-using static The_Legend_of_Zelda.Program;
+﻿using static The_Legend_of_Zelda.Rendering.Screen;
+using static The_Legend_of_Zelda.Gameplay.Program;
+using The_Legend_of_Zelda.Sprites;
+using The_Legend_of_Zelda.Rendering;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Gameplay
 {
     public sealed class DungeonCode : GameplayCode
     {
+        public enum RoomType
+        {
+
+        }
+
         public enum DoorType
         {
             NONE,
@@ -87,7 +94,8 @@ namespace The_Legend_of_Zelda
         bool is_dark = false;
 
         public DoorType[] door_types = new DoorType[NUMBER_OF_DOORS];
-        FlickeringSprite compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
+        public bool[] door_statuses = new bool[NUMBER_OF_DOORS];
+        public FlickeringSprite compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
 
         public readonly byte[] room_list = {
             0x2A, 0x14, 0x14, 0x29, 0x0B, 0x0B, 0x0F, 0x2B, 0x29, 0x1A, 0x1B, 0x0B, 0x2A, 0x06, 0x0C, 0x2B,
@@ -125,76 +133,6 @@ namespace The_Legend_of_Zelda
             0b0010000000000100,
             0b0000000100000000,
         };
-        public readonly byte[] connection_IDs = {
-            #region code
-            /*
-                0 - none
-                1 - open
-                2 - key
-                3 - bombable
-                4 - blocked: needs push down/right
-                5 - blocked: needs screen clear up/left
-                6 - blocked: needs screen clear down/right
-                7 - blocked: needs screen clear up & down
-                8 - blocked: needs screen clear left & right
-                9 - blocked: needs push up/left
-                a - blocked: permanent up/left
-                b - blocked: permanent down/right
-                c - blocked: needs triforce
-                d - walk-through wall
-                e - walk-through wall up/left
-                f - walk-through wall down/right
-
-                IF ROOM NEEDS CLEAR, BLOCK DOORS THAT
-                LEAD TO PUSH ROOMS AS CLEAR DOORS
-                order = bottom, right for that room
-            */
-#endregion
-            0x00, 0x23, 0x53, 0x60, 0x60, 0x06, 0x60, 0x00, 0x62, 0x31, 0x10, 0x60, 0x00, 0x02, 0x20, 0x00,
-            0x75, 0x21, 0x01, 0x00, 0x20, 0x10, 0x73, 0x10, 0x53, 0x33, 0x09, 0x00, 0x60, 0x30, 0x03, 0x00,
-            0x43, 0x60, 0x05, 0x40, 0x61, 0x00, 0x21, 0x30, 0x21, 0x20, 0x02, 0x20, 0x62, 0x01, 0x02, 0x10,
-            0x50, 0x05, 0x00, 0x20, 0x00, 0x60, 0x11, 0x30, 0x12, 0x05, 0x00, 0x10, 0x00, 0x25, 0x00, 0x10,
-            0x60, 0x11, 0x12, 0x12, 0x13, 0x70, 0x51, 0x30, 0x10, 0x04, 0x21, 0x32, 0x31, 0x00, 0x21, 0x10,
-            0x10, 0x52, 0x01, 0x13, 0x08, 0x00, 0x12, 0x30, 0x01, 0x10, 0x05, 0x11, 0x00, 0xB8, 0x61, 0x00,
-            0x10, 0x00, 0x20, 0x10, 0x06, 0x11, 0x12, 0x00, 0x00, 0x12, 0x00, 0x20, 0x03, 0x03, 0x12, 0x30,
-            0x02, 0x11, 0x00, 0x01, 0x10, 0x11, 0x00, 0x00, 0x01, 0x10, 0x01, 0x11, 0x00, 0x00, 0x11, 0x00,
-            0x33, 0x78, 0x00, 0x20, 0x63, 0x00, 0x70, 0x00, 0x00, 0xA2, 0x60, 0x03, 0x00, 0x03, 0x20, 0x30,
-            0x52, 0x03, 0x03, 0x02, 0x00, 0x13, 0x25, 0x00, 0x30, 0x50, 0x22, 0x20, 0x12, 0x31, 0x10, 0x30,
-            0x20, 0x03, 0x05, 0x00, 0x60, 0x03, 0x30, 0x00, 0x00, 0xA3, 0x02, 0x23, 0x10, 0x32, 0x23, 0x30,
-            0x05, 0x63, 0x00, 0x13, 0x30, 0x60, 0x28, 0x00, 0x23, 0xA0, 0xC0, 0x03, 0x00, 0x00, 0x03, 0x10,
-            0x20, 0x10, 0x00, 0x08, 0x00, 0x12, 0x60, 0x00, 0x20, 0xA0, 0x60, 0x30, 0x11, 0x31, 0x10, 0x10,
-            0x11, 0x35, 0x30, 0x60, 0x01, 0x06, 0x32, 0x00, 0x08, 0x10, 0x00, 0x20, 0x13, 0x33, 0x60, 0x00,
-            0x13, 0x11, 0x11, 0x01, 0x01, 0x00, 0x10, 0x00, 0x00, 0x11, 0x02, 0x20, 0x01, 0x06, 0x10, 0x00,
-            0x00, 0x11, 0x00, 0x00, 0x06, 0x01, 0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x10, 0x00
-        };
-        public readonly byte[] starting_screens = {
-            123, 117, 116, 121, 126, 113, 241, 246, 254 
-        };
-        public readonly byte[] rooms_with_boses = {
-            61, 54, 6, 69, 24, 27, 94, 44, 16, 20, 131, 132, 148, 162, 177, 178, 208, 228, 242, 245, 230, 197, 166, 150, 233, 218, 169, 175, 158, 202
-        };
-        public readonly byte[] rooms_with_palette_3 = {
-            9, 17, 18, 30, 33, 37, 40, 41, 43, 46, 47, 49, 52, 56, 57, 59, 63, 72, 78, 79, 80, 93, 95, 110, 113, 116, 117, 121, 123, 126, 
-            132, 137, 144, 150, 157, 171, 172, 177, 182, 187, 188, 193, 195, 200, 202, 210, 214, 215, 216, 219, 222, 223, 225, 229, 237, 241, 245, 246, 247
-        };
-        public readonly byte[] rooms_with_palette_1 = {
-            54, 69, 131
-        };
-        public readonly byte[] door_metatiles = {
-            23, 151, 81, 94
-        };
-        public readonly byte[,] dungeon_tileset_indexes = {
-            {0x74,0x76,0x75,0x77}, // floor tile
-            {0xb0,0xb2,0xb1,0xb3}, // block
-            {0xf4,0xf4,0xf4,0xf4}, // water/lava
-            {0x94,0x96,0x95,0x97}, // left statue
-            {0xb4,0xb6,0xb5,0xb7}, // right statue
-            {0x68,0x68,0x68,0x68}, // sand
-            {0x70,0x72,0x71,0x73}, // stairs
-            {0x24,0x24,0x24,0x24}, // black
-            {0xfa,0xfa,0xfa,0xfa}, // bricks
-            {0x6f,0x6f,0x6f,0x6f}  // gray stairs
-        };
         public readonly uint[] dungeon_enemy_list = {
             0x55550000, 0xbbccc000, 0x2288aa00, 0x60000000, 0x00000000, 0x00000000, 0xffff0001, 0x00005555, 0x60000000, 0x55555555, 0x70000000, 0x00000000, 0x55550000, 0xbbbbbb00, 0x00000000, 0x55550000,
             0xffff0005, 0xaa228800, 0xbbbbbb00, 0xbbcccaaa, 0xffff0009, 0xaa228800, 0x99999000, 0x60000000, 0xffff0003, 0x00000000, 0x99999000, 0xffff0004, 0x00000000, 0x60000000, 0x55555550, 0x60000000,
@@ -213,21 +151,107 @@ namespace The_Legend_of_Zelda
             0x75555000, 0xaaaaa000, 0x55555555, 0xaaaaaa00, 0xffff0007, 0x88888888, 0xffff0003, 0x55550000, 0x55550000, 0xffff000b, 0x55555555, 0x88888000, 0x2aaabbcc, 0x222bbccc, 0x60000000, 0x55550000,
             0xccccc000, 0x00000000, 0xffff000c, 0x55550000, 0x22aab999, 0xffff0003, 0x00000000, 0x22288555, 0x55550000, 0x00000000, 0x55550000, 0xbbccc222, 0xee000000, 0x55550000, 0x00000000, 0x55550000
         };
+        readonly (byte x, byte y)[] compass_coords =
+        // x,y coordinates within the minimap of the dungeon on where the compass dot should be
+        // where 1unit = 1 blue square over (which is twice the distance horizontally)
+        // (0,0) is the blue square (theoretically) located just under the L of LEVEL, and (x+,y+) is going down right from there
+        {
+            (6, 3),
+            (3, 0),
+            (5, 3),
+            (5, 0),
+            (2, 1),
+            (5, 0),
+            (4, 2),
+            (2, 2),
+            (2, 3)
+        };
+        // for save file flags
+        public readonly byte[] rooms_with_boses = {
+            61, 54, 6, 69, 24, 27, 94, 44, 16, 20, 131, 132, 148, 162, 177, 178, 208, 228, 242, 245, 230, 197, 166, 150, 233, 218, 169, 175, 158, 202
+        };
         public readonly short[] bombable_connections = {
-            3, 5, 18, 45, 49, 50, 51, 58, 61, 65, 78, 110, 137, 142, 150, 152, 167, 174, 217, 219, 256, 257, 
-            265, 279, 283, 286, 291, 293, 299, 304, 314, 318, 323, 331, 332, 339, 343, 346, 349, 350, 355, 359, 
+            3, 5, 18, 45, 49, 50, 51, 58, 61, 65, 78, 110, 137, 142, 150, 152, 167, 174, 217, 219, 256, 257,
+            265, 279, 283, 286, 291, 293, 299, 304, 314, 318, 323, 331, 332, 339, 343, 346, 349, 350, 355, 359,
             360, 369, 375, 381, 406, 410, 418, 420, 428, 441, 442, 443, 449
+        };
+        // for Textures.LoadPPUPage
+        public readonly byte[] rooms_with_palette_3 = {
+            9, 17, 18, 30, 33, 37, 40, 41, 43, 46, 47, 49, 52, 56, 57, 59, 63, 72, 78, 79, 80, 93, 95, 110, 113, 116, 117, 121, 123, 126,
+            132, 137, 144, 150, 157, 171, 172, 177, 182, 187, 188, 193, 195, 200, 202, 210, 214, 215, 216, 219, 222, 223, 225, 229, 237, 241, 245, 246, 247
+        };
+        public readonly byte[] rooms_with_palette_1 = {
+            54, 69, 131
+        };
+        // for MetaTiles
+        public readonly byte[,] dungeon_tileset_indexes = {
+            {0x74,0x76,0x75,0x77}, // floor tile
+            {0xb0,0xb2,0xb1,0xb3}, // block
+            {0xf4,0xf4,0xf4,0xf4}, // water/lava
+            {0x94,0x96,0x95,0x97}, // left statue
+            {0xb4,0xb6,0xb5,0xb7}, // right statue
+            {0x68,0x68,0x68,0x68}, // sand
+            {0x70,0x72,0x71,0x73}, // stairs
+            {0x24,0x24,0x24,0x24}, // black
+            {0xfa,0xfa,0xfa,0xfa}, // bricks
+            {0x6f,0x6f,0x6f,0x6f}  // gray stairs
+        };
+        // doors...
+        public readonly byte[] door_metatiles = {
+            23, 151, 81, 94
+        };
+        public readonly byte[] connection_IDs = {
+#region documentation
+            //  0 - none
+            //  1 - open
+            //  2 - key
+            //  3 - bombable
+            //  4 - blocked: needs push down/right
+            //  5 - blocked: needs screen clear up/left
+            //  6 - blocked: needs screen clear down/right
+            //  7 - blocked: needs screen clear up & down
+            //  8 - blocked: needs screen clear left & right
+            //  9 - blocked: needs push up/left
+            //  a - blocked: permanent up/left
+            //  b - blocked: permanent down/right
+            //  c - blocked: needs triforce
+            //  d - walk-through wall
+            //  e - walk-through wall up/left
+            //  f - walk-through wall down/right
+            //
+            //  IF ROOM NEEDS CLEAR, BLOCK DOORS THAT
+            //  LEAD TO PUSH ROOMS AS CLEAR DOORS
+            //  order = bottom, right for that room
+#endregion
+            0x00, 0x23, 0x53, 0x60, 0x60, 0x06, 0x60, 0x00, 0x62, 0x31, 0x10, 0x60, 0x00, 0x02, 0x20, 0x00,
+            0x75, 0x21, 0x01, 0x00, 0x20, 0x10, 0x73, 0x10, 0x53, 0x33, 0x09, 0x00, 0x60, 0x30, 0x03, 0x00,
+            0x43, 0x60, 0x05, 0x40, 0x61, 0x00, 0x21, 0x30, 0x21, 0x20, 0x02, 0x20, 0x62, 0x01, 0x02, 0x10,
+            0x50, 0x05, 0x00, 0x20, 0x00, 0x60, 0x11, 0x30, 0x12, 0x05, 0x00, 0x10, 0x00, 0x25, 0x00, 0x10,
+            0x60, 0x11, 0x12, 0x12, 0x13, 0x70, 0x51, 0x30, 0x10, 0x04, 0x21, 0x32, 0x31, 0x00, 0x21, 0x10,
+            0x10, 0x52, 0x01, 0x13, 0x08, 0x00, 0x12, 0x30, 0x01, 0x10, 0x05, 0x11, 0x00, 0xB8, 0x61, 0x00,
+            0x10, 0x00, 0x20, 0x10, 0x06, 0x11, 0x12, 0x00, 0x00, 0x12, 0x00, 0x20, 0x03, 0x03, 0x12, 0x30,
+            0x02, 0x11, 0x00, 0x01, 0x10, 0x11, 0x00, 0x00, 0x01, 0x10, 0x01, 0x11, 0x00, 0x00, 0x11, 0x00,
+            0x33, 0x78, 0x00, 0x20, 0x63, 0x00, 0x70, 0x00, 0x00, 0xA2, 0x60, 0x03, 0x00, 0x03, 0x20, 0x30,
+            0x52, 0x03, 0x03, 0x02, 0x00, 0x13, 0x25, 0x00, 0x30, 0x50, 0x22, 0x20, 0x12, 0x31, 0x10, 0x30,
+            0x20, 0x03, 0x05, 0x00, 0x60, 0x03, 0x30, 0x00, 0x00, 0xA3, 0x02, 0x23, 0x10, 0x32, 0x23, 0x30,
+            0x05, 0x63, 0x00, 0x13, 0x30, 0x60, 0x28, 0x00, 0x23, 0xA0, 0xC0, 0x03, 0x00, 0x00, 0x03, 0x10,
+            0x20, 0x10, 0x00, 0x08, 0x00, 0x12, 0x60, 0x00, 0x20, 0xA0, 0x60, 0x30, 0x11, 0x31, 0x10, 0x10,
+            0x11, 0x35, 0x30, 0x60, 0x01, 0x06, 0x32, 0x00, 0x08, 0x10, 0x00, 0x20, 0x13, 0x33, 0x60, 0x00,
+            0x13, 0x11, 0x11, 0x01, 0x01, 0x00, 0x10, 0x00, 0x00, 0x11, 0x02, 0x20, 0x01, 0x06, 0x10, 0x00,
+            0x00, 0x11, 0x00, 0x00, 0x06, 0x01, 0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x10, 0x00
         };
         public readonly short[] key_door_connections = {
             2, 17, 27, 28, 34, 40, 76, 80, 82, 85, 86, 89, 93, 102, 113, 122, 133, 135, 148, 151, 163, 173, 205,
-            211, 214, 221, 225, 262, 275, 284, 289, 295, 300, 308, 309, 310, 313, 320, 341, 342, 347, 348, 368, 
+            211, 214, 221, 225, 262, 275, 284, 289, 295, 300, 308, 309, 310, 313, 320, 341, 342, 347, 348, 368,
             384, 395, 400, 429, 438, 469, 470, 503
         };
 
-        public bool[] door_statuses = new bool[NUMBER_OF_DOORS];
-
         public void Init(byte dungeon)
         {
+            ReadOnlySpan<byte> starting_screens = new byte[]{
+                123, 117, 116, 121, 126, 113, 241, 246, 254
+            };
+
             Link.knockback_timer = 0;
             Link.iframes_timer = 0;
             Link.facing_direction = Direction.UP;
@@ -237,6 +261,10 @@ namespace The_Legend_of_Zelda
             Menu.InitHUD();
             // set number in hud "LEVEL-X"
             Textures.ppu[0x48] = (byte)(dungeon + 1);
+            // THE COMPASS DOT DOES NOT SHOW UP UNLESS IT'S MODIFIED AFTER CONSTRUCTION???? WHY
+            compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
+            compass_dot.x = 10 + compass_coords[dungeon].x * 8;
+            compass_dot.y = 24 + compass_coords[dungeon].y * 4;
 
             current_dungeon = dungeon;
             current_screen = starting_screens[current_dungeon];
@@ -338,7 +366,7 @@ namespace The_Legend_of_Zelda
             Palettes.LoadPaletteGroup(PaletteID.SP_3, chosen_palette);
 
             // dungeons 2, 3, 5 and 9 have red water (lava)
-            if ((current_dungeon + 1) is 2 or 3 or 5 or 9)
+            if (current_dungeon + 1 is 2 or 3 or 5 or 9)
                 Palettes.LoadPalette(PaletteID.BG_3, 1, Color._16_RED_ORANGE);
             else
                 Palettes.LoadPalette(PaletteID.BG_3, 1, Color._12_SMEI_DARK_BLUE);
@@ -362,9 +390,10 @@ namespace The_Legend_of_Zelda
             if (room_list[current_screen] == 1 && scroll_direction == Direction.DOWN)
             {
                 Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
-                Program.gamemode = Program.Gamemode.OVERWORLD;
+                gamemode = Gamemode.OVERWORLD;
                 Link.Show(false);
                 Link.SetPos(-16, -16);
+                sprites.Remove(compass_dot);
                 OC.Init();
                 OC.black_square_stairs_return_flag = true;
                 OC.current_screen = OC.return_screen;
@@ -438,7 +467,7 @@ namespace The_Legend_of_Zelda
 
         public bool GetRoomDarkness(byte room)
         {
-            int value = dark_rooms[room >> 4] & (1 << (15 - (room % 16)));
+            int value = dark_rooms[room >> 4] & 1 << 15 - room % 16;
             return value > 0;
         }
 
@@ -461,9 +490,9 @@ namespace The_Legend_of_Zelda
                         //new Aquamentus();
                         break;
                     case Bosses.DODONGO_TRIPLE:
-                        //new Dodongo();
-                        //new Dodongo();
-                        //new Dodongo();
+                    //new Dodongo();
+                    //new Dodongo();
+                    //new Dodongo();
                     case Bosses.DODONGO:
                         //new Dodongo();
                         break;
@@ -508,7 +537,7 @@ namespace The_Legend_of_Zelda
             uint enemy_selector = 0xF0000000;
             for (int i = 0; i < 8; i++)
             {
-                uint enemy_id = (enemies & enemy_selector) >> ((7 - i) * 4);
+                uint enemy_id = (enemies & enemy_selector) >> (7 - i) * 4;
                 if (enemy_id < 8)
                 {
                     switch ((DungeonEnemies)enemy_id)
@@ -599,7 +628,7 @@ namespace The_Legend_of_Zelda
                 if (is_dark && !GetRoomDarkness(current_screen))
                 {
                     dark_room_animation_timer = -22;
-                    is_dark = false;                   
+                    is_dark = false;
                 }
                 Link.can_move = false;
                 UnloadSpritesRoomTransition();
@@ -629,7 +658,7 @@ namespace The_Legend_of_Zelda
             else
                 x_add = 1;
 
-            if (Program.gTimer % 2 == 0)
+            if (gTimer % 2 == 0)
             {
                 x_add *= 2;
                 y_add *= 2;
@@ -791,7 +820,7 @@ namespace The_Legend_of_Zelda
                 {
                     continue;
                 }
-                
+
                 if (door_types[i] is DoorType.BOMBABLE or DoorType.WALK_THROUGH)
                 {
                     //meta_tiles[door_metatiles[i]].special = true;

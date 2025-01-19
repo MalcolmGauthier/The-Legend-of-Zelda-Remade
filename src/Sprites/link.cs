@@ -1,10 +1,12 @@
-﻿using static The_Legend_of_Zelda.Screen;
+﻿using static The_Legend_of_Zelda.Rendering.Screen;
 using static The_Legend_of_Zelda.Control;
 using static The_Legend_of_Zelda.SaveLoad;
-using static The_Legend_of_Zelda.Program;
+using static The_Legend_of_Zelda.Gameplay.Program;
 using System.Reflection;
+using The_Legend_of_Zelda.Gameplay;
+using The_Legend_of_Zelda.Rendering;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Sprites
 {
     public enum Direction
     {
@@ -13,7 +15,7 @@ namespace The_Legend_of_Zelda
         LEFT,
         RIGHT
     }
-    
+
     public static class Link
     {
         public static int x, y;
@@ -121,16 +123,16 @@ namespace The_Legend_of_Zelda
 
                 BButton();
             }
-            
+
             Animation();
 
             hp = Math.Clamp(hp, 0, nb_of_hearts);
-            
+
             counterpart.x = self.x + 8;
             counterpart.y = self.y;
             x = self.x;
             y = self.y;
-            
+
             // debug section
             //hp = 3f;
             blue_candle = true;
@@ -139,7 +141,9 @@ namespace The_Legend_of_Zelda
             // c# doesn't have c++'s friend keyword, so fuck you c#, et reflection and die :)
             // (this is only used for testing ofc)
             FieldInfo? lol = typeof(SaveLoad).GetField("map_flags", BindingFlags.NonPublic | BindingFlags.Static);
-            lol?.SetValue(null, new ushort[]{ 0xffff, 0, 0});
+            lol?.SetValue(null, new ushort[] { 0xffff, 0, 0 });
+            lol = typeof(SaveLoad).GetField("compass_flags", BindingFlags.NonPublic | BindingFlags.Static);
+            lol?.SetValue(null, new ushort[] { 0xffff, 0, 0 });
             bomb_count = 8;
             ladder = true;
             raft = true;
@@ -392,7 +396,7 @@ namespace The_Legend_of_Zelda
                     break;
 
                 case SpriteID.RECORDER:
-                    if (!Program.mute_sound && self.shown)
+                    if (!mute_sound && self.shown)
                     {
                         Sound.PlaySFX(Sound.SoundEffects.RECORDER);
                         can_move = false;
@@ -413,7 +417,7 @@ namespace The_Legend_of_Zelda
                     }
                     else
                     {
-                        if (!Menu.tornado_out && Program.gamemode == Program.Gamemode.OVERWORLD &&
+                        if (!Menu.tornado_out && gamemode == Gamemode.OVERWORLD &&
                             OC.current_screen != 128 && Menu.GetTriforcePieceCount() != 0)
                         {
                             new TornadoSprite(0, y);
@@ -555,12 +559,12 @@ namespace The_Legend_of_Zelda
             if (stair_speed)
             {
                 change = 1;
-                if ((Program.gTimer % 4) == 0)
+                if (gTimer % 4 == 0)
                     change = 0;
             }
             else
             {
-                change = (Program.gTimer % 2) + 1;
+                change = gTimer % 2 + 1;
             }
 
             if (!is_positive)
@@ -616,7 +620,7 @@ namespace The_Legend_of_Zelda
 
             if (hp < nb_of_hearts)
             {
-                if (Program.gTimer % 22 == 0)
+                if (gTimer % 22 == 0)
                     hp += 0.5f;
 
                 Sound.PlaySFX(Sound.SoundEffects.HEART, true);
@@ -669,7 +673,7 @@ namespace The_Legend_of_Zelda
 
         static void Animation()
         {
-            if (Program.gamemode == Program.Gamemode.DEATH && DeathCode.death_timer > 120)
+            if (gamemode == Gamemode.DEATH && DeathCode.death_timer > 120)
                 return;
 
             switch (current_action)
@@ -785,7 +789,7 @@ namespace The_Legend_of_Zelda
                     goto item_anim;
                 case Action.ITEM_HELD_UP:
                     counterpart.tile_index = 0x78;
-                    item_anim:
+                item_anim:
                     self.tile_index = 0x78;
                     self.xflip = false;
                     counterpart.xflip = true;
@@ -895,7 +899,7 @@ namespace The_Legend_of_Zelda
                         else
                             counterpart.tile_index = 0x2;
                     }
-                    else if(animation_timer == 12 + longer_attack_anim / 6)
+                    else if (animation_timer == 12 + longer_attack_anim / 6)
                     {
                         current_action = Action.WALKING_RIGHT;
                         if (!wand_out && !sword_out)
@@ -961,8 +965,8 @@ namespace The_Legend_of_Zelda
 
             // link always spawns lined up on the metatile grid when warping. being off the grid means he moved after a warp.
             // this is useful because you can't enter a warp until you've moved after a warp transition
-            if (!has_moved_after_warp_flag && 
-                ((x % 16) != 0 || (y % 16) != 0))
+            if (!has_moved_after_warp_flag &&
+                (x % 16 != 0 || y % 16 != 0))
             {
                 has_moved_after_warp_flag = true;
             }
@@ -985,14 +989,14 @@ namespace The_Legend_of_Zelda
         // checks if the tile at position Link.x + x_add, Link.y + y_add is solid. returns true if collision found
         static bool CheckCollision(int x_add, int y_add) // create duplicate for dungeon
         {
-            int metatile_index = ((self.y + y_add) & (~0xF)) + ((self.x + x_add) / 16) - 64;
+            int metatile_index = (self.y + y_add & ~0xF) + (self.x + x_add) / 16 - 64;
 
             if (metatile_index < 0 || metatile_index > meta_tiles.Length)
             {
                 return false;
             }
 
-            if (Program.gamemode == Program.Gamemode.OVERWORLD)
+            if (gamemode == Gamemode.OVERWORLD)
             {
                 // 2 exceptions to collision logic.
 
@@ -1024,7 +1028,7 @@ namespace The_Legend_of_Zelda
                     case 0x19:
                         if (meta_tiles[metatile_index].special)
                         {
-                            if (facing_direction is (Direction.UP or Direction.DOWN) &&
+                            if (facing_direction is Direction.UP or Direction.DOWN &&
                                 self.x % 16 == 0)
                             {
                                 new MovingTileSprite(MovingTileSprite.MovingTile.TOMBSTONE, metatile_index);
@@ -1056,8 +1060,8 @@ namespace The_Legend_of_Zelda
                         return true;
 
                     case 0x25:
-                        int mtl_x2 = (metatile_index % 16) * 16;
-                        int mtl_y2 = (metatile_index / 16) * 16 + 64;
+                        int mtl_x2 = metatile_index % 16 * 16;
+                        int mtl_y2 = metatile_index / 16 * 16 + 64;
 
                         foreach (Sprite spr in sprites)
                         {
@@ -1072,28 +1076,28 @@ namespace The_Legend_of_Zelda
                         return true;
 
                     case 0x04: // BL
-                        return ((self.x + x_add & 15) < 8 || (self.y + y_add & 15) > 8);
+                        return (self.x + x_add & 15) < 8 || (self.y + y_add & 15) > 8;
                     case 0x05: // BR
-                        return ((self.x + x_add & 15) > 8 || (self.y + y_add & 15) > 8);
+                        return (self.x + x_add & 15) > 8 || (self.y + y_add & 15) > 8;
                     case 0x06: // TL
-                        return ((self.x + x_add & 15) < 8 || (self.y + y_add & 15) < 8);
+                        return (self.x + x_add & 15) < 8 || (self.y + y_add & 15) < 8;
                     case 0x07: // TR
-                        return ((self.x + x_add & 15) > 8 || (self.y + y_add & 15) < 8);
+                        return (self.x + x_add & 15) > 8 || (self.y + y_add & 15) < 8;
 
                     case 0x03:
-                        if ((self.x % 16) == 0 && (self.y % 16) == 0 && has_moved_after_warp_flag)
+                        if (self.x % 16 == 0 && self.y % 16 == 0 && has_moved_after_warp_flag)
                             OC.black_square_stairs_flag = true;
-                        return ((self.y + y_add & 15) < 8);
+                        return (self.y + y_add & 15) < 8;
 
                     case 0x18:
-                        if ((self.x % 16) == 0 && (self.y % 16) == 0)
+                        if (self.x % 16 == 0 && self.y % 16 == 0)
                         {
                             OC.stair_warp_flag = true;
                         }
-                        return ((self.y + y_add & 15) < 8);
+                        return (self.y + y_add & 15) < 8;
 
                     case 0x15:
-                        if (((self.x + 1) % 16) < 3 && ((self.y + 1) % 16) < 3)
+                        if ((self.x + 1) % 16 < 3 && (self.y + 1) % 16 < 3)
                         {
                             int mt_i = GetTileIndexAtLocation(x + 8, y + 8);
                             //TODO: ??
@@ -1112,7 +1116,7 @@ namespace The_Legend_of_Zelda
                         // TODO: why check for which screen??
                         if (raft && (OC.current_screen == 63 || OC.current_screen == 85))
                         {
-                            if (((self.x + 1) % 16) < 3 && ((self.y + 1) % 16) < 3)
+                            if ((self.x + 1) % 16 < 3 && (self.y + 1) % 16 < 3)
                             {
                                 if (self.y < 80)
                                     facing_direction = Direction.DOWN;
@@ -1130,17 +1134,17 @@ namespace The_Legend_of_Zelda
 
                     // special tiles that ladder turns water into (half block)
                     case 0x2e: // U
-                        return (((self.y + y_add) % 16) < 8);
+                        return (self.y + y_add) % 16 < 8;
                     case 0x2f: // D
-                        return (((self.y + y_add) % 16) > 8);
+                        return (self.y + y_add) % 16 > 8;
                     case 0x30: // L
-                        return (((self.x + x_add) % 16) < 8);
+                        return (self.x + x_add) % 16 < 8;
                     case 0x31: // R
-                        return (((self.x + x_add) % 16) > 8);
+                        return (self.x + x_add) % 16 > 8;
                     case 0x32: // TL
-                        return (((self.x + x_add) % 16) < 8 || ((self.y + y_add) % 16) < 8);
+                        return (self.x + x_add) % 16 < 8 || (self.y + y_add) % 16 < 8;
                     case 0x33: // TR
-                        return (((self.x + x_add) % 16) > 8 || ((self.y + y_add) % 16) < 8);
+                        return (self.x + x_add) % 16 > 8 || (self.y + y_add) % 16 < 8;
                     case 0x34: // none
                         return false;
 
@@ -1171,7 +1175,7 @@ namespace The_Legend_of_Zelda
                         return false;
                 }
             }
-            else if (Program.gamemode == Program.Gamemode.DUNGEON)
+            else if (gamemode == Gamemode.DUNGEON)
             {
                 switch (meta_tiles[metatile_index].tile_index)
                 {
@@ -1196,11 +1200,11 @@ namespace The_Legend_of_Zelda
                         return false;
 
                     case 10: // top of dungeon room
-                        return ((self.y + y_add & 15) < 8 && self.x != 120);
+                        return (self.y + y_add & 15) < 8 && self.x != 120;
                     case 11: // left of up/down doors
-                        return ((self.x + x_add & 15) < 8);
+                        return (self.x + x_add & 15) < 8;
                     case 12: // right of up/down doors
-                        return ((self.x + x_add & 15) > 8);
+                        return (self.x + x_add & 15) > 8;
 
                     case 13: // walk-through tile
                         // TODO: 8 frame timer before animation
@@ -1209,17 +1213,17 @@ namespace The_Legend_of_Zelda
                     // LADDER SHENANIGANS
                     // special tiles that ladder turns water into (half block)
                     case 0x2e: // U
-                        return (((self.y + y_add) % 16) < 8);
+                        return (self.y + y_add) % 16 < 8;
                     case 0x2f: // D
-                        return (((self.y + y_add) % 16) > 8);
+                        return (self.y + y_add) % 16 > 8;
                     case 0x30: // L
-                        return (((self.x + x_add) % 16) < 8);
+                        return (self.x + x_add) % 16 < 8;
                     case 0x31: // R
-                        return (((self.x + x_add) % 16) > 8);
+                        return (self.x + x_add) % 16 > 8;
                     case 0x32: // TL
-                        return (((self.x + x_add) % 16) < 8 || ((self.y + y_add) % 16) < 8);
+                        return (self.x + x_add) % 16 < 8 || (self.y + y_add) % 16 < 8;
                     case 0x33: // TR
-                        return (((self.x + x_add) % 16) > 8 || ((self.y + y_add) % 16) < 8);
+                        return (self.x + x_add) % 16 > 8 || (self.y + y_add) % 16 < 8;
                     case 0x34: // none
                         return false;
                 }
@@ -1292,8 +1296,8 @@ namespace The_Legend_of_Zelda
             iframes_timer = 48;
 
             // if aligned on grid
-            if (((int)knockback_direction < 2 && x % 8 == 0) ||
-                ((int)knockback_direction >= 2 && y % 8 == 0))
+            if ((int)knockback_direction < 2 && x % 8 == 0 ||
+                (int)knockback_direction >= 2 && y % 8 == 0)
             {
                 knockback_timer = 8;
             }
@@ -1315,8 +1319,8 @@ namespace The_Legend_of_Zelda
             sprites.Remove(sword_1);
             sprites.Remove(sword_2);
             DeathCode.death_timer = 0;
-            DeathCode.died_in_dungeon = (Program.gamemode == Program.Gamemode.DUNGEON);
-            Program.gamemode = Program.Gamemode.DEATH;
+            DeathCode.died_in_dungeon = gamemode == Gamemode.DUNGEON;
+            gamemode = Gamemode.DEATH;
         }
 
         // checks to se eif link should flash, does it if so
@@ -1329,7 +1333,7 @@ namespace The_Legend_of_Zelda
             if (iframes_timer == 1)
                 new_palette = 4;
             else
-                new_palette = (byte)((Program.gTimer / 2) % 4 + 4);
+                new_palette = (byte)(gTimer / 2 % 4 + 4);
 
             self.palette_index = new_palette;
             counterpart.palette_index = new_palette;

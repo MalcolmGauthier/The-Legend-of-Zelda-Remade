@@ -1,6 +1,8 @@
-﻿using static The_Legend_of_Zelda.Program;
+﻿using The_Legend_of_Zelda.Gameplay;
+using The_Legend_of_Zelda.Rendering;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Sprites
 {
     public enum EightDirection
     {
@@ -14,7 +16,7 @@ namespace The_Legend_of_Zelda
         DOWNRIGHT
     }
 
-    internal abstract class FairySprite : FlickeringSprite
+    public abstract class FairySprite : FlickeringSprite
     {
         public FairySprite(int x, int y) : base(0x50, 6, x, y, 4, 0x52)
         {
@@ -23,7 +25,7 @@ namespace The_Legend_of_Zelda
         }
     }
 
-    internal abstract class ProjectileSprite : Sprite
+    public abstract class ProjectileSprite : Sprite
     {
         public bool is_from_link;
         public bool hit_target = false;
@@ -104,9 +106,9 @@ namespace The_Legend_of_Zelda
                     Enemy enemy = (Enemy)Screen.sprites[i];
 
                     // if no collision or enemy is invincible, continue
-                    if (!(x < enemy.x + 16 && 
-                        x + width > enemy.x && 
-                        y < enemy.y + 16 && 
+                    if (!(x < enemy.x + 16 &&
+                        x + width > enemy.x &&
+                        y < enemy.y + 16 &&
                         y + 16 > enemy.y &&
                         !enemy.invincible))
                     {
@@ -136,9 +138,9 @@ namespace The_Legend_of_Zelda
             }
 
             // return if not colliding
-            if (!(x < Link.x + 16 && 
-                x + width > Link.x && 
-                y < Link.y + 16 && 
+            if (!(x < Link.x + 16 &&
+                x + width > Link.x &&
+                y < Link.y + 16 &&
                 y + 16 > Link.y))
             {
                 return;
@@ -149,7 +151,7 @@ namespace The_Legend_of_Zelda
             {
                 // small rocks and arrows can be reflected by any shield, swords and beams need the magic shield
                 if (this is RockProjectileSprite || this is ArrowSprite ||
-                    ((this is SwordProjectileSprite || this is MagicBeamSprite) && SaveLoad.magical_shield))
+                    (this is SwordProjectileSprite || this is MagicBeamSprite) && SaveLoad.magical_shield)
                 {
                     bonk = true;
                 }
@@ -201,7 +203,7 @@ namespace The_Legend_of_Zelda
         }
     }
 
-    internal abstract class ItemDropSprite : Sprite
+    public abstract class ItemDropSprite : Sprite
     {
         public bool collected = false;
         public int local_timer = 0;
@@ -232,9 +234,9 @@ namespace The_Legend_of_Zelda
 
         public bool CollidingWithLink()
         {
-            return x < Link.x + 16 && 
-                x + (dbl_wide ? 16 : 8) > Link.x && 
-                y < Link.y + 16 && 
+            return x < Link.x + 16 &&
+                x + (dbl_wide ? 16 : 8) > Link.x &&
+                y < Link.y + 16 &&
                 y + 16 > Link.y;
         }
 
@@ -266,7 +268,7 @@ namespace The_Legend_of_Zelda
 
         public override void ItemSpecificActions()
         {
-            if (Program.gTimer % 8 == 0)
+            if (gTimer % 8 == 0)
             {
                 if (palette_index == 5)
                     palette_index = 6;
@@ -305,7 +307,7 @@ namespace The_Legend_of_Zelda
                 Screen.sprites.Remove(this);
             }
 
-            if (Program.gTimer % 8 == 0 && !five_rupies)
+            if (gTimer % 8 == 0 && !five_rupies)
             {
                 if (palette_index == 5)
                     palette_index = 6;
@@ -349,8 +351,8 @@ namespace The_Legend_of_Zelda
         {
             if (flying_timer == 1)
             {
-                direction = (EightDirection)Program.RNG.Next(8);
-                when_to_stop = Program.RNG.Next(40, 90);
+                direction = (EightDirection)RNG.Next(8);
+                when_to_stop = RNG.Next(40, 90);
             }
 
             if (flying_timer > when_to_stop)
@@ -464,7 +466,7 @@ namespace The_Legend_of_Zelda
 
             if (!(CheckIfEdgeHit() || explosion_flag))
             {
-                new_plt_index = (byte)((Program.gTimer % 4) + 4);
+                new_plt_index = (byte)(gTimer % 4 + 4);
                 palette_index = new_plt_index;
                 counterpart.palette_index = new_plt_index;
                 Move();
@@ -507,7 +509,7 @@ namespace The_Legend_of_Zelda
                 return;
             }
 
-            new_plt_index = (byte)((Program.gTimer % 4) + 4);
+            new_plt_index = (byte)(gTimer % 4 + 4);
             for (int i = 0; i < explosion_effects.Length; i++)
             {
                 explosion_effects[i].palette_index = new_plt_index;
@@ -553,7 +555,7 @@ namespace The_Legend_of_Zelda
             for (int i = 0; i < smoke.Length; i++)
             {
                 smoke[i] = new StaticSprite(0x70, 5, x, y);
-                smoke[i].xflip = (i % 2) == 1;
+                smoke[i].xflip = i % 2 == 1;
                 smoke[i].x = x + smoke_init_pos[i, 0];
                 smoke[i].y = y + smoke_init_pos[i, 1];
                 smoke[i].unload_during_transition = true;
@@ -617,12 +619,12 @@ namespace The_Legend_of_Zelda
             {
                 for (int j = -16; j < 17; j += 16)
                 {
-                    metatile_index = ((y + i) & (~0xF)) + ((x + j) >> 4) - 64;
+                    metatile_index = (y + i & ~0xF) + (x + j >> 4) - 64;
 
                     if (metatile_index < 0 || metatile_index > Screen.meta_tiles.Length)
                         continue;
 
-                    if (Program.gamemode == Program.Gamemode.OVERWORLD)
+                    if (gamemode == Gamemode.OVERWORLD)
                     {
                         if (!Screen.meta_tiles[metatile_index].special)
                             continue;
@@ -654,8 +656,8 @@ namespace The_Legend_of_Zelda
             this.x = x;
             this.y = y;
             this.direction = direction;
-            this.tile_index = 0x5c;
-            this.palette_index = 6;
+            tile_index = 0x5c;
+            palette_index = 6;
             counterpart.tile_index = 0x5e;
             counterpart.palette_index = 6;
             counterpart.x = x + 8;
@@ -708,7 +710,7 @@ namespace The_Legend_of_Zelda
             {
                 for (int j = -8; j < 9; j += 8)
                 {
-                    metatile_index = ((y + i) & 0xFFF0) + ((x + j) >> 4) - 64;
+                    metatile_index = (y + i & 0xFFF0) + (x + j >> 4) - 64;
 
                     if (metatile_index < 0 || metatile_index > Screen.meta_tiles.Length)
                         continue;
@@ -804,10 +806,10 @@ namespace The_Legend_of_Zelda
                 return;
             }
 
-            byte distance = (byte)((Program.gTimer % 2) + 2);
+            byte distance = (byte)(gTimer % 2 + 2);
             Move(distance);
 
-            byte new_plt_index = (byte)((Program.gTimer % 4) + 4);
+            byte new_plt_index = (byte)(gTimer % 4 + 4);
             palette_index = new_plt_index;
             counterpart.palette_index = new_plt_index;
         }
@@ -849,7 +851,7 @@ namespace The_Legend_of_Zelda
             x += 2;
             counterpart.x += 2;
 
-            byte new_plt_index = (byte)((Program.gTimer % 4) + 4);
+            byte new_plt_index = (byte)(gTimer % 4 + 4);
             palette_index = new_plt_index;
             counterpart.palette_index = new_plt_index;
             byte swap = tile_index;
@@ -957,7 +959,7 @@ namespace The_Legend_of_Zelda
         {
             if (!(tile_index == 0x3c && !returning))
             {
-                switch ((local_timer % 16) >> 1)
+                switch (local_timer % 16 >> 1)
                 {
                     case 0:
                         tile_index = 0x36;
@@ -1004,8 +1006,8 @@ namespace The_Legend_of_Zelda
             if (returning)
             {
                 // https://www.desmos.com/calculator/esasntj0cm
-                x_dist_from_link = (x + 4) - (Link.x + 8);
-                y_dist_from_link = (y + 8) - (Link.y + 8);
+                x_dist_from_link = x + 4 - (Link.x + 8);
+                y_dist_from_link = y + 8 - (Link.y + 8);
                 float angle = MathF.Atan(x_dist_from_link / (y_dist_from_link + 0.01f)); // +0.01f auto converts y_dist_from_link to float AND prevents div by 0 error
                 float x_dist_to_move = MathF.Sin(angle) * speed;
                 float y_dist_to_move = MathF.Cos(angle) * speed;
@@ -1045,18 +1047,18 @@ namespace The_Legend_of_Zelda
 
             if (m_direction is not (EightDirection.UP or EightDirection.DOWN))
             {
-                if (m_direction is (EightDirection.UP or EightDirection.LEFT or EightDirection.UPLEFT or EightDirection.DOWNLEFT))
+                if (m_direction is EightDirection.UP or EightDirection.LEFT or EightDirection.UPLEFT or EightDirection.DOWNLEFT)
                     x -= speed;
                 else
                     x += speed;
             }
             if (m_direction is not (EightDirection.LEFT or EightDirection.RIGHT))
             {
-                if (m_direction is (EightDirection.UP or EightDirection.DOWN))
+                if (m_direction is EightDirection.UP or EightDirection.DOWN)
                 {
                     y += m_direction == EightDirection.UP ? -speed : speed;
                 }
-                else if (m_direction is (EightDirection.DOWNLEFT or EightDirection.DOWNRIGHT))
+                else if (m_direction is EightDirection.DOWNLEFT or EightDirection.DOWNRIGHT)
                 {
                     y += speed;
                 }
@@ -1207,7 +1209,7 @@ namespace The_Legend_of_Zelda
 
         public LadderSprite(int metatile_index) : base(0x76, 4)
         {
-            x = (metatile_index % 16) * 16;
+            x = metatile_index % 16 * 16;
             y = (metatile_index >> 4) * 16 + 64;
             tile_being_used = metatile_index;
 
@@ -1326,7 +1328,7 @@ namespace The_Legend_of_Zelda
 
         bool IsTileWater(int index)
         {
-            if (Program.gamemode == Program.Gamemode.OVERWORLD)
+            if (gamemode == Gamemode.OVERWORLD)
             {
                 if (index >= 0xa && index <= 0x12)
                     return true;
@@ -1403,8 +1405,8 @@ namespace The_Legend_of_Zelda
 
             // if animation_timer == 16
             // copied from boomerang code
-            int x_dist_from_link = (x + 4) - (Link.x + 8);
-            int y_dist_from_link = (y + 8) - (Link.y + 8);
+            int x_dist_from_link = x + 4 - (Link.x + 8);
+            int y_dist_from_link = y + 8 - (Link.y + 8);
 
             float angle = MathF.Atan(x_dist_from_link / (y_dist_from_link + 0.01f)); // +0.01f auto converts y_dist_from_link to float AND prevents div by 0 error
 

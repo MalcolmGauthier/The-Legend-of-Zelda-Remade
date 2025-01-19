@@ -1,14 +1,16 @@
-﻿using static The_Legend_of_Zelda.Screen;
+﻿using static The_Legend_of_Zelda.Rendering.Screen;
 using static The_Legend_of_Zelda.SaveLoad;
-using static The_Legend_of_Zelda.Program;
+using static The_Legend_of_Zelda.Gameplay.Program;
+using The_Legend_of_Zelda.Sprites;
+using The_Legend_of_Zelda.Rendering;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Gameplay
 {
     internal static class Menu
     {
         public static bool can_open_menu = false;
         public static bool menu_open = false;
-        public static bool boomerang_out = false, arrow_out = false, bait_out = false, magic_wave_out = false, 
+        public static bool boomerang_out = false, arrow_out = false, bait_out = false, magic_wave_out = false,
             tornado_out = false, bomb_out = false, sword_proj_out = false;
         public static bool blue_candle_limit_reached = false;
         public static bool draw_hud_objects = false;
@@ -196,25 +198,25 @@ namespace The_Legend_of_Zelda
             }
 
             map_dot.shown = true;
-            if (Program.gamemode == Program.Gamemode.OVERWORLD)
+            if (gamemode == Gamemode.OVERWORLD)
             {
                 if (OC.current_screen != 128)
                 {
-                    map_dot.x = 17 + ((OC.current_screen % 16) * 4);
-                    map_dot.y = 24 + ((OC.current_screen / 16) * 4);
+                    map_dot.x = 17 + OC.current_screen % 16 * 4;
+                    map_dot.y = 24 + OC.current_screen / 16 * 4;
                 }
             }
             else
             {
                 if (DC.room_list[DC.current_screen] is not (0x2a or 0x2b))
                 {
-                    map_dot.x = 10 + ((DC.current_screen % 16) * 8) + map_offsets[DC.current_dungeon * 2] * 8;
-                    map_dot.y = 24 + ((DC.current_screen / 16) * 4) + map_offsets[DC.current_dungeon * 2 + 1] * 4;
+                    map_dot.x = 10 + DC.current_screen % 16 * 8 + map_offsets[DC.current_dungeon * 2] * 8;
+                    map_dot.y = 24 + DC.current_screen / 16 * 4 + map_offsets[DC.current_dungeon * 2 + 1] * 4;
                 }
             }
 
-            skip_showing_items:
-            if (rupie_count_display != rupy_count && (Program.gTimer & 1) == 0)
+        skip_showing_items:
+            if (rupie_count_display != rupy_count && (gTimer & 1) == 0)
             {
                 if (rupie_count_display > rupy_count)
                 {
@@ -276,7 +278,7 @@ namespace The_Legend_of_Zelda
             if (bombs >= 10)
             {
                 // supports number over 19 even tho highest bomb count possible is 16
-                Textures.ppu[0xcd] = (byte)((bombs / 10) % 10);
+                Textures.ppu[0xcd] = (byte)(bombs / 10 % 10);
                 Textures.ppu[0xce] = (byte)(bombs % 10);
             }
             else
@@ -288,11 +290,11 @@ namespace The_Legend_of_Zelda
             for (int i = 0; i < nb_of_hearts; i++)
             {
                 if (Link.hp >= i + 1)
-                    Textures.ppu[0xd6 + i + ((i >> 3) * -40)] = 0xf2;
+                    Textures.ppu[0xd6 + i + (i >> 3) * -40] = 0xf2;
                 else if (Link.hp >= i + 0.5f)
-                    Textures.ppu[0xd6 + i + ((i >> 3) * -40)] = 0x65;
+                    Textures.ppu[0xd6 + i + (i >> 3) * -40] = 0x65;
                 else
-                    Textures.ppu[0xd6 + i + ((i >> 3) * -40)] = 0x66;
+                    Textures.ppu[0xd6 + i + (i >> 3) * -40] = 0x66;
             }
 
             //TODO: this shit
@@ -459,7 +461,7 @@ namespace The_Legend_of_Zelda
                 y_scroll--;
                 hud_B_item.x -= 60;
                 hud_B_item.y += 328;
-                if (Program.gamemode == Program.Gamemode.OVERWORLD)
+                if (gamemode == Gamemode.OVERWORLD)
                     DrawTriforce();
                 else
                     DrawMap();
@@ -492,7 +494,7 @@ namespace The_Legend_of_Zelda
                 menu_open = false;
                 draw_hud_objects = true;
                 menu_animation_timer = 201;
-                Program.can_pause = true;
+                can_pause = true;
             }
 
             if (menu_animation_timer < 58)
@@ -575,10 +577,10 @@ namespace The_Legend_of_Zelda
         // moves the position of the cursor in the menu. this is called whenever the B item changes. even if done outside of full screen menu
         public static void MoveCursor()
         {
-            menu_selection_left.x = 128 + (selected_menu_index % 4) * 24;
-            menu_selection_left.y = 359 + (selected_menu_index / 4) * 16;
-            menu_selection_right.x = 136 + (selected_menu_index % 4) * 24;
-            menu_selection_right.y = 359 + (selected_menu_index / 4) * 16;
+            menu_selection_left.x = 128 + selected_menu_index % 4 * 24;
+            menu_selection_left.y = 359 + selected_menu_index / 4 * 16;
+            menu_selection_right.x = 136 + selected_menu_index % 4 * 24;
+            menu_selection_right.y = 359 + selected_menu_index / 4 * 16;
 
             SpriteID switch_to = menu_item_list[selected_menu_index];
             if (switch_to == SpriteID.POTION && !(blue_potion || red_potion))
@@ -692,7 +694,7 @@ namespace The_Legend_of_Zelda
                 {
                     shift -= MASK_BIT_LEN;
                     Textures.ppu[HUD_MAP_OFFSET + i * Textures.PPU_WIDTH + j] = tile_locations[
-                        (hud_dungeon_maps[DC.current_dungeon, i] & (BIT_MASK << shift)) >> shift
+                        (hud_dungeon_maps[DC.current_dungeon, i] & BIT_MASK << shift) >> shift
                     ];
                 }
             }
@@ -704,7 +706,7 @@ namespace The_Legend_of_Zelda
             int count = 0;
             for (byte i = 0; i < 8; i++)
             {
-                if (SaveLoad.GetTriforceFlag(i))
+                if (GetTriforceFlag(i))
                     count++;
             }
             return count;

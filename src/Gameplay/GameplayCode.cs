@@ -1,4 +1,7 @@
-﻿namespace The_Legend_of_Zelda
+﻿using The_Legend_of_Zelda.Rendering;
+using The_Legend_of_Zelda.Sprites;
+
+namespace The_Legend_of_Zelda.Gameplay
 {
     public abstract class GameplayCode
     {
@@ -53,6 +56,10 @@
                 Sound.PlaySong(bg_music, false);
                 Program.can_pause = true;
                 Link.can_move = true;
+                if (this is DungeonCode dc && SaveLoad.GetCompassFlag(dc.current_dungeon))
+                {
+                    Screen.sprites.Add(dc.compass_dot);
+                }
                 return;
             }
 
@@ -84,7 +91,7 @@
             }
         }
 
-        public bool ScrollingDone() => scroll_animation_timer == SCROLL_ANIMATION_DONE;
+        public bool ScrollingDone() => scroll_animation_timer >= SCROLL_ANIMATION_DONE;
         // if player is on a raft, set on_raft to true to disable checking for held direction
         protected void Scroll(bool on_raft)
         {
@@ -132,7 +139,7 @@
                     return;
                 }
 
-                Textures.PPUDataGroup data_group = (Program.gamemode == Program.Gamemode.OVERWORLD) ? Textures.PPUDataGroup.OVERWORLD : Textures.PPUDataGroup.DUNGEON;
+                Textures.PPUDataGroup data_group = Program.gamemode == Program.Gamemode.OVERWORLD ? Textures.PPUDataGroup.OVERWORLD : Textures.PPUDataGroup.DUNGEON;
 
                 if (scroll_direction == Direction.DOWN)
                 {
@@ -154,21 +161,23 @@
                 Link.can_move = false;
             }
 
-            int FRAMES_BETWEEN_CAMERA_MOVE = (Program.gamemode == Program.Gamemode.OVERWORLD) ? 2 : 4;
-            int VERTICAL_SCROLL_SPEED      = (Program.gamemode == Program.Gamemode.OVERWORLD) ? 7 : 8;
-            int HORIZONTAL_SCROLL_SPEED    = (Program.gamemode == Program.Gamemode.OVERWORLD) ? 4 : 2;
-            int VERTICAL_SCROLL_LENGTH     = (Program.gamemode == Program.Gamemode.OVERWORLD) ? 50 : 87;
-            int HORIZONTAL_SCROLL_LENGTH   = (Program.gamemode == Program.Gamemode.OVERWORLD) ? 64 : 128;
+            int FRAMES_BETWEEN_CAMERA_MOVE = Program.gamemode == Program.Gamemode.OVERWORLD ? 2 : 4;
+            int VERTICAL_SCROLL_SPEED = Program.gamemode == Program.Gamemode.OVERWORLD ? 7 : 8;
+            int HORIZONTAL_SCROLL_SPEED = Program.gamemode == Program.Gamemode.OVERWORLD ? 4 : 2;
+            int VERTICAL_SCROLL_LENGTH = Program.gamemode == Program.Gamemode.OVERWORLD ? 49 : 87;
+            int HORIZONTAL_SCROLL_LENGTH = Program.gamemode == Program.Gamemode.OVERWORLD ? 64 : 128;
 
             if (scroll_direction == Direction.UP || scroll_direction == Direction.DOWN)
             {
-                if ((Program.gTimer % FRAMES_BETWEEN_CAMERA_MOVE) == 0)
+                if (Program.gTimer % FRAMES_BETWEEN_CAMERA_MOVE == 0)
                 {
                     if (scroll_direction == Direction.UP)
                     {
                         Screen.y_scroll -= VERTICAL_SCROLL_SPEED;
                         if (Program.gTimer % 4 == 0)
-                            Link.SetPos(new_y: Link.y - VERTICAL_SCROLL_SPEED - 1);
+                            Link.SetPos(new_y: Link.y - 2);
+                        if (Link.y < 224)
+                            Link.SetPos(new_y: 224);
                     }
                     else
                     {
@@ -224,7 +233,7 @@
         protected abstract bool SpecificScrollCode(bool scroll_finished);
         void EndScroll()
         {
-            bool is_overworld = (Program.gamemode == Program.Gamemode.OVERWORLD);
+            bool is_overworld = Program.gamemode == Program.Gamemode.OVERWORLD;
 
             Link.Show(true);
             Screen.x_scroll = 0;

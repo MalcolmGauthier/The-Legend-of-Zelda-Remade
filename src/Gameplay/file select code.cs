@@ -1,6 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
-using static The_Legend_of_Zelda.Screen;
-namespace The_Legend_of_Zelda
+using The_Legend_of_Zelda.Rendering;
+using The_Legend_of_Zelda.Sprites;
+using static The_Legend_of_Zelda.Rendering.Screen;
+namespace The_Legend_of_Zelda.Gameplay
 {
     internal static class FileSelectCode
     {
@@ -33,7 +35,7 @@ namespace The_Legend_of_Zelda
         static StaticSprite[] quest_2_swords = new StaticSprite[3];
 
         static readonly byte[] selection_heart_positions = new byte[5] { 92, 116, 140, 168, 184 };
-        static readonly byte[] register_name_text = new byte[18] 
+        static readonly byte[] register_name_text = new byte[18]
             { 0x1b, 0xe, 0x10, 0x12, 0x1c, 0x1d, 0xe, 0x1b, 0x24, 0x22, 0x18, 0x1e, 0x1b, 0x24, 0x17, 0xa, 0x18, 0xe }; // "REGISTER YOUR NAME"
         static readonly byte[] register_end_text = new byte[15]
             { 0x1b, 0xe, 0x10, 0x12, 0x1c, 0x1d, 0xe, 0x1b, 0x24, 0x24, 0x24, 0x24, 0xe, 0x17, 0xd }; // "REGISTER    END"
@@ -90,7 +92,7 @@ namespace The_Legend_of_Zelda
                 SpriteID sprite = i % 2 == 0 ? SpriteID.LINK_DOWN_L : SpriteID.LINK_DOWN_R;
                 PaletteID palette = (PaletteID)(i / 2 + 4);
                 int x = i % 2 == 0 ? 48 : 56;
-                int y = (i / 2) * 24 + 88;
+                int y = i / 2 * 24 + 88;
 
                 sprites.Add(link_icons[i] = new StaticSprite(sprite, palette, x, y));
             }
@@ -119,7 +121,7 @@ namespace The_Legend_of_Zelda
             // move link icons
             for (int i = 0; i < link_icons.Length; i++)
             {
-                link_icons[i].x = 80 + ((i % 2) * 8);
+                link_icons[i].x = 80 + i % 2 * 8;
                 link_icons[i].y = 48 + 24 * (i / 2);
             }
 
@@ -257,7 +259,7 @@ namespace The_Legend_of_Zelda
                 Palettes.LoadPalette(PaletteID.SP_3, 1, Color._30_WHITE);
                 for (int i = 0; i < link_icons.Length; i++)
                 {
-                    link_icons[i].x = 80 + ((i % 2) * 8);
+                    link_icons[i].x = 80 + i % 2 * 8;
                     link_icons[i].y = 48 + 24 * (i / 2);
                 }
 
@@ -344,7 +346,7 @@ namespace The_Legend_of_Zelda
         static void RegistrationMode()
         {
             // end registration mode
-            if (Control.IsPressed(Buttons.START) && (selected_option == Selection.REGISTER_OR_END))
+            if (Control.IsPressed(Buttons.START) && selected_option == Selection.REGISTER_OR_END)
             {
                 // for each file that did not exist (and thus had no name) but now DOES have a name, create it
                 for (byte i = 0; i < 3; i++)
@@ -471,7 +473,7 @@ namespace The_Legend_of_Zelda
         {
             for (Selection i = 0; i <= Selection.FILE_3; i++)
             {
-                if ((selected_option == i) && (SaveLoad.save_file_exists[(int)i] == skip_over_existing_files))
+                if (selected_option == i && SaveLoad.save_file_exists[(int)i] == skip_over_existing_files)
                 {
                     selected_option++;
                     continue;
@@ -510,7 +512,7 @@ namespace The_Legend_of_Zelda
         // sets character's background to certain palette. returns character at index, so set palette to invalid value to not change palette.
         static byte SetRegistrationChrBackground(int selected_character, int palette)
         {
-            int index = 0x226 + (selected_character % 11) * 2 + (selected_character / 11 * 0x40);
+            int index = 0x226 + selected_character % 11 * 2 + selected_character / 11 * 0x40;
             if (palette >= 0 && palette <= 7)
                 Textures.ppu_plt[index] = (byte)palette;
             return Textures.ppu[index];

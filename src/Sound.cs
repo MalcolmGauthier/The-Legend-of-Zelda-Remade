@@ -1,9 +1,6 @@
 ﻿using static SDL2.SDL;
 using static SDL2.SDL_mixer;
-using The_Legend_of_Zelda;
-using System.Diagnostics;
-using static The_Legend_of_Zelda.Sound;
-using System.IO;
+using The_Legend_of_Zelda.Gameplay;
 
 namespace The_Legend_of_Zelda
 {
@@ -43,7 +40,7 @@ namespace The_Legend_of_Zelda
         }
 
         public static IntPtr music = IntPtr.Zero;
-        public static IntPtr[] SFX = new IntPtr[4] {IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero};
+        public static IntPtr[] SFX = new IntPtr[4] { IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero };
         static byte[] sfx_order = new byte[4] { 0, 0, 0, 0 };
         static int recorder_sfx_channel = -1;
         public static bool recorder_playing = false;

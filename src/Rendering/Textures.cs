@@ -1,6 +1,6 @@
-﻿using static The_Legend_of_Zelda.Program;
+﻿using static The_Legend_of_Zelda.Gameplay.Program;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Rendering
 {
     public enum Text : byte
     {
@@ -173,10 +173,10 @@ namespace The_Legend_of_Zelda
                 for (int i = 0; i < ppu_plt.Length / 4; i++)
                 {
                     a = reader.ReadByte();
-                    ppu_plt[i * 4    ] = (byte)((a & 0b11000000) >> 6);
+                    ppu_plt[i * 4] = (byte)((a & 0b11000000) >> 6);
                     ppu_plt[i * 4 + 1] = (byte)((a & 0b00110000) >> 4);
                     ppu_plt[i * 4 + 2] = (byte)((a & 0b00001100) >> 2);
-                    ppu_plt[i * 4 + 3] = (byte) (a & 0b00000011);
+                    ppu_plt[i * 4 + 3] = (byte)(a & 0b00000011);
                 }
             }
         }
@@ -191,8 +191,8 @@ namespace The_Legend_of_Zelda
                 for (int j = 0; j < 8; j++)
                 {
                     texture[i * 8 + (7 - j)] = (byte)(
-                        ((chr_bg[real_index +     i] & (1 << j)) >> j) | // gets j-th bit of byte real_index+i
-                        ((chr_bg[real_index + 8 + i] & (1 << j)) >> j) * 2 // gets j-th bit of byte real_index+i+8, and multiplies by 2
+                        (chr_bg[real_index + i] & 1 << j) >> j | // gets j-th bit of byte real_index+i
+                        ((chr_bg[real_index + 8 + i] & 1 << j) >> j) * 2 // gets j-th bit of byte real_index+i+8, and multiplies by 2
                     ); // stores resulting byte in texture, top to bottom, right to left
                 }
             }
@@ -219,8 +219,8 @@ namespace The_Legend_of_Zelda
                 for (int j = 0; j < 8; j++)
                 {
                     texture[i * 8 + (7 - j)] = (byte)(
-                        ((chr_sp[real_index +     i] & (1 << j)) >> j) | // gets j-th bit of byte real_index+i
-                        ((chr_sp[real_index + 8 + i] & (1 << j)) >> j) * 2 // gets j-th bit of byte real_index+i+8, and multiplies by 2
+                        (chr_sp[real_index + i] & 1 << j) >> j | // gets j-th bit of byte real_index+i
+                        ((chr_sp[real_index + 8 + i] & 1 << j) >> j) * 2 // gets j-th bit of byte real_index+i+8, and multiplies by 2
                     ); // stores resulting byte in 1st half of texture, top to bottom, right to left
                 }
             }
@@ -230,8 +230,8 @@ namespace The_Legend_of_Zelda
                 for (int j = 0; j < 8; j++)
                 {
                     texture[i * 8 + (7 - j) + PIXELS_PER_TILE] = (byte)(
-                        ((chr_sp[real_index +     i] & (1 << j)) >> j) | // gets j-th bit of byte real_index+i
-                        ((chr_sp[real_index + 8 + i] & (1 << j)) >> j) * 2 // gets j-th bit of byte real_index+i+8, and multiplies by 2
+                        (chr_sp[real_index + i] & 1 << j) >> j | // gets j-th bit of byte real_index+i
+                        ((chr_sp[real_index + 8 + i] & 1 << j) >> j) * 2 // gets j-th bit of byte real_index+i+8, and multiplies by 2
                     ); // stores resulting byte in 2nd half of texture, top to bottom, right to left
                 }
             }
@@ -260,10 +260,10 @@ namespace The_Legend_of_Zelda
                     {
                         BinaryReader reader = new BinaryReader(stream);
                         stream.Seek(6 * 8 * 22 + page, SeekOrigin.Begin);
-                        stream.Seek((8 * 22) * reader.ReadByte(), SeekOrigin.Begin);
+                        stream.Seek(8 * 22 * reader.ReadByte(), SeekOrigin.Begin);
                         byte a;
                         int start, lim;
-                        if ((screen_index % 2) == 1)
+                        if (screen_index % 2 == 1)
                         {
                             start = 0;
                             lim = 176;
@@ -318,7 +318,7 @@ namespace The_Legend_of_Zelda
                                 ppu_plt[i] = palette;
                             }
                             // find and draw inside of room, depending on its room type
-                            stream.Seek(0x420 + (12 * 7) * DC.room_list[page], SeekOrigin.Begin);
+                            stream.Seek(0x420 + 12 * 7 * DC.room_list[page], SeekOrigin.Begin);
                             for (int i = 2; i < 9; i++)
                             {
                                 for (int j = 2 + screen_index * 176; j < 14 + screen_index * 176; j++)
@@ -329,7 +329,7 @@ namespace The_Legend_of_Zelda
                                 }
                             }
                             //byte[] metatiles_to_reset = { 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 };
-                            foreach (byte i in new byte[]{ 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 })
+                            foreach (byte i in new byte[] { 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 })
                                 Screen.meta_tiles[i].tile_index = 1;
                             DC.DrawDoors(page, screen_index);
                         }
@@ -390,7 +390,7 @@ namespace The_Legend_of_Zelda
                 }
             }
 
-            if (Program.gamemode == Program.Gamemode.DUNGEON)
+            if (gamemode == Gamemode.DUNGEON)
             {
                 // writes "LEVEL-" above the map
                 byte[] level_text = { (byte)Text.L, (byte)Text.E, (byte)Text.V, (byte)Text.E, (byte)Text.L, (byte)Text.DASH }; // LEVEL-
@@ -413,17 +413,17 @@ namespace The_Legend_of_Zelda
                 for (int i = 0; i < 64; i++)
                 {
                     a = reader.ReadByte();
-                    ppu_plt[i * 4    ] = (byte)((a & 0b11000000) >> 6);
+                    ppu_plt[i * 4] = (byte)((a & 0b11000000) >> 6);
                     ppu_plt[i * 4 + 1] = (byte)((a & 0b00110000) >> 4);
                     ppu_plt[i * 4 + 2] = (byte)((a & 0b00001100) >> 2);
-                    ppu_plt[i * 4 + 3] = (byte) (a & 0b00000011);
+                    ppu_plt[i * 4 + 3] = (byte)(a & 0b00000011);
                 }
             }
         }
 
         public static void DrawMenu()
         {
-            int page_index = Program.gamemode == Program.Gamemode.OVERWORLD ? (int)OtherPPUPages.OVERWORLD_MENU : (int)OtherPPUPages.DUNGEON_MENU;
+            int page_index = gamemode == Gamemode.OVERWORLD ? (int)OtherPPUPages.OVERWORLD_MENU : (int)OtherPPUPages.DUNGEON_MENU;
 
             using (Stream stream = File.OpenRead(@"Data\TILES_OTHER.bin"))
             {
@@ -443,10 +443,10 @@ namespace The_Legend_of_Zelda
                 for (int i = 64 + 240; i < 480; i++)
                 {
                     a = reader.ReadByte();
-                    ppu_plt[i * 4    ] = (byte)((a & 0b11000000) >> 6);
+                    ppu_plt[i * 4] = (byte)((a & 0b11000000) >> 6);
                     ppu_plt[i * 4 + 1] = (byte)((a & 0b00110000) >> 4);
                     ppu_plt[i * 4 + 2] = (byte)((a & 0b00001100) >> 2);
-                    ppu_plt[i * 4 + 3] = (byte) (a & 0b00000011);
+                    ppu_plt[i * 4 + 3] = (byte)(a & 0b00000011);
                 }
             }
         }

@@ -1,6 +1,8 @@
-﻿using static The_Legend_of_Zelda.Program;
+﻿using The_Legend_of_Zelda.Gameplay;
+using The_Legend_of_Zelda.Rendering;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Sprites
 {
     internal class TriforcePieceSprite : ItemDropSprite
     {
@@ -31,12 +33,12 @@ namespace The_Legend_of_Zelda
 
         public override void ItemSpecificActions()
         {
-            if (Program.gTimer % 12 == 0)
+            if (gTimer % 12 == 0)
             {
                 palette_index = 5;
                 counterpart.palette_index = 5;
             }
-            else if (Program.gTimer % 12 == 6)
+            else if (gTimer % 12 == 6)
             {
                 palette_index = 6;
                 counterpart.palette_index = 6;
@@ -128,7 +130,7 @@ namespace The_Legend_of_Zelda
                     OC.black_square_stairs_return_flag = true;
                     OC.current_screen = OC.return_screen;
                     SaveLoad.SetTriforceFlag(DC.current_dungeon, true);
-                    Program.gamemode = Program.Gamemode.OVERWORLD;
+                    gamemode = Gamemode.OVERWORLD;
                     OC.Init();
                     Link.SetBGState(true);
                     Screen.sprites.Remove(counterpart);

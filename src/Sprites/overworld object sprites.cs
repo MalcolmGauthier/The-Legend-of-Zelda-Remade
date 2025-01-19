@@ -1,6 +1,7 @@
-﻿using static The_Legend_of_Zelda.Program;
+﻿using The_Legend_of_Zelda.Rendering;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Sprites
 {
     internal class OverworldFairySprite : FairySprite
     {
@@ -87,6 +88,7 @@ namespace The_Legend_of_Zelda
     internal class RaftSprite : Sprite
     {
         StaticSprite counterpart = new StaticSprite(0x6c, 4, Link.x + 8, Link.y, true);
+        bool screen_has_scrolled = false;
 
         public RaftSprite() : base(0x6c, 4)
         {
@@ -103,17 +105,16 @@ namespace The_Legend_of_Zelda
             counterpart.x = Link.x + 8;
             counterpart.y = Link.y;
 
-            if ((Link.facing_direction == Direction.UP && Link.current_action != Link.Action.WALKING_UP) ||
-                (Link.facing_direction == Direction.DOWN && Link.current_action != Link.Action.WALKING_DOWN))
-            {
-                if (Link.facing_direction == Direction.UP)
-                    Link.current_action = Link.Action.WALKING_UP;
-                else
-                    Link.current_action = Link.Action.WALKING_DOWN;
-            }
+            if (Link.facing_direction == Direction.UP)
+                Link.current_action = Link.Action.WALKING_UP;
+            else
+                Link.current_action = Link.Action.WALKING_DOWN;
 
-            if ((Screen.GetTileIndexAtLocation(Link.x + 8, Link.y - 1) == 0x14 && Link.facing_direction == Direction.DOWN) ||
-                (OC.ScrollingDone() && Link.facing_direction == Direction.UP))
+            if (!OC.ScrollingDone())
+                screen_has_scrolled = true;
+
+            if (Screen.GetTileIndexAtLocation(Link.x + 8, Link.y - 1) == 0x14 && Link.facing_direction == Direction.DOWN ||
+                OC.ScrollingDone() && screen_has_scrolled && Link.facing_direction == Direction.UP)
             {
                 OC.raft_flag = false;
                 Link.can_move = true;
@@ -141,7 +142,7 @@ namespace The_Legend_of_Zelda
         Direction direction;
         StaticSprite counterpart = new StaticSprite(0, 7, 0, 0);
 
-        public MovingTileSprite(MovingTile moving_tile, int metatile_index) : base (0, 7)
+        public MovingTileSprite(MovingTile moving_tile, int metatile_index) : base(0, 7)
         {
             use_chr_rom = true;
             counterpart.use_chr_rom = true;
@@ -183,7 +184,7 @@ namespace The_Legend_of_Zelda
             x = metatile_index % 16 * 16;
             y = (metatile_index >> 4) * 16 + 64;
 
-            ppu_tile_location = 256 + (metatile_index >> 4) * 64 + (metatile_index % 16) * 2;
+            ppu_tile_location = 256 + (metatile_index >> 4) * 64 + metatile_index % 16 * 2;
             if (moving_tile == MovingTile.DUNGEON_BLOCK)
             {
                 Textures.ppu[ppu_tile_location] = 0x74;
@@ -208,7 +209,7 @@ namespace The_Legend_of_Zelda
         {
             if (local_timer == 32)
             {
-                bool is_overwolrd = Program.gamemode == Program.Gamemode.OVERWORLD;
+                bool is_overwolrd = gamemode == Gamemode.OVERWORLD;
                 if (is_overwolrd && moving_tile != MovingTile.TOMBSTONE)
                 {
                     SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, OC.current_screen), true);

@@ -5,7 +5,7 @@
         public static byte current_save_file;
 
         public static bool[] save_file_exists = new bool[3];
-        public static byte[,] file_name = new byte[3,8];
+        public static byte[,] file_name = new byte[3, 8];
         public static bool[] second_quest = new bool[3];
 
         private static byte[] _nb_of_hearts = new byte[3];
@@ -600,7 +600,7 @@
 
         public static bool GetCompassFlag(byte compass_index)
         {
-            return (compass_flags[current_save_file] & (1 << compass_index)) >> compass_index == 1;
+            return (compass_flags[current_save_file] & 1 << compass_index) >> compass_index == 1;
         }
         public static void SetCompassFlag(byte compass_index, bool value)
         {
@@ -609,7 +609,7 @@
         }
         public static bool GetMapFlag(byte map_index)
         {
-            return (map_flags[current_save_file] & (1 << map_index)) >> map_index == 1;
+            return (map_flags[current_save_file] & 1 << map_index) >> map_index == 1;
         }
         public static void SetMapFlag(byte map_index, bool value)
         {
@@ -618,25 +618,25 @@
         }
         public static bool GetBombedHoleFlag(byte bombed_holes_index)
         {
-            return (bombed_holes_flags[current_save_file] & (1L << bombed_holes_index)) >> bombed_holes_index == 1;
+            return (bombed_holes_flags[current_save_file] & 1L << bombed_holes_index) >> bombed_holes_index == 1;
         }
         public static void SetBombedHoleFlag(byte bombed_holes_index, bool value)
         {
             if (GetBombedHoleFlag(bombed_holes_index) != value)
-                bombed_holes_flags[current_save_file] ^= (long)(1L << bombed_holes_index);
+                bombed_holes_flags[current_save_file] ^= 1L << bombed_holes_index;
         }
         public static bool GetOpenedKeyDoorsFlag(byte opened_key_doors_index)
         {
-            return (opened_key_doors_flags[current_save_file] & (1L << opened_key_doors_index)) >> opened_key_doors_index == 1;
+            return (opened_key_doors_flags[current_save_file] & 1L << opened_key_doors_index) >> opened_key_doors_index == 1;
         }
         public static void SetOpenedKeyDoorsFlag(byte opened_key_doors_index, bool value)
         {
             if (GetOpenedKeyDoorsFlag(opened_key_doors_index) != value)
-                opened_key_doors_flags[current_save_file] ^= (long)(1L << opened_key_doors_index);
+                opened_key_doors_flags[current_save_file] ^= 1L << opened_key_doors_index;
         }
         public static bool GetBossKillsFlag(byte boss_kills_index)
         {
-            return (boss_kills_flags[current_save_file] & (1 << boss_kills_index)) >> boss_kills_index == 1;
+            return (boss_kills_flags[current_save_file] & 1 << boss_kills_index) >> boss_kills_index == 1;
         }
         public static void SetBossKillsFlag(byte boss_kills_index, bool value)
         {
@@ -645,16 +645,16 @@
         }
         public static bool GetGiftFlag(byte gift_index)
         {
-            return (gift_flags[current_save_file] & (1L << gift_index)) >> gift_index == 1;
+            return (gift_flags[current_save_file] & 1L << gift_index) >> gift_index == 1;
         }
         public static void SetGiftFlag(byte gift_index, bool value)
         {
             if (GetGiftFlag(gift_index) != value)
-                gift_flags[current_save_file] ^= (long)(1L << gift_index);
+                gift_flags[current_save_file] ^= 1L << gift_index;
         }
         public static bool GetHeartContainerFlag(byte container_index)
         {
-            return ((heart_container_flags[current_save_file] & (1 << container_index)) >> container_index) == 1;
+            return (heart_container_flags[current_save_file] & 1 << container_index) >> container_index == 1;
         }
         public static void SetHeartContainerFlag(byte heart_container_index, bool value)
         {
@@ -663,7 +663,7 @@
         }
         public static bool GetOverworldSecretsFlag(byte container_index)
         {
-            return ((overworld_secrets_flags[current_save_file] & (1L << container_index)) >> container_index) == 1;
+            return (overworld_secrets_flags[current_save_file] & 1L << container_index) >> container_index == 1;
         }
         public static void SetOverworldSecretsFlag(byte overworld_secrets_index, bool value)
         {
@@ -672,7 +672,7 @@
         }
         public static bool GetTriforceFlag(byte triforce_index)
         {
-            return ((triforce_pieces[current_save_file] & (1 << triforce_index)) >> triforce_index) == 1;
+            return (triforce_pieces[current_save_file] & 1 << triforce_index) >> triforce_index == 1;
         }
         public static void SetTriforceFlag(byte triforce_index, bool value)
         {
@@ -682,7 +682,7 @@
         public static bool GetDungeonGiftFlag(byte room_index)
         {
             int index_in_number = room_index & 0b111111;
-            return ((dungeon_gift_flags[current_save_file, room_index >> 6] & (1L << index_in_number)) >> index_in_number) == 1;
+            return (dungeon_gift_flags[current_save_file, room_index >> 6] & 1L << index_in_number) >> index_in_number == 1;
         }
         public static void SetDungeonGiftFlag(byte room_index, bool value)
         {
@@ -693,7 +693,7 @@
         {
             // 4 int64s to make up the 256 bits needed to store the info, the upper 2 bits of the byte indicate which int64 to check
             int index_in_number = room_index & 0b111111;
-            return ((dungeon_rooms_visited_flags[current_save_file, room_index >> 6] & (1L << index_in_number)) >> index_in_number) == 1;
+            return (dungeon_rooms_visited_flags[current_save_file, room_index >> 6] & 1L << index_in_number) >> index_in_number == 1;
         }
         public static void SetDungeonVisitedRoomFlag(byte room_index, bool value)
         {

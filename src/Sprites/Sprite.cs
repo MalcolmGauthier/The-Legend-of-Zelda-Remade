@@ -1,6 +1,8 @@
-﻿using static SDL2.SDL;
+﻿using The_Legend_of_Zelda.Gameplay;
+using The_Legend_of_Zelda.Rendering;
+using static SDL2.SDL;
 
-namespace The_Legend_of_Zelda
+namespace The_Legend_of_Zelda.Sprites
 {
     public abstract class Sprite
     {
@@ -62,14 +64,14 @@ namespace The_Legend_of_Zelda
                 {
                     j += j_inc;
 
-                    pixel_color = pixels[(i * 8) + j];
+                    pixel_color = pixels[i * 8 + j];
                     if (pixel_color == 0) // check for transparency
                         continue;
 
-                    int location = TrueMod(((y + (y_count - 1)) * Textures.VRAM_WIDTH) + (x_count - 1) + x, Textures.vram.Length);
+                    int location = TrueMod((y + (y_count - 1)) * Textures.VRAM_WIDTH + (x_count - 1) + x, Textures.vram.Length);
 
                     if (link_mask_flag)
-                        if ((y + (y_count - 1)) <= 80 || (y + (y_count - 1)) >= 224 || (x_count - 1) + x <= 16 || (x_count - 1) + x >= 240)
+                        if (y + (y_count - 1) <= 80 || y + (y_count - 1) >= 224 || x_count - 1 + x <= 16 || x_count - 1 + x >= 240)
                             continue;
 
                     // if on background, only draw pixel if the pixel is using palette index 0 (background)
@@ -77,7 +79,7 @@ namespace The_Legend_of_Zelda
                         if ((Textures.vram[location] & 3) != 0)
                             continue;
 
-                    Textures.vram[location] = (byte)(pixel_color + (palette_index * 4));
+                    Textures.vram[location] = (byte)(pixel_color + palette_index * 4);
                 }
                 x_count = 0;
                 i += i_inc;
