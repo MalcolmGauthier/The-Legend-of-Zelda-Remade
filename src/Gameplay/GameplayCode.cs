@@ -1,5 +1,6 @@
 ﻿using The_Legend_of_Zelda.Rendering;
 using The_Legend_of_Zelda.Sprites;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
 namespace The_Legend_of_Zelda.Gameplay
 {
@@ -48,7 +49,7 @@ namespace The_Legend_of_Zelda.Gameplay
         {
             opening_animation_timer++;
 
-            if (opening_animation_timer >= OPENING_ANIMATION_DONE)
+            if (OpeningAnimationDone())
             {
                 Link.Show(true);
                 Menu.can_open_menu = true;
@@ -95,7 +96,7 @@ namespace The_Legend_of_Zelda.Gameplay
         // if player is on a raft, set on_raft to true to disable checking for held direction
         protected void Scroll(bool on_raft)
         {
-            if (scroll_animation_timer >= SCROLL_ANIMATION_DONE)
+            if (ScrollingDone())
             {
                 if (Link.y < 64 && (Control.IsHeld(Buttons.UP) || on_raft))
                 {
@@ -220,9 +221,9 @@ namespace The_Legend_of_Zelda.Gameplay
             }
 
             if ((int)scroll_direction < 2)
-                Link.current_action = (Link.Action)scroll_direction + 2;
+                Link.current_action = (LinkAction)scroll_direction + 2;
             else
-                Link.current_action = (Link.Action)scroll_direction - 2;
+                Link.current_action = (LinkAction)scroll_direction - 2;
 
             scroll_animation_timer++;
             Link.animation_timer++;

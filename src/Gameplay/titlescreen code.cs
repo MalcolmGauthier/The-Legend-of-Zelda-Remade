@@ -1,6 +1,7 @@
 ﻿using static The_Legend_of_Zelda.Gameplay.Program;
 using static The_Legend_of_Zelda.Rendering.Screen;
 using The_Legend_of_Zelda.Rendering;
+using The_Legend_of_Zelda.Sprites;
 namespace The_Legend_of_Zelda.Gameplay
 {
     internal static class TitlescreenCode

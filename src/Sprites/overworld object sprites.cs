@@ -88,7 +88,6 @@ namespace The_Legend_of_Zelda.Sprites
     internal class RaftSprite : Sprite
     {
         StaticSprite counterpart = new StaticSprite(0x6c, 4, Link.x + 8, Link.y, true);
-        bool screen_has_scrolled = false;
 
         public RaftSprite() : base(0x6c, 4)
         {
@@ -106,15 +105,12 @@ namespace The_Legend_of_Zelda.Sprites
             counterpart.y = Link.y;
 
             if (Link.facing_direction == Direction.UP)
-                Link.current_action = Link.Action.WALKING_UP;
+                Link.current_action = LinkAction.WALKING_UP;
             else
-                Link.current_action = Link.Action.WALKING_DOWN;
+                Link.current_action = LinkAction.WALKING_DOWN;
 
-            if (!OC.ScrollingDone())
-                screen_has_scrolled = true;
-
-            if (Screen.GetTileIndexAtLocation(Link.x + 8, Link.y - 1) == 0x14 && Link.facing_direction == Direction.DOWN ||
-                OC.ScrollingDone() && screen_has_scrolled && Link.facing_direction == Direction.UP)
+            if ((Screen.GetMetaTileTypeAtLocation(Link.x + 8, Link.y - 1) == MetatileType.DOCK && Link.facing_direction == Direction.DOWN) ||
+                (!OC.ScrollingDone() && Link.facing_direction == Direction.UP))
             {
                 OC.raft_flag = false;
                 Link.can_move = true;
@@ -180,6 +176,7 @@ namespace The_Legend_of_Zelda.Sprites
 
             UpdateTexture();
             counterpart.UpdateTexture();
+            Screen.meta_tiles[metatile_index].tile_index = MetatileType.ROCK;
             Screen.meta_tiles[metatile_index].special = false;
             x = metatile_index % 16 * 16;
             y = (metatile_index >> 4) * 16 + 64;
@@ -209,8 +206,8 @@ namespace The_Legend_of_Zelda.Sprites
         {
             if (local_timer == 32)
             {
-                bool is_overwolrd = gamemode == Gamemode.OVERWORLD;
-                if (is_overwolrd && moving_tile != MovingTile.TOMBSTONE)
+                bool is_overworld = gamemode == Gamemode.OVERWORLD;
+                if (is_overworld && moving_tile != MovingTile.TOMBSTONE)
                 {
                     SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, OC.current_screen), true);
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, OC.current_screen, 0);
@@ -250,18 +247,18 @@ namespace The_Legend_of_Zelda.Sprites
                 else
                     offset = 1;
 
-                if (is_overwolrd)
+                if (is_overworld)
                 {
                     if (moving_tile == MovingTile.TOMBSTONE)
-                        Screen.meta_tiles[metatile_index].tile_index = 0x15;
+                        Screen.meta_tiles[metatile_index].tile_index = MetatileType.STAIRS;
                     else
-                        Screen.meta_tiles[metatile_index].tile_index = 0x1;
-                    Screen.meta_tiles[metatile_index + offset].tile_index = 0x8;
+                        Screen.meta_tiles[metatile_index].tile_index = MetatileType.GROUND;
+                    Screen.meta_tiles[metatile_index + offset].tile_index = MetatileType.ROCK_SNAIL;
                 }
                 else
                 {
-                    Screen.meta_tiles[metatile_index].tile_index = 0x0;
-                    Screen.meta_tiles[metatile_index + offset].tile_index = 0x1;
+                    Screen.meta_tiles[metatile_index].tile_index_D = DungeonMetatile.GROUND;
+                    Screen.meta_tiles[metatile_index + offset].tile_index_D = DungeonMetatile.WALL;
                 }
                 Screen.meta_tiles[metatile_index + offset].special = false;
 
@@ -276,7 +273,7 @@ namespace The_Legend_of_Zelda.Sprites
                 Textures.ppu[ppu_tile_location + 32] = (byte)(tile_to_use + 1);
                 Textures.ppu[ppu_tile_location + 33] = (byte)(tile_to_use + 3);
 
-                if (is_overwolrd)
+                if (is_overworld)
                 {
                     Palettes.LoadPaletteGroup(PaletteID.SP_3, Palettes.PaletteGroups.OVERWORLD_DARK_ENEMIES);
                 }

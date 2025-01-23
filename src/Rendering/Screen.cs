@@ -98,8 +98,18 @@ namespace The_Legend_of_Zelda.Rendering
             return (x % m + m) % m;
         }
 
-        // gives tile id of meta tile at location, returns 0 if oob
-        public static byte GetTileIndexAtLocation(int x, int y)
+
+        public static int GetMetaTileIndexAtLocation(int x, int y)
+        {
+            int index = (y & ~0xF) + x / 16 - 64;
+
+            if (index < 0 || index > Screen.meta_tiles.Length)
+                return -1;
+
+            return index;
+        }
+        // gives tile type of meta tile at location, returns 0 if oob
+        public static MetatileType GetMetaTileTypeAtLocation(int x, int y)
         {
             int metatile_index = (y & ~0xF) + (x >> 4) - 64;
             if (metatile_index < 0 || metatile_index > meta_tiles.Length)

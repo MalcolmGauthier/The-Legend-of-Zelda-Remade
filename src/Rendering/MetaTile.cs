@@ -3,13 +3,148 @@ using static The_Legend_of_Zelda.Gameplay.Program;
 
 namespace The_Legend_of_Zelda.Rendering
 {
+    public enum MetatileType
+    {
+        ROCK,
+        GROUND,
+        ROCK_TOP,
+        BLACK_SQUARE_WARP,
+        ROCK_TR,
+        ROCK_TL,
+        ROCK_BR,
+        ROCK_BL,
+        ROCK_SNAIL,
+        TREE,
+        WATER,
+        WATER_L,
+        WATER_TL,
+        WATER_T,
+        WATER_TR,
+        WATER_R,
+        WATER_BR,
+        WATER_B,
+        WATER_BL,
+        BLUE_STAIRS,
+        DOCK,
+        STAIRS,
+        SAND,
+        WATERFALL,
+        WATERFALL_BOTTOM,
+        TOMBSTONE,
+        STUMP_TL,
+        STUMP_BL,
+        STUMP_BR,
+        STUMP_TR,
+        STUMP_FACE,
+        RUINS_TL,
+        RUINS_BL,
+        RUINS_TR,
+        RUINS_BR,
+        RUINS_FACE_1_EYE,
+        RUINS_FACE_2_EYES,
+        STATUE,
+        WATER_INNER_TR,
+        WATER_INNER_TL,
+        WATER_INNER_BL,
+        WATER_INNER_BR,
+        BOMBABLE_ROCK,
+        BURNABLE_TREE,
+        FAST_TRAVEL_STAIRCASE,
+        WATER_RAFT,
+        LADDER_TOP,
+        LADDER_BOTTOM,
+        LADDER_LEFT,
+        LADDER_RIGHT,
+        LADDER_TL,
+        LADDER_TR,
+        LADDER_EMPTY,
+    }
+
+    public enum DungeonMetatile
+    {
+        GROUND,
+        WALL,
+        WATER,
+        LEFT_STATUE,
+        RIGHT_STATUE,
+        SAND,
+        STAIRS,
+        VOID,
+        GRAY_BRICKS,
+        GRAY_STAIRS,
+        ROOM_TOP,
+        VERT_DOOR_LEFT,
+        VERT_DOOR_RIGHT,
+        WALK_THROUGH_WALL,
+        TOP_DOOR_OPEN_L,
+        TOP_DOOR_OPEN_R,
+    }
+
     public class MetaTile
     {
         public const int METATILES_PER_ROW = 16;
 
+        // ppu indices of all overworld metatiles
+        readonly byte[,] overworld_tileset_indexes = {
+            {0xd8,0xda,0xd9,0xdb}, // rock
+            {0x26,0x26,0x26,0x26}, // ground
+            {0xce,0xd0,0xcf,0xd1}, // rock T
+            {0x24,0x24,0x24,0x24}, // black hole
+            {0xd0,0xd2,0xd1,0xd3}, // rock TR
+            {0xcc,0xce,0xcd,0xcf}, // rock TL
+            {0xdc,0xde,0xdd,0xdf}, // rock BR
+            {0xd4,0xd6,0xd5,0xd7}, // rock BL
+            {0xc8,0xca,0xc9,0xcb}, // rock snail
+            {0xc4,0xc6,0xc5,0xc7}, // tree
+            {0x90,0x90,0x95,0x95}, // water
+            {0x8e,0x90,0x93,0x95}, // water R
+            {0x8d,0x8f,0x8e,0x90}, // water TL
+            {0x8f,0x8f,0x90,0x90}, // water T
+            {0x8f,0x91,0x90,0x92}, // water TR
+            {0x90,0x92,0x95,0x97}, // water L
+            {0x95,0x97,0x96,0x98}, // water BR
+            {0x95,0x95,0x96,0x96}, // water B
+            {0x93,0x95,0x94,0x96}, // water BL
+            {0x74,0x75,0x74,0x75}, // ladder
+            {0x76,0x76,0x77,0x77}, // dock
+            {0x70,0x72,0x71,0x73}, // stairs
+            {0x84,0x86,0x85,0x87}, // sand
+            {0x89,0x8b,0x8a,0x8c}, // waterfall
+            {0x89,0x8b,0x88,0x88}, // waterfall bottom
+            {0xbc,0xbe,0xbd,0xbf}, // tombstone
+            {0xb0,0xb2,0xb1,0xb3}, // stump TL
+            {0xac,0xae,0xad,0xaf}, // stump BL
+            {0xb8,0xba,0xb9,0xbb}, // stump BR
+            {0xaa,0xac,0xab,0xad}, // stump TR
+            {0xb4,0xb6,0xb5,0xb7}, // stump face
+            {0x9c,0x9e,0x9d,0x9f}, // ruins TL
+            {0xa2,0xa4,0xa3,0xa5}, // ruins BL
+            {0x9a,0x9c,0x9b,0x9d}, // ruins TR
+            {0xa0,0xa2,0xa1,0xa3}, // ruins BR
+            {0xe0,0xe2,0xe1,0xe3}, // ruins face 1 eye
+            {0xa6,0xa8,0xa7,0xa9}, // ruins face 2 eyes
+            {0xc0,0xc2,0xc1,0xc3}, // statue
+            {0x7a,0x7c,0x7b,0x7d}, // water I TR
+            {0x78,0x7a,0x79,0x7b}, // water I TL
+            {0x7e,0x80,0x7f,0x81}, // water I BL
+            {0x80,0x82,0x81,0x83}, // water I BR
+        };
+
         public short id;
-        public byte tile_index;
+        public byte _tile_index;
         public bool special = false;
+
+        public MetatileType tile_index
+        {
+            get => (MetatileType)_tile_index;
+            set => _tile_index = (byte)value;
+        }
+
+        public DungeonMetatile tile_index_D
+        {
+            get => (DungeonMetatile)_tile_index;
+            set => _tile_index = (byte)value;
+        }
 
         public MetaTile(short id)
         {
@@ -30,7 +165,7 @@ namespace The_Legend_of_Zelda.Rendering
             if (gamemode == Gamemode.DUNGEON)
             {
                 special = false;
-                this.tile_index = tile_index;
+                this._tile_index = tile_index;
                 Textures.ppu[index_in_ppu_arr] = DC.dungeon_tileset_indexes[tile_index, 0];
                 Textures.ppu[index_in_ppu_arr + 1] = DC.dungeon_tileset_indexes[tile_index, 1];
                 Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH] = DC.dungeon_tileset_indexes[tile_index, 2];
@@ -103,11 +238,11 @@ namespace The_Legend_of_Zelda.Rendering
                 }
             }
 
-            this.tile_index = tile_index;
-            Textures.ppu[index_in_ppu_arr] = OC.overworld_tileset_indexes[tile_index, 0];
-            Textures.ppu[index_in_ppu_arr + 1] = OC.overworld_tileset_indexes[tile_index, 1];
-            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH] = OC.overworld_tileset_indexes[tile_index, 2];
-            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = OC.overworld_tileset_indexes[tile_index, 3];
+            this._tile_index = tile_index;
+            Textures.ppu[index_in_ppu_arr] = overworld_tileset_indexes[tile_index, 0];
+            Textures.ppu[index_in_ppu_arr + 1] = overworld_tileset_indexes[tile_index, 1];
+            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH] = overworld_tileset_indexes[tile_index, 2];
+            Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = overworld_tileset_indexes[tile_index, 3];
 
             return;
         }

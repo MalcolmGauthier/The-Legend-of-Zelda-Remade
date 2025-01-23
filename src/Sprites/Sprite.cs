@@ -1,5 +1,6 @@
 ﻿using The_Legend_of_Zelda.Gameplay;
 using The_Legend_of_Zelda.Rendering;
+using static The_Legend_of_Zelda.Gameplay.Program;
 using static SDL2.SDL;
 
 namespace The_Legend_of_Zelda.Sprites

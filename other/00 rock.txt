@@ -17,7 +17,7 @@
 10// water BR
 11// water B
 12// water BL
-13// ladder
+13// blue ladder
 14// dock
 15// stairs
 16// sand
@@ -44,8 +44,13 @@
 2b// burnable tree
 2c// fast travel staircase
 2d// water raft tile
-2e// invisible half block used by ladder & pushable rock
-2f// idem but yflip
+2e// invisible top half block used by ladder & pushable rock
+2f// idem but bottom
+30// ladder left
+31// ladder right
+32// ladder tl
+33// ladder tr
+34// ladder empty
 
 dungeon:
 00// basic walkable tile

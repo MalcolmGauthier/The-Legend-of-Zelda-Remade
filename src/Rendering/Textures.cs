@@ -1,4 +1,5 @@
-﻿using static The_Legend_of_Zelda.Gameplay.Program;
+﻿using The_Legend_of_Zelda.Gameplay;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
 namespace The_Legend_of_Zelda.Rendering
 {
@@ -93,22 +94,6 @@ namespace The_Legend_of_Zelda.Rendering
 
     public static class Textures
     {
-        public const int PPU_WIDTH = 32;
-        public const int PPU_HEIGHT = 30;
-        public const int PPU_SCREENS = 4;
-        public const int SCREEN_TILES = PPU_WIDTH * PPU_HEIGHT; // 960
-        public const int VRAM_WIDTH = PPU_WIDTH * 8 * 2; // 512
-        public const int VRAM_HEIGHT = PPU_HEIGHT * 8 * 2; // 480
-        public const int PIXELS_PER_TILE = 64;
-        public const int BYTES_PER_CHR_TILE = 16;
-        public const int CHR_TILESET_SIZE = 256;
-
-        public static byte[] chr_bg = new byte[CHR_TILESET_SIZE * BYTES_PER_CHR_TILE]; // 4096
-        public static byte[] chr_sp = new byte[CHR_TILESET_SIZE * BYTES_PER_CHR_TILE]; // 4096
-        public static byte[] vram = new byte[SCREEN_TILES * PPU_SCREENS * PIXELS_PER_TILE]; // 245000
-        public static byte[] ppu = new byte[SCREEN_TILES * PPU_SCREENS]; // 3840
-        public static byte[] ppu_plt = new byte[SCREEN_TILES * PPU_SCREENS]; // 3840
-
         public enum PPUDataGroup
         {
             OVERWORLD,
@@ -133,6 +118,35 @@ namespace The_Legend_of_Zelda.Rendering
             DUNGEON_MENU,
             GAME_OVER
         }
+
+        public const int TILE_SIZE = 8;
+        public const int PPU_WIDTH = NES_OUTPUT_WIDTH / TILE_SIZE;
+        public const int PPU_HEIGHT = NES_OUTPUT_HEIGHT / TILE_SIZE;
+        // the 4 screens worth of image data allow for scrolling both vertically and horizontally.
+        // in the game, they are layed out like this:
+        // +-----+-----+
+        // |  0  |  2  |
+        // +-----+-----+
+        // |  1  |  3  |
+        // +-----+-----+
+        // 
+        // the 4th screen (screen 3) is never used, so theoretically we could save space
+        // by removing the last quarter of the tiles, metatiles, but not vram.
+        // for more info on vram layout, check the comment inside Tile.ChangeTexture()
+        public const int PPU_SCREENS = 4;
+        public const int SCREEN_TILES = PPU_WIDTH * PPU_HEIGHT; // 960
+        public const int VRAM_WIDTH = PPU_WIDTH * TILE_SIZE * 2; // 512
+        public const int VRAM_HEIGHT = PPU_HEIGHT * TILE_SIZE * 2; // 480
+        public const int PIXELS_PER_TILE = TILE_SIZE * TILE_SIZE; // 64
+        public const int BYTES_PER_CHR_TILE = 16;
+        public const int CHR_TILESET_SIZE = 256;
+        public const int HUD_HEIGHT = 64;
+
+        public static byte[] chr_bg = new byte[CHR_TILESET_SIZE * BYTES_PER_CHR_TILE]; // 4096
+        public static byte[] chr_sp = new byte[CHR_TILESET_SIZE * BYTES_PER_CHR_TILE]; // 4096
+        public static byte[] vram = new byte[SCREEN_TILES * PPU_SCREENS * PIXELS_PER_TILE]; // 245000
+        public static byte[] ppu = new byte[SCREEN_TILES * PPU_SCREENS]; // 3840
+        public static byte[] ppu_plt = new byte[SCREEN_TILES * PPU_SCREENS]; // 3840
 
         public enum ROMData
         {
@@ -262,16 +276,15 @@ namespace The_Legend_of_Zelda.Rendering
                         stream.Seek(6 * 8 * 22 + page, SeekOrigin.Begin);
                         stream.Seek(8 * 22 * reader.ReadByte(), SeekOrigin.Begin);
                         byte a;
-                        int start, lim;
-                        if (screen_index % 2 == 1)
+                        int start = HUD_HEIGHT;
+                        int lim = NES_OUTPUT_HEIGHT;
+                        // when scrolling vertically in overworld or dungeon, screen 1 is used in a special way where the world is rendered at the
+                        // top where the HUD would be in the other screens. thus, we need to update the top of the screen, and not under the HUD.
+                        // screen 3 is never used in the entire game, so we don't care about that one.
+                        if (screen_index == 1)
                         {
-                            start = 0;
-                            lim = 176;
-                        }
-                        else
-                        {
-                            start = 64;
-                            lim = 240;
+                            start -= HUD_HEIGHT;
+                            lim -= HUD_HEIGHT;
                         }
 
                         for (int i = start; i < lim; i++)
@@ -290,33 +303,39 @@ namespace The_Legend_of_Zelda.Rendering
                     {
                         BinaryReader reader = new BinaryReader(stream);
 
-                        // IF TOP DOWN
+                        // IF NORMAL ROOM
                         if (DC.room_list[page] is not (0x2a or 0x2b))
                         {
                             int screen_1_exception = 0;
                             if (screen_index == 1)
-                                screen_1_exception = -256;
-                            int lim = ppu.Length / 4 + ppu_start_index + screen_1_exception;
+                                screen_1_exception = -((HUD_HEIGHT / TILE_SIZE) * PPU_WIDTH);
+                            int lim = SCREEN_TILES + ppu_start_index + screen_1_exception;
 
+                            // draw the walls around the room, this writes 0's to the middle, but they will be overwritten
                             for (int i = 256 + ppu_start_index + screen_1_exception; i < lim; i++)
                             {
                                 ppu[i] = reader.ReadByte();
                                 ppu_plt[i] = 2;
                             }
 
-                            // draw border around dungeon room
+                            // set palette of entire room
+                            byte inner_palette = 2;
+                            // rooms with water or darkness require palette 3
+                            if (DC.rooms_with_palette_3.Contains(page) || DC.GetRoomDarkness(page))
+                                inner_palette = 3;
+                            // rooms with sand require palette 1
+                            else if (DC.rooms_with_palette_1.Contains(page))
+                                inner_palette = 1;
                             for (int i = 256 + 128 + screen_1_exception + ppu_start_index; i < 832 + screen_1_exception + ppu_start_index; i++)
                             {
                                 byte palette = 2;
-                                if (i % 32 >= 4 && i % 32 <= 0x1b)
+                                if (i % 32 >= 4 && i % 32 <= 27)
                                 {
-                                    if (DC.rooms_with_palette_3.Contains(page) || DC.GetRoomDarkness(page))
-                                        palette = 3;
-                                    else if (DC.rooms_with_palette_1.Contains(page))
-                                        palette = 1;
+                                    palette = inner_palette;
                                 }
                                 ppu_plt[i] = palette;
                             }
+
                             // find and draw inside of room, depending on its room type
                             stream.Seek(0x420 + 12 * 7 * DC.room_list[page], SeekOrigin.Begin);
                             for (int i = 2; i < 9; i++)
@@ -324,24 +343,23 @@ namespace The_Legend_of_Zelda.Rendering
                                 for (int j = 2 + screen_index * 176; j < 14 + screen_index * 176; j++)
                                 {
                                     Screen.meta_tiles[i * 16 + j].SetPPUValues(reader.ReadByte());
-                                    if (i == 2 && Screen.meta_tiles[i * 16 + j].tile_index is 0 or 5 or 7)
-                                        Screen.meta_tiles[i * 16 + j].tile_index = 10;
+                                    // top row of dungeon room doesn't allow link be along the wall.
+                                    if (i == 2 && Screen.meta_tiles[i * 16 + j].tile_index_D is (DungeonMetatile.GROUND or DungeonMetatile.SAND or DungeonMetatile.VOID))
+                                        Screen.meta_tiles[i * 16 + j].tile_index_D = DungeonMetatile.ROOM_TOP;
                                 }
                             }
-                            //byte[] metatiles_to_reset = { 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 };
-                            foreach (byte i in new byte[] { 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 })
-                                Screen.meta_tiles[i].tile_index = 1;
-                            DC.DrawDoors(page, screen_index);
+
+                            DC.InitDoors(page, screen_index);
                         }
                         // IF SIDE VIEW
                         else
                         {
-                            stream.Seek(0x2c0 + (DC.room_list[page] - 0x2a) * 176, SeekOrigin.Begin);
+                            stream.Seek(0x2c0 + (DC.room_list[page] - (byte)DungeonCode.RoomType.SIDESCROLL_ITEM) * 176, SeekOrigin.Begin);
                             for (int i = screen_index * 176; i < screen_index * 176 + 176; i++)
                             {
                                 Screen.meta_tiles[i].SetPPUValues(reader.ReadByte());
                             }
-                            int lim = ppu.Length / 4 + ppu_start_index;
+                            int lim = SCREEN_TILES + ppu_start_index;
                             for (int i = 256 + ppu_start_index; i < lim; i++)
                             {
                                 ppu_plt[i] = 2;
@@ -355,9 +373,9 @@ namespace The_Legend_of_Zelda.Rendering
                     {
                         BinaryReader reader = new BinaryReader(stream);
                         stream.Seek(page * 0x3c0, SeekOrigin.Begin);
-                        for (int i = 0; i < ppu.Length / 4; i++)
+                        for (int i = 0; i < SCREEN_TILES; i++)
                         {
-                            ppu[i + screen_index * 960] = reader.ReadByte();
+                            ppu[i + screen_index * SCREEN_TILES] = reader.ReadByte();
                         }
                     }
                     using (Stream stream = File.OpenRead(@"Data\PLT_OTHER.bin"))
@@ -368,10 +386,10 @@ namespace The_Legend_of_Zelda.Rendering
                         for (int i = 0; i < ppu_plt.Length / 16; i++)
                         {
                             a = reader.ReadByte();
-                            ppu_plt[i * 4 + 0 + screen_index * 960] = (byte)((a & 0b11000000) >> 6);
-                            ppu_plt[i * 4 + 1 + screen_index * 960] = (byte)((a & 0b00110000) >> 4);
-                            ppu_plt[i * 4 + 2 + screen_index * 960] = (byte)((a & 0b00001100) >> 2);
-                            ppu_plt[i * 4 + 3 + screen_index * 960] = (byte)((a & 0b00000011) >> 0);
+                            ppu_plt[i * 4 + 0 + screen_index * SCREEN_TILES] = (byte)((a & 0b11000000) >> 6);
+                            ppu_plt[i * 4 + 1 + screen_index * SCREEN_TILES] = (byte)((a & 0b00110000) >> 4);
+                            ppu_plt[i * 4 + 2 + screen_index * SCREEN_TILES] = (byte)((a & 0b00001100) >> 2);
+                            ppu_plt[i * 4 + 3 + screen_index * SCREEN_TILES] = (byte)((a & 0b00000011) >> 0);
                         }
                     }
                     break;
@@ -429,7 +447,7 @@ namespace The_Legend_of_Zelda.Rendering
             {
                 BinaryReader reader = new BinaryReader(stream);
                 stream.Seek(page_index * 0x3c0 + 256 + 32, SeekOrigin.Begin);
-                for (int i = 256 + 960; i < 1920; i++)
+                for (int i = 256 + SCREEN_TILES; i < 1920; i++)
                 {
                     ppu[i] = reader.ReadByte();
                 }
@@ -482,6 +500,18 @@ namespace The_Legend_of_Zelda.Rendering
                             chr_bg[i + 0x700] = reader.ReadByte();
                         }
                     }
+                    break;
+                case ROMData.SPR_DUNGEON_127:
+                    break;
+                case ROMData.SPR_DUNGEON_358:
+                    break;
+                case ROMData.SPR_DUNGEON_469:
+                    break;
+                case ROMData.SPR_DUNGEON_BOSS_1257:
+                    break;
+                case ROMData.SPR_DUNGEON_BOSS_3468:
+                    break;
+                case ROMData.SPR_DUNGEON_BOSS_9:
                     break;
             }
         }

@@ -9,7 +9,50 @@ namespace The_Legend_of_Zelda.Gameplay
     {
         public enum RoomType
         {
-
+            EMPTY,
+            ENTRANCE,
+            DOUBLE_2X3,
+            SINGLE_2X3,
+            FOUR_BLOCKS_CLOSE,
+            FOUR_BLOCKS_FAR,
+            SINGLE_PUSH_BLOCK,
+            FIVE_2X1,
+            GRID,
+            WATER_MAZE,
+            AQUAMENTUS_ARENA,
+            TRIFORCE,
+            CENTRAL_STAIRS,
+            WATER_POKEBALL,
+            ARENA,
+            SAND,
+            RIGHT_STAIRS,
+            DIAGONALS,
+            HORIZONTAL_BARRIER,
+            SIDEWAYS_U,
+            DOUBLE_PUSH_BLOCK,
+            MAZE,
+            HORIZONTAL_WATER_BAR,
+            WATER_MOAT,
+            GOHMA_ARENA,
+            GLEEOK_ARENA,
+            WATER_ISLAND,
+            SPIKE_TRAP,
+            VERTICAL_WATER_BAR,
+            TRIPLE_HORIZONTAL_BAR,
+            WATER_RING,
+            STATUE_DUO,
+            BOX,
+            DOUBLE_HORIZONTAL_WATER_BAR,
+            SPIRAL,
+            GANON_ARENA,
+            ZELDA,
+            VERTICAL_BARRIER,
+            VERTICAL_BARS, //2q only
+            FORCE_TURN, //2q only
+            DIAGONAL_WATER_BARRIER, //2q only
+            VOID,
+            SIDESCROLL_ITEM,
+            SIDESCROLL_SHORTCUT,
         }
 
         public enum DoorType
@@ -18,11 +61,18 @@ namespace The_Legend_of_Zelda.Gameplay
             OPEN,
             KEY,
             BOMBABLE,
-            CLOSED_ENEMY,
-            CLOSED_PUSH,
+            CLOSED_PUSH_DR,
+            CLOSED_ENEMY_UL,
+            CLOSED_ENEMY_DR,
+            CLOSED_ENEMY_UD,
+            CLOSED_ENEMY_LR,
+            CLOSED_PUSH_UL,
+            CLOSED_ALWAYS_UL,
+            CLOSED_ALWAYS_DR,
             CLOSED_TRIFORCE,
-            CLOSED_ALWAYS,
             WALK_THROUGH,
+            WALK_THROUGH_UL,
+            WALK_THROUGH_DR,
         }
 
         enum DungeonEnemies
@@ -82,6 +132,10 @@ namespace The_Legend_of_Zelda.Gameplay
         }
 
         const int NUMBER_OF_DOORS = 4;
+        const int DARKENING_EFFECT_ACTIVATE = 22;
+        const int DARKENING_EFFECT_REMOVE = -22;
+        // if you don't care about which kind of closed door it is, use this
+        public const DoorType DOOR_GENERIC_CLOSED = DoorType.CLOSED_ENEMY_UL;
 
         public byte current_dungeon { get; private set; }
         public byte nb_enemies_alive = 0;
@@ -91,9 +145,9 @@ namespace The_Legend_of_Zelda.Gameplay
 
         public bool warp_flag = false;
         public bool block_push_flag = false;
-        bool is_dark = false;
+        public bool is_dark { get; private set; } = false;
 
-        public DoorType[] door_types = new DoorType[NUMBER_OF_DOORS];
+        public DoorType[] doors = new DoorType[NUMBER_OF_DOORS];
         public bool[] door_statuses = new bool[NUMBER_OF_DOORS];
         public FlickeringSprite compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
 
@@ -197,9 +251,6 @@ namespace The_Legend_of_Zelda.Gameplay
             {0x6f,0x6f,0x6f,0x6f}  // gray stairs
         };
         // doors...
-        public readonly byte[] door_metatiles = {
-            23, 151, 81, 94
-        };
         public readonly byte[] connection_IDs = {
 #region documentation
             //  0 - none
@@ -216,8 +267,8 @@ namespace The_Legend_of_Zelda.Gameplay
             //  b - blocked: permanent down/right
             //  c - blocked: needs triforce
             //  d - walk-through wall
-            //  e - walk-through wall up/left
-            //  f - walk-through wall down/right
+            //  e - one way walk-through wall up/left
+            //  f - one way walk-through wall down/right
             //
             //  IF ROOM NEEDS CLEAR, BLOCK DOORS THAT
             //  LEAD TO PUSH ROOMS AS CLEAR DOORS
@@ -246,6 +297,7 @@ namespace The_Legend_of_Zelda.Gameplay
             384, 395, 400, 429, 438, 469, 470, 503
         };
 
+        // dungeon is 0 indexed. 0 is level 1, etc.
         public void Init(byte dungeon)
         {
             ReadOnlySpan<byte> starting_screens = new byte[]{
@@ -276,25 +328,25 @@ namespace The_Legend_of_Zelda.Gameplay
 
             LoadPalette();
             Textures.LoadNewRomData(Textures.ROMData.CHR_DUNGEON);
-            UpdateBGMusic(Sound.Songs.DUNGEON, 0);
+            UpdateBGMusic(current_dungeon == 8 ? Sound.Songs.DEATH_MOUNTAIN : Sound.Songs.DUNGEON, 0);
 
-            if (current_dungeon is 1 or 2 or 7)
+            if (current_dungeon is 0 or 1 or 6)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_127);
-            else if (current_dungeon is 3 or 5 or 8)
+            else if (current_dungeon is 2 or 4 or 7)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_358);
-            else if (current_dungeon is 4 or 6 or 9)
+            else if (current_dungeon is 3 or 7 or 8)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_469);
 
-            if (current_dungeon is 1 or 2 or 5 or 7)
+            if (current_dungeon is 0 or 1 or 4 or 6)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_1257);
-            else if (current_dungeon is 3 or 4 or 6 or 8)
+            else if (current_dungeon is 2 or 3 or 5 or 7)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_3468);
-            else if (current_dungeon == 9)
+            else if (current_dungeon == 8)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_9);
 
             for (int i = 0; i < meta_tiles.Length; i++)
             {
-                meta_tiles[i].tile_index = 1;
+                meta_tiles[i].tile_index_D = DungeonMetatile.WALL;
             }
 
             LinkWalkAnimation();
@@ -309,7 +361,7 @@ namespace The_Legend_of_Zelda.Gameplay
             if (link_walk_animation_timer > 0)
                 LinkWalkAnimation();
 
-            if (scroll_animation_timer >= SCROLL_ANIMATION_DONE)
+            if (ScrollingDone())
                 DoorCode();
 
             CheckForWarp();
@@ -403,12 +455,12 @@ namespace The_Legend_of_Zelda.Gameplay
             LinkWalkAnimation();
             if (GetRoomDarkness(scroll_destination) && !is_dark)
             {
-                is_dark = true;
-                dark_room_animation_timer = 22;
+                DarkeningAnimationActivate();
             }
 
             return true;
         }
+
 
         // plays the room darkening animation, either forwards or backwards depending on dark room enter or exit
         void DarkeningAnimation()
@@ -421,6 +473,9 @@ namespace The_Legend_of_Zelda.Gameplay
                     if (Palettes.active_palette_list[i] > 15)
                         Palettes.active_palette_list[i] -= 16;
             }
+
+            if (dark_room_animation_timer == 0)
+                return;
 
             if (dark_room_animation_timer > 0)
                 dark_room_animation_timer--;
@@ -447,11 +502,15 @@ namespace The_Legend_of_Zelda.Gameplay
                     Palettes.LoadPalette(PaletteID.BG_3, 3, Color._0F_BLACK);
                     break;
 
+                case 0:
+                    return;
+
                 case -21:
                     LoadPalette();
                     reducePalettes(list_21);
                     reducePalettes(list_11);
                     Palettes.LoadPalette(PaletteID.BG_2, 1, Color._0F_BLACK);
+                    Link.can_move = false;
                     break;
 
                 case -11:
@@ -461,15 +520,28 @@ namespace The_Legend_of_Zelda.Gameplay
 
                 case -1:
                     LoadPalette();
-                    break;
+                    if (Menu.fire_out > 0)
+                        Link.can_move = true;
+                    return;
             }
+        }
+        public void DarkeningAnimationActivate()
+        {
+            dark_room_animation_timer = DARKENING_EFFECT_ACTIVATE;
+            is_dark = true;
+        }
+        public void DarkeningAnimationDisable()
+        {
+            dark_room_animation_timer = DARKENING_EFFECT_REMOVE;
+            is_dark = false;
         }
 
         public bool GetRoomDarkness(byte room)
         {
             int value = dark_rooms[room >> 4] & 1 << 15 - room % 16;
-            return value > 0;
+            return value != 0;
         }
+
 
         // spawn ennemies and or bosses in a simillar way to overworld
         void SpawnEnemies()
@@ -616,21 +688,23 @@ namespace The_Legend_of_Zelda.Gameplay
 
         public void LinkWalkAnimation()
         {
-            const byte ANIM_LEN = 10;
+            const byte ANIM_LEN = 11;
             if (link_walk_animation_timer == 0)
             {
                 //TODO: extend animation if exiting bomb hole or door that's about to lock
                 link_walk_animation_timer = ANIM_LEN;
+                if (doors[(int)Link.facing_direction ^ 1] is not (DoorType.OPEN or DoorType.KEY) && ScrollingDone())
+                {
+                    link_walk_animation_timer = ANIM_LEN * 2;
+                }
             }
 
             if (link_walk_animation_timer == ANIM_LEN)
             {
                 if (is_dark && !GetRoomDarkness(current_screen))
                 {
-                    dark_room_animation_timer = -22;
-                    is_dark = false;
+                    DarkeningAnimationDisable();
                 }
-                Link.can_move = false;
                 UnloadSpritesRoomTransition();
                 if (dark_room_animation_timer != 0)
                 {
@@ -640,12 +714,18 @@ namespace The_Legend_of_Zelda.Gameplay
             }
             else if (link_walk_animation_timer == 1)
             {
-                Link.can_move = scroll_animation_timer >= SCROLL_ANIMATION_DONE;
+                Link.can_move = ScrollingDone();
+                Menu.can_open_menu = ScrollingDone();
                 SpawnEnemies();
                 SpawnItems();
                 SaveLoad.SetDungeonVisitedRoomFlag(current_screen, true);
+                link_walk_animation_timer = 0;
+                //CloseDoor();
+                return;
             }
 
+            Link.can_move = false;
+            Menu.can_open_menu = false;
             Link.animation_timer++;
             int x_add = 0, y_add = 0;
 
@@ -668,14 +748,109 @@ namespace The_Legend_of_Zelda.Gameplay
             link_walk_animation_timer--;
         }
 
+
+        void DoorCode()
+        {
+            bool redraw = false;
+            for (int i = 0; i < doors.Length; i++)
+            {
+                switch (doors[i])
+                {
+                    case DoorType.KEY:
+                        if (Link.dungeon_wall_push_timer >= 8 && (Math.Abs(Link.x - 120) < 3 || Math.Abs(Link.y - 144) < 3)
+                            && Link.facing_direction == (Direction)i)
+                        {
+                            if (SaveLoad.key_count == 0 && !SaveLoad.magical_key)
+                                break;
+
+                            if (SaveLoad.key_count > 0)
+                                SaveLoad.key_count--;
+
+                            // set correct key flag by getting the index of the door's connectionID in key_door_connections
+                            SaveLoad.SetOpenedKeyDoorsFlag
+                            (
+                                (byte)Array.IndexOf
+                                (
+                                    key_door_connections,
+                                    (short)DC.getConnectionID(current_screen, (Direction)i)
+                                ),
+                                true
+                            );
+
+                            MakeDoorWalkable((Direction)i);
+                            DrawDoor((Direction)i, DoorType.OPEN);
+                            // TODO: play door opening sfx
+                        }
+                        break;
+                    case DoorType.BOMBABLE:
+                        // bomb sprite sets flag to true if it hit a bombable door metatile
+                        if (door_statuses[i])
+                        {
+                            byte index = (byte)Array.IndexOf(bombable_connections, (short)getConnectionID(current_screen, (Direction)i));
+                            if (!SaveLoad.GetBombedHoleFlag(index))
+                            {
+                                SaveLoad.SetBombedHoleFlag(index, true);
+                                doors[i] = DoorType.BOMBABLE;
+                                redraw = true;
+                            }
+                        }
+                        break;
+                    case DoorType.CLOSED_ENEMY_DR or DoorType.CLOSED_ENEMY_UL:
+                        if (!door_statuses[i])
+                        {
+                            if (nb_enemies_alive <= 0)
+                            {
+                                door_statuses[i] = true;
+                                redraw = true;
+                            }
+                        }
+                        else
+                        {
+                            if (nb_enemies_alive > 0)
+                            {
+                                door_statuses[i] = false;
+                                redraw = true;
+                            }
+                        }
+                        break;
+                    case DoorType.CLOSED_PUSH_DR or DoorType.CLOSED_PUSH_UL:
+                        if (block_push_flag)
+                        {
+                            doors[i] = DoorType.OPEN;
+                            redraw = true;
+                        }
+                        break;
+                    case DoorType.CLOSED_TRIFORCE:
+                        if (SaveLoad.triforce_of_power)
+                        {
+                            doors[i] = DoorType.OPEN;
+                            redraw = true;
+                        }
+                        break;
+                    case DoorType.WALK_THROUGH:
+                        break;
+                }
+            }
+
+            if (redraw)
+                redraw = false;//InitDoors(current_screen, 0, true);
+        }
+
+        // this sets the door's entry in doors[] to its correct type, by finding and using its connectionID.
+        // however, it only does this if the entry is marked as DoorType.NONE.
+        // otherwise, it just returns the current door type of the given door.
         public DoorType GetDoorType(byte room_id, Direction door_direction)
         {
             // door_types must be cleared before use
-            if (door_types[(int)door_direction] != DoorType.NONE)
-                return door_types[(int)door_direction];
+            if (doors[(int)door_direction] != DoorType.NONE)
+                return doors[(int)door_direction];
 
+            // now we must retreive the data from the crunched up connectionID table. there are 256 bytes in the table, one for each room,
+            // but each entry in the table is 4 bits, where the upper 4 bits are the connection type between that room and the one below,
+            // and the lower 4 bits are for the connection between that room and the one to the right. if we want to know the upper or left
+            // connection, we need to check the entry for the room on the other side of those connections. connection_id will be an index into
+            // this table, but will treat each nibble as if it were its on entry, and thus pretends the table is 512 entries.
             int connection_id = 2 * room_id;
-            int connection_index;
             if (door_direction == Direction.LEFT)
                 connection_id--;
             else if (door_direction == Direction.RIGHT)
@@ -683,88 +858,335 @@ namespace The_Legend_of_Zelda.Gameplay
             else if (door_direction == Direction.UP)
                 connection_id -= 32;
 
+            // if entry indexes into out of bounds, there is no door.
             if (connection_id < 0 || connection_id >= connection_IDs.Length * 2)
                 return DoorType.NONE;
 
-            connection_index = connection_id;
+            // store the connection index for later
+            int connection_index = connection_id;
 
-            float connection_location = connection_id / 2f;
+            // now that we have our entry in the hypothetical 512 byte table, we need to retreive data from the real 256 byte table.
+            // the first step is to determine wether we want the upper nibble or lower nibble. the lower nibble will always be for
+            // left-right connections, and thus we can use the right bitmask to retreive the data.
             byte bit_mask = 0xF0;
-            if (connection_location % 1 != 0)
+            if (door_direction is (Direction.LEFT or Direction.RIGHT))
             {
                 bit_mask >>= 4;
-                connection_location -= 0.5f;
             }
-            connection_id = connection_IDs[(int)connection_location] & bit_mask;
+            connection_id = connection_IDs[connection_id / 2] & bit_mask;
             if (bit_mask == 0xF0)
                 connection_id >>= 4;
 
-            if (connection_id >= 4 && connection_id <= 0xc && door_statuses[(int)door_direction])
-                return DoorType.OPEN;
+            DoorType connection_type = (DoorType)connection_id;
 
-            switch (connection_id)
+            if (connection_type == DoorType.KEY)
             {
-                case 0:
-                    return DoorType.NONE;
-                case 1:
-                    return DoorType.OPEN;
-                case 2:
-                    if (SaveLoad.GetOpenedKeyDoorsFlag((byte)Array.IndexOf(key_door_connections, (short)connection_index)))
-                        return DoorType.OPEN;
-                    else
-                        return DoorType.KEY;
-                case 3:
-                    return DoorType.BOMBABLE;
-                case 4:
-                    if (door_direction == Direction.UP || door_direction == Direction.LEFT) // will likely have to flip conditions of a-b
-                        return DoorType.CLOSED_PUSH;
-                    else
-                        return DoorType.OPEN;
-                case 5:
-                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
-                        return DoorType.CLOSED_ENEMY;
-                    else
-                        return DoorType.OPEN;
-                case 6:
-                    if (door_direction == Direction.UP || door_direction == Direction.LEFT)
-                        return DoorType.CLOSED_ENEMY;
-                    else
-                        return DoorType.OPEN;
-                case 7 or 8:
-                    return DoorType.CLOSED_ENEMY;
-                case 9:
-                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
-                        return DoorType.CLOSED_PUSH;
-                    else
-                        return DoorType.OPEN;
-                case 0xa:
-                    if (door_direction == Direction.UP || door_direction == Direction.LEFT)
-                        return DoorType.CLOSED_ALWAYS;
-                    else
-                        return DoorType.OPEN;
-                case 0xb:
-                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
-                        return DoorType.CLOSED_ALWAYS;
-                    else
-                        return DoorType.OPEN;
-                case 0xc:
-                    return DoorType.CLOSED_TRIFORCE;
-                case 0xd:
-                    return DoorType.WALK_THROUGH;
-                case 0xe:
-                    if (door_direction == Direction.UP || door_direction == Direction.LEFT)
-                        return DoorType.WALK_THROUGH;
-                    else
-                        return DoorType.NONE;
-                case 0xf:
-                    if (door_direction == Direction.DOWN || door_direction == Direction.RIGHT)
-                        return DoorType.WALK_THROUGH;
-                    else
-                        return DoorType.NONE;
-                default:
-                    return DoorType.NONE;
+                if (SaveLoad.GetOpenedKeyDoorsFlag((byte)Array.IndexOf(key_door_connections, (short)connection_index)))
+                    connection_type = DoorType.OPEN;
+            }
+
+            doors[(int)door_direction] = connection_type;
+            return connection_type;
+
+            //switch (connection_id)
+            //{
+            //    case 0:
+            //        return DoorType.NONE;
+            //    case 1:
+            //        return DoorType.OPEN;
+            //    case 2:
+            //        if (SaveLoad.GetOpenedKeyDoorsFlag((byte)Array.IndexOf(key_door_connections, (short)connection_index)))
+            //            return DoorType.OPEN;
+            //        else
+            //            return DoorType.KEY;
+            //    case 3:
+            //        return DoorType.BOMBABLE;
+            //    case 4:
+            //        if (door_direction is (Direction.UP or Direction.LEFT)) // will likely have to flip conditions of a-b
+            //            return DoorType.CLOSED_PUSH;
+            //        else
+            //            return DoorType.OPEN;
+            //    case 5:
+            //        if (door_direction is (Direction.DOWN or Direction.RIGHT))
+            //            return DoorType.CLOSED_ENEMY;
+            //        else
+            //            return DoorType.OPEN;
+            //    case 6:
+            //        if (door_direction is (Direction.UP or Direction.LEFT))
+            //            return DoorType.CLOSED_ENEMY;
+            //        else
+            //            return DoorType.OPEN;
+            //    case 7 or 8:
+            //        return DoorType.CLOSED_ENEMY;
+            //    case 9:
+            //        if (door_direction is (Direction.DOWN or Direction.RIGHT))
+            //            return DoorType.CLOSED_PUSH;
+            //        else
+            //            return DoorType.OPEN;
+            //    case 0xa:
+            //        if (door_direction is (Direction.UP or Direction.LEFT))
+            //            return DoorType.CLOSED_ALWAYS;
+            //        else
+            //            return DoorType.OPEN;
+            //    case 0xb:
+            //        if (door_direction is (Direction.DOWN or Direction.RIGHT))
+            //            return DoorType.CLOSED_ALWAYS;
+            //        else
+            //            return DoorType.OPEN;
+            //    case 0xc:
+            //        return DoorType.CLOSED_TRIFORCE;
+            //    case 0xd:
+            //        return DoorType.WALK_THROUGH;
+            //    case 0xe:
+            //        if (door_direction is (Direction.UP or Direction.LEFT))
+            //            return DoorType.WALK_THROUGH;
+            //        else
+            //            return DoorType.NONE;
+            //    case 0xf:
+            //        if (door_direction is (Direction.DOWN or Direction.RIGHT))
+            //            return DoorType.WALK_THROUGH;
+            //        else
+            //            return DoorType.NONE;
+            //    default:
+            //        return DoorType.NONE;
+            //}
+        }
+
+        // code that gets called after PPU page drawn to a screen. sets the doors to what they should appear like
+        // during scrolling/opening/warp
+        public void InitDoors(byte room, byte screen_index)
+        {
+            int screen_index_offset = screen_index * Textures.SCREEN_TILES;
+
+            // texture data for adding an open door to a wall on any side.
+            // index into this with [direction, y, x]
+            byte[,,] door_data = {
+                {// up
+                    { 0xf6,0xf6,0xf6,0xf6 },
+                    { 0x78,0x78,0x78,0x78 },
+                    { 0x79,0x24,0x24,0x7b },
+                    { 0x7a,0x77,0x75,0x7c }
+                },
+                {// down
+                    { 0x7e,0x76,0x74,0x80 },
+                    { 0x7f,0x24,0x24,0x81 },
+                    { 0x7d,0x7d,0x7d,0x7d },
+                    { 0xf6,0xf6,0xf6,0xf6 }
+                },
+                {// left
+                    { 0xf6,0x82,0x83,0x85 },
+                    { 0xf6,0x82,0x24,0x76 },
+                    { 0xf6,0x82,0x24,0x77 },
+                    { 0xf6,0x82,0x84,0x86 }
+                },
+                {// right
+                    { 0x88,0x8a,0x87,0xf6 },
+                    { 0x74,0x24,0x87,0xf6 },
+                    { 0x75,0x24,0x87,0xf6 },
+                    { 0x89,0x8b,0x87,0xf6 }
+                }
+            };
+            int[] door_ppu_locations = { 0x10e, 0x34e, 0x220, 0x23c };
+            int[] door_center_ppu_locations = { 0x14f, 0x34f, 0x242, 0x25c};
+
+            // init door metatiles to wall. |left|  |right| |-----up---|  |----down--------|
+            foreach (byte i in new byte[] { 80, 81, 94, 95, 7, 8, 23, 24, 151, 152, 167, 168 })
+                Screen.meta_tiles[i].tile_index_D = DungeonMetatile.WALL;
+
+            if (screen_index == 1)
+                screen_index_offset -= 256;
+
+            Array.Clear(doors);
+            Array.Clear(door_statuses);
+            //foreach (byte i in door_metatiles)
+            //    meta_tiles[i].special = false;
+
+            for (int i = 0; i < doors.Length; i++)
+            {
+                // makes it so entrances only have open door on bottom, and not top of room below
+                // this checks for every room, so an additional check to prevent OOB indexing when checking the type of room above
+                if (i == (int)Direction.UP && room - 16 >= 0)
+                    if (room_list[room - 16] == (int)RoomType.ENTRANCE)
+                        continue;
+
+                doors[i] = GetDoorType(room, (Direction)i);
+
+                if (doors[i] == DoorType.NONE)
+                {
+                    continue;
+                }
+
+                // DoorType.Open is here to leech off of the code to make the 
+                if (doors[i] is DoorType.BOMBABLE)
+                {
+                    if (SaveLoad.GetBombedHoleFlag((byte)Array.IndexOf(bombable_connections, (short)getConnectionID(room, (Direction)i))))
+                    {
+                        MakeDoorWalkable((Direction)i);
+
+                        byte[,] bomb_hole_texture_data = {
+                            { 0x8c, 0x8d, 0x24, 0x24 },// up
+                            { 0x24, 0x24, 0x8e, 0x8f },// down
+                            { 0x90, 0x24, 0x91, 0x24 },// left
+                            { 0x24, 0x92, 0x24, 0x93 }// right
+                        };
+
+                        Textures.ppu[door_center_ppu_locations[i] + screen_index_offset] = bomb_hole_texture_data[i, 0];
+                        Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + 1] = bomb_hole_texture_data[i, 1];
+                        Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH] = bomb_hole_texture_data[i, 2];
+                        Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH + 1] = bomb_hole_texture_data[i, 3];
+                    }
+
+                    continue;
+                }
+
+                // draw an open door onto the wall. doesn't matter if it's supposed to be open, the middle will be replaced later
+                for (int height = 0; height < 4; height++)
+                    for (int width = 0; width < 4; width++)
+                        Textures.ppu[door_ppu_locations[i] + height * Textures.PPU_WIDTH + width + screen_index_offset] = door_data[i, height, width];
+
+                // these are not the full textures, but indexes to the top left corner of the 2x2 texture.
+                // index with [type, direction]
+                byte[,] texture_locations = {
+                    { 0x98, 0x9c, 0xa0, 0xa4 },// key door
+                    { 0xa8, 0xa8, 0xac, 0xac }// locked door
+                };
+
+
+                if (doors[i] == DoorType.OPEN)
+                {
+                    MakeDoorWalkable((Direction)i);
+                    continue;
+                }
+                // a door with doortype key will always be locked. when unlocked, the doortype is set to open, because an unlocked key door
+                // is perfectly identical to an open door.
+                else if (doors[i] == DoorType.KEY)
+                {
+                    Textures.ppu[door_center_ppu_locations[i] + screen_index_offset] = texture_locations[0, i];
+                    Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + 1] = (byte)(texture_locations[0, i] + 2);
+                    Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH] = (byte)(texture_locations[0, i] + 1);
+                    Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH + 1] = (byte)(texture_locations[0, i] + 3);
+                }
+                // remaining cases are for locked doors, but if link is coming through one form the other side,
+                // then they only lock after the walking animation. on initialization, they appear open.
+                // the direction enum is set up such that (direction) ^ 1 == (opposite direction)
+                else if ((Direction)(i ^ 1) != Link.facing_direction)
+                {
+                    Textures.ppu[door_center_ppu_locations[i] + screen_index_offset] = texture_locations[1, i];
+                    Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + 1] = (byte)(texture_locations[1, i] + 2);
+                    Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH] = (byte)(texture_locations[1, i] + 1);
+                    Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH + 1] = (byte)(texture_locations[1, i] + 3);
+                }
+            }
+
+        }
+
+        // replaces door metatiles with ones where link can walk through.
+        // setting walk_through to true will instead replace them with walk-through tiles
+        void MakeDoorWalkable(Direction dir, bool walk_through = false)
+        {
+            byte[] door_metatiles = {
+                7, 151, 80, 94
+            };
+
+            if (walk_through)
+            {
+                meta_tiles[door_metatiles[(int)dir]].tile_index_D = DungeonMetatile.WALK_THROUGH_WALL;
+                return;
+            }
+
+            switch (dir)
+            {
+                case Direction.UP:
+                case Direction.DOWN:
+                    meta_tiles[door_metatiles[(int)dir]].tile_index_D = DungeonMetatile.VERT_DOOR_LEFT;
+                    meta_tiles[door_metatiles[(int)dir] + 1].tile_index_D = DungeonMetatile.VERT_DOOR_RIGHT;
+                    meta_tiles[door_metatiles[(int)dir] + 16].tile_index_D = DungeonMetatile.VERT_DOOR_LEFT;
+                    meta_tiles[door_metatiles[(int)dir] + 16 + 1].tile_index_D = DungeonMetatile.VERT_DOOR_RIGHT;
+                    // eliminate the "room_top" tiles below top door. however, special tiles need to be made that act like
+                    // corner tiles... JUST for this edge case.
+                    if (dir == Direction.UP)
+                    {
+                        meta_tiles[door_metatiles[(int)dir] + 16 * 2].tile_index_D = DungeonMetatile.TOP_DOOR_OPEN_L;
+                        meta_tiles[door_metatiles[(int)dir] + 16 * 2 + 1].tile_index_D = DungeonMetatile.TOP_DOOR_OPEN_R;
+                    }
+                    break;
+                case Direction.LEFT:
+                case Direction.RIGHT:
+                    meta_tiles[door_metatiles[(int)dir]].tile_index_D = DungeonMetatile.ROOM_TOP;
+                    meta_tiles[door_metatiles[(int)dir]].tile_index_D = DungeonMetatile.ROOM_TOP;
+                    meta_tiles[door_metatiles[(int)dir] + 1].tile_index_D = DungeonMetatile.ROOM_TOP;
+                    meta_tiles[door_metatiles[(int)dir] + 1].tile_index_D = DungeonMetatile.ROOM_TOP;
+                    break;
             }
         }
+
+        void DrawDoor(Direction door, DoorType new_type)
+        {
+            byte[,,] door_data = {
+                {// up
+                    { 0xf6,0xf6,0xf6,0xf6 },
+                    { 0x78,0x78,0x78,0x78 },
+                    { 0x79,0x24,0x24,0x7b },
+                    { 0x7a,0x77,0x75,0x7c }
+                },
+                {// down
+                    { 0x7e,0x76,0x74,0x80 },
+                    { 0x7f,0x24,0x24,0x81 },
+                    { 0x7d,0x7d,0x7d,0x7d },
+                    { 0xf6,0xf6,0xf6,0xf6 }
+                },
+                {// left
+                    { 0xf6,0x82,0x83,0x85 },
+                    { 0xf6,0x82,0x24,0x76 },
+                    { 0xf6,0x82,0x24,0x77 },
+                    { 0xf6,0x82,0x84,0x86 }
+                },
+                {// right
+                    { 0x88,0x8a,0x87,0xf6 },
+                    { 0x74,0x24,0x87,0xf6 },
+                    { 0x75,0x24,0x87,0xf6 },
+                    { 0x89,0x8b,0x87,0xf6 }
+                }
+            };
+            int[] door_ppu_locations = { 0x10e, 0x34e, 0x220, 0x23c };
+            int[] door_center_ppu_locations = { 0x14f, 0x34f, 0x242, 0x25c };
+            // copied from InitDoors()
+            byte[] locked_door_tile_indexes = {
+                0xa8, 0xa8, 0xac, 0xac
+            };
+            byte[,] bomb_hole_texture_data = {
+                { 0x8c, 0x8d, 0x24, 0x24 },// up
+                { 0x24, 0x24, 0x8e, 0x8f },// down
+                { 0x90, 0x24, 0x91, 0x24 },// left
+                { 0x24, 0x92, 0x24, 0x93 }// right
+            };
+
+            switch (new_type)
+            {
+                case DoorType.OPEN:
+                    // code copied from InitDoors(). it draws the whole thing instead of the 2x2 area that needs to be modified, but fuckin whatever.
+                    //TODO: reduce this to the 2x2 needed
+                    for (int height = 0; height < 4; height++)
+                        for (int width = 0; width < 4; width++)
+                            Textures.ppu[door_ppu_locations[(int)door] + height * Textures.PPU_WIDTH + width] = door_data[(int)door, height, width];
+                    break;
+
+                case DoorType.BOMBABLE:
+                    Textures.ppu[door_center_ppu_locations[(int)door]] = bomb_hole_texture_data[(int)door, 0];
+                    Textures.ppu[door_center_ppu_locations[(int)door] + 1] = bomb_hole_texture_data[(int)door, 1];
+                    Textures.ppu[door_center_ppu_locations[(int)door] + Textures.PPU_WIDTH] = bomb_hole_texture_data[(int)door, 2];
+                    Textures.ppu[door_center_ppu_locations[(int)door] + Textures.PPU_WIDTH + 1] = bomb_hole_texture_data[(int)door, 3];
+                    break;
+
+                case DOOR_GENERIC_CLOSED:
+                    Textures.ppu[door_center_ppu_locations[(int)door]] = locked_door_tile_indexes[(int)door];
+                    Textures.ppu[door_center_ppu_locations[(int)door] + 1] = (byte)(locked_door_tile_indexes[(int)door] + 2);
+                    Textures.ppu[door_center_ppu_locations[(int)door] + Textures.PPU_WIDTH] = (byte)(locked_door_tile_indexes[(int)door] + 1);
+                    Textures.ppu[door_center_ppu_locations[(int)door] + Textures.PPU_WIDTH + 1] = (byte)(locked_door_tile_indexes[(int)door] + 3);
+                    break;
+            }
+        }
+
 
         // get connection ID of connection between two rooms, found with direction relative to room id
         public int getConnectionID(byte room_id, Direction door_direction)
@@ -783,212 +1205,13 @@ namespace The_Legend_of_Zelda.Gameplay
                 return connection_id;
         }
 
-        public void DrawDoors(byte room, byte screen_index, bool redraw = false)
-        {
-            int screen_index_offset = screen_index * 0x3c0;
-
-            byte[] door_data = {
-                0xf6,0xf6,0xf6,0xf6,0x78,0x78,0x78,0x78,0x79,0x24,0x24,0x7b,0x7a,0x77,0x75,0x7c,
-                0x7e,0x76,0x74,0x80,0x7f,0x24,0x24,0x81,0x7d,0x7d,0x7d,0x7d,0xf6,0xf6,0xf6,0xf6,
-                0xf6,0x82,0x83,0x85,0xf6,0x82,0x24,0x76,0xf6,0x82,0x24,0x77,0xf6,0x82,0x84,0x86,
-                0x88,0x8a,0x87,0xf6,0x74,0x24,0x87,0xf6,0x75,0x24,0x87,0xf6,0x89,0x8b,0x87,0xf6
-            };
-            short[] door_ppu_locations = { 0x10e, 0x34e, 0x220, 0x23c };
-            byte[] ppu_location_differences = { 65, 1, 34, 32 };
-
-            if (screen_index == 1)
-                screen_index_offset -= 256;
-
-            if (!redraw)
-            {
-                Array.Clear(door_types);
-                Array.Clear(door_statuses);
-                foreach (byte i in door_metatiles)
-                    meta_tiles[i].special = false;
-            }
-
-            for (int i = 0; i < door_types.Length; i++)
-            {
-                if (!redraw)
-                    door_types[i] = GetDoorType(room, (Direction)i);
-
-                if (i == 0 && room - 16 >= 0) // makes it so entrances only have open door on bottom, and not top of room below
-                    if (room_list[room - 16] == 1)
-                        continue;
-
-                if (door_types[i] == DoorType.NONE)
-                {
-                    continue;
-                }
-
-                if (door_types[i] is DoorType.BOMBABLE or DoorType.WALK_THROUGH)
-                {
-                    //meta_tiles[door_metatiles[i]].special = true;
-                    if (door_types[i] == DoorType.BOMBABLE &&
-                        SaveLoad.GetBombedHoleFlag((byte)Array.IndexOf(bombable_connections, (short)getConnectionID(room, (Direction)i))))
-                    {
-                        byte[] bomb_hole_texture_data = {
-                            0x8c, 0x8d, 0x24, 0x24,
-                            0x24, 0x24, 0x8e, 0x8f,
-                            0x90, 0x24, 0x91, 0x24,
-                            0x24, 0x92, 0x24, 0x93
-                        };
-
-                        int ppu_location2 = door_ppu_locations[i] + ppu_location_differences[i];
-                        Textures.ppu[ppu_location2 + screen_index_offset] = bomb_hole_texture_data[i * 4];
-                        Textures.ppu[ppu_location2 + 1 + screen_index_offset] = bomb_hole_texture_data[i * 4 + 1];
-                        Textures.ppu[ppu_location2 + 32 + screen_index_offset] = bomb_hole_texture_data[i * 4 + 2];
-                        Textures.ppu[ppu_location2 + 33 + screen_index_offset] = bomb_hole_texture_data[i * 4 + 3];
-                        MakeDoorWalkable(i);
-                    }
-                    else if (door_types[i] == DoorType.WALK_THROUGH)
-                    {
-                        MakeDoorWalkable(i, true);
-                    }
-
-                    continue;
-                }
-
-                for (int height = 0; height < 4; height++)
-                    for (int width = 0; width < 4; width++)
-                        Textures.ppu[door_ppu_locations[i] + height * 32 + width + screen_index_offset] = door_data[height * 4 + width + i * 16];
-
-                byte[] texture_locations = { 0x98, 0x9c, 0xa0, 0xa4, 0xa8, 0xa8, 0xac, 0xac };
-                int ppu_location = door_ppu_locations[i] + ppu_location_differences[i];
-
-
-                if (door_types[i] == DoorType.OPEN)
-                {
-                    MakeDoorWalkable(i);
-                    continue;
-                }
-                else if (door_types[i] == DoorType.KEY)
-                {
-                    Textures.ppu[ppu_location + screen_index_offset] = texture_locations[i];
-                    Textures.ppu[ppu_location + 1 + screen_index_offset] = (byte)(texture_locations[i] + 2);
-                    Textures.ppu[ppu_location + 32 + screen_index_offset] = (byte)(texture_locations[i] + 1);
-                    Textures.ppu[ppu_location + 33 + screen_index_offset] = (byte)(texture_locations[i] + 3);
-                    MakeDoorWalkable(i, locked_key_door: true);
-                }
-                else
-                {
-                    Textures.ppu[ppu_location + screen_index_offset] = texture_locations[i + 4];
-                    Textures.ppu[ppu_location + 1 + screen_index_offset] = (byte)(texture_locations[i + 4] + 2);
-                    Textures.ppu[ppu_location + 32 + screen_index_offset] = (byte)(texture_locations[i + 4] + 1);
-                    Textures.ppu[ppu_location + 33 + screen_index_offset] = (byte)(texture_locations[i + 4] + 3);
-                }
-            }
-
-            void MakeDoorWalkable(int i, bool walk_through = false, bool locked_key_door = false)
-            {
-                int add = 0;
-                for (int loop = 0; loop < 2; loop++)
-                {
-                    if (loop != 0)
-                    {
-                        if (i == 0)
-                            add = -16;
-                        else if (i == 1)
-                            add = 16;
-                        else if (i == 2)
-                            add = -1;
-                        else
-                            add = 1;
-                    }
-
-                    if (walk_through)
-                    {
-                        meta_tiles[door_metatiles[i]].tile_index = 13;
-                        return;
-                    }
-                    else if (locked_key_door)
-                    {
-                        meta_tiles[door_metatiles[i]].special = true;
-                        meta_tiles[door_metatiles[i]].tile_index = 1;
-                        return;
-                    }
-
-                    if (i < 2)
-                    {
-                        meta_tiles[door_metatiles[i] + add].tile_index = 11;
-                        meta_tiles[door_metatiles[i] + 1 + add].tile_index = 12;
-                    }
-                    else
-                    {
-                        meta_tiles[door_metatiles[i] + add].tile_index = 10;
-                    }
-                }
-            }
-        }
-
-        void DoorCode()
-        {
-            bool redraw = false;
-            for (int i = 0; i < door_types.Length; i++)
-            {
-                switch (door_types[i])
-                {
-                    case DoorType.KEY:
-                        break;
-                    case DoorType.BOMBABLE:
-                        if (door_statuses[i])
-                        {
-                            byte index = (byte)Array.IndexOf(bombable_connections, (short)getConnectionID(current_screen, (Direction)i));
-                            if (!SaveLoad.GetBombedHoleFlag(index))
-                            {
-                                SaveLoad.SetBombedHoleFlag(index, true);
-                                door_types[i] = DoorType.BOMBABLE;
-                                redraw = true;
-                            }
-                        }
-                        break;
-                    case DoorType.CLOSED_ENEMY:
-                        if (!door_statuses[i])
-                        {
-                            if (nb_enemies_alive <= 0)
-                            {
-                                door_statuses[i] = true;
-                                redraw = true;
-                            }
-                        }
-                        else
-                        {
-                            if (nb_enemies_alive > 0)
-                            {
-                                door_statuses[i] = false;
-                                redraw = true;
-                            }
-                        }
-                        break;
-                    case DoorType.CLOSED_PUSH:
-                        if (block_push_flag)
-                        {
-                            door_types[i] = DoorType.OPEN;
-                            redraw = true;
-                        }
-                        break;
-                    case DoorType.CLOSED_TRIFORCE:
-                        if (SaveLoad.triforce_of_power)
-                        {
-                            door_types[i] = DoorType.OPEN;
-                            redraw = true;
-                        }
-                        break;
-                    case DoorType.WALK_THROUGH:
-                        break;
-                }
-            }
-
-            if (redraw)
-                DrawDoors(current_screen, 0, true);
-        }
 
         void CheckForWarp()
         {
             if (warp_flag)
             {
                 warp_flag = false;
-                Link.current_action = Link.Action.WALKING_DOWN;
+                Link.current_action = LinkAction.WALKING_DOWN;
             }
         }
 

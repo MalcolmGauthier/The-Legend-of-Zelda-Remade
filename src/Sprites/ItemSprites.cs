@@ -619,9 +619,9 @@ namespace The_Legend_of_Zelda.Sprites
             {
                 for (int j = -16; j < 17; j += 16)
                 {
-                    metatile_index = (y + i & ~0xF) + (x + j >> 4) - 64;
+                    metatile_index = Screen.GetMetaTileIndexAtLocation(j, i);
 
-                    if (metatile_index < 0 || metatile_index > Screen.meta_tiles.Length)
+                    if (metatile_index < 0)
                         continue;
 
                     if (gamemode == Gamemode.OVERWORLD)
@@ -630,8 +630,8 @@ namespace The_Legend_of_Zelda.Sprites
                             continue;
 
                         SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, OC.current_screen), true);
-                        Screen.meta_tiles[metatile_index].tile_index = 3;
-                        int ppu_index = 2 * metatile_index + 2 * (metatile_index & 0xFFFFFF0) + 256;
+                        Screen.meta_tiles[metatile_index].tile_index = MetatileType.BLACK_SQUARE_WARP;
+                        int ppu_index = 2 * metatile_index + 2 * (metatile_index & (~0xF)) + 256;
                         Textures.ppu[ppu_index] = 0x24;
                         Textures.ppu[ppu_index + 1] = 0x24;
                         Textures.ppu[ppu_index + 32] = 0x24;
@@ -639,10 +639,10 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     else
                     {
-                        if (MemoryExtensions.Contains(DC.door_metatiles, (byte)metatile_index)) // byte[].Contains marche pas
-                        {
-                            DC.door_statuses[Array.IndexOf(DC.door_metatiles, (byte)metatile_index)] = true;
-                        }
+                        //if (MemoryExtensions.Contains(DC.door_metatiles, (byte)metatile_index)) // byte[].Contains marche pas
+                        //{
+                        //    DC.door_statuses[Array.IndexOf(DC.door_metatiles, (byte)metatile_index)] = true;
+                        //}
                     }
                 }
             }
@@ -680,6 +680,13 @@ namespace The_Legend_of_Zelda.Sprites
             {
                 Move(1);
             }
+            else if (animation_timer == 33)
+            {
+                if (gamemode == Gamemode.DUNGEON && DC.is_dark)
+                {
+                    DC.DarkeningAnimationDisable();
+                }
+            }
             else if (animation_timer == 94)
             {
                 BurnBushes();
@@ -692,9 +699,7 @@ namespace The_Legend_of_Zelda.Sprites
 
             if (animation_timer % 4 == 0)
             {
-                byte swap = counterpart.tile_index;
-                counterpart.tile_index = tile_index;
-                tile_index = swap;
+                (tile_index, counterpart.tile_index) = (counterpart.tile_index, tile_index);
                 xflip = !xflip;
                 counterpart.xflip = !counterpart.xflip;
             }
@@ -706,6 +711,10 @@ namespace The_Legend_of_Zelda.Sprites
         void BurnBushes()
         {
             int metatile_index;
+
+            if (gamemode == Gamemode.DUNGEON)
+                return;
+
             for (int i = -8; i < 9; i += 8)
             {
                 for (int j = -8; j < 9; j += 8)
@@ -719,7 +728,7 @@ namespace The_Legend_of_Zelda.Sprites
                         continue;
 
                     SaveLoad.SetOverworldSecretsFlag((byte)Array.IndexOf(OC.screens_with_secrets_list, OC.current_screen), true);
-                    Screen.meta_tiles[metatile_index].tile_index = 0x15;
+                    Screen.meta_tiles[metatile_index].tile_index = MetatileType.STAIRS;
                     int ppu_index = 2 * metatile_index + 2 * (metatile_index & 0xFFFFFF0) + 256;
                     Textures.ppu[ppu_index] = 0x70;
                     Textures.ppu[ppu_index + 1] = 0x72;
@@ -941,17 +950,21 @@ namespace The_Legend_of_Zelda.Sprites
         byte local_timer = 0;
         byte speed = 3;
         bool returning = false;
-        int x_dist_from_link, y_dist_from_link;
+        int x_dist_from_parent, y_dist_from_parent;
+        int return_x, return_y;
         EightDirection m_direction;
+        IBoomerangThrower parent;
 
-        public BoomerangSprite(int x, int y, bool is_from_link) : base(is_from_link, true, 1)
+        public BoomerangSprite(int x, int y, bool is_from_link, IBoomerangThrower parent) : base(is_from_link, true, 1)
         {
             this.x = x;
             this.y = y;
+            this.parent = parent;
             if (SaveLoad.magical_boomerang)
                 palette_index = 5;
             unload_during_transition = true;
             m_direction = FindBoomerangDirection();
+            parent.boomerang_out = true;
             Link.animation_timer = 0;
         }
 
@@ -959,7 +972,7 @@ namespace The_Legend_of_Zelda.Sprites
         {
             if (!(tile_index == 0x3c && !returning))
             {
-                switch (local_timer % 16 >> 1)
+                switch ((local_timer % 16) / 2)
                 {
                     case 0:
                         tile_index = 0x36;
@@ -1002,16 +1015,24 @@ namespace The_Legend_of_Zelda.Sprites
             }
             local_timer++;
 
+            // only update return pos if parent still exists
+            if (parent is Sprite s && Screen.sprites.Contains(s))
+            {
+                return_x = s.x;
+                return_y = s.y;
+            }
+
             //TODO: what about goriya? booreangs are not always thrown by link
             if (returning)
             {
                 // https://www.desmos.com/calculator/esasntj0cm
-                x_dist_from_link = x + 4 - (Link.x + 8);
-                y_dist_from_link = y + 8 - (Link.y + 8);
-                float angle = MathF.Atan(x_dist_from_link / (y_dist_from_link + 0.01f)); // +0.01f auto converts y_dist_from_link to float AND prevents div by 0 error
+                x_dist_from_parent = x + 4 - (return_x + 8);
+                y_dist_from_parent = y + 8 - (return_y + 8);
+                // +0.01f auto converts y_dist_from_link to float AND prevents div by 0 error
+                float angle = MathF.Atan(x_dist_from_parent / (y_dist_from_parent + 0.01f));
                 float x_dist_to_move = MathF.Sin(angle) * speed;
                 float y_dist_to_move = MathF.Cos(angle) * speed;
-                if (y_dist_from_link >= 0)
+                if (y_dist_from_parent >= 0)
                 {
                     x_dist_to_move = -x_dist_to_move;
                     y_dist_to_move = -y_dist_to_move;
@@ -1022,17 +1043,10 @@ namespace The_Legend_of_Zelda.Sprites
                 x += (int)x_dist_to_move;
                 y += (int)y_dist_to_move;
 
-                if (Math.Abs(x_dist_from_link) < 8 && Math.Abs(y_dist_from_link) < 8)
+                if (Math.Abs(x_dist_from_parent) < 8 && Math.Abs(y_dist_from_parent) < 8)
                 {
-                    if (Link.current_action == Link.Action.WALKING_LEFT)
-                        Link.current_action = Link.Action.ATTACK_LEFT;
-                    else if (Link.current_action == Link.Action.WALKING_UP)
-                        Link.current_action = Link.Action.ATTACK_UP;
-                    else if (Link.current_action == Link.Action.WALKING_DOWN)
-                        Link.current_action = Link.Action.ATTACK_DOWN;
-                    else if (Link.current_action == Link.Action.WALKING_RIGHT)
-                        Link.current_action = Link.Action.ATTACK_RIGHT;
-                    Link.using_item = true;
+                    parent.BoomerangRetreive();
+                    parent.boomerang_out = false;
                     Menu.boomerang_out = false;
                     Screen.sprites.Remove(this);
                 }
@@ -1201,9 +1215,11 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class LadderSprite : Sprite
     {
+        const int INVALID_TILE = 0xff;
+
         int tile_being_used;
         bool half_off;
-        byte og_tile, og_tile_2 = 0xff;
+        MetatileType og_tile, og_tile_2 = (MetatileType)INVALID_TILE;
 
         StaticSprite counterpart = new StaticSprite(0x76, 4, 0, 0, xflip: true);
 
@@ -1214,7 +1230,7 @@ namespace The_Legend_of_Zelda.Sprites
             tile_being_used = metatile_index;
 
             og_tile = Screen.meta_tiles[tile_being_used].tile_index;
-            byte tile_to_use = 0, tile_to_use_2 = 0;
+            MetatileType tile_to_use = 0, tile_to_use_2 = 0;
 
             if (Link.facing_direction == Direction.UP)
             {
@@ -1223,21 +1239,21 @@ namespace The_Legend_of_Zelda.Sprites
                 if (half_off)
                 {
                     if (IsTileWater(og_tile))
-                        tile_to_use = 0x32;
+                        tile_to_use = MetatileType.LADDER_TL;
                     og_tile_2 = Screen.meta_tiles[tile_being_used + 1].tile_index;
                     if (IsTileWater(og_tile_2))
-                        tile_to_use_2 = 0x33;
+                        tile_to_use_2 = MetatileType.LADDER_TR;
                     if (!IsTileWater(Screen.meta_tiles[metatile_index - 16].tile_index))
                     {
-                        tile_to_use = 0x34;
-                        tile_to_use_2 = 0x34;
+                        tile_to_use = MetatileType.LADDER_EMPTY;
+                        tile_to_use_2 = MetatileType.LADDER_EMPTY;
                     }
                 }
                 else
                 {
-                    tile_to_use = 0x2e;
+                    tile_to_use = MetatileType.LADDER_TOP;
                     if (!IsTileWater(Screen.meta_tiles[metatile_index - 16].tile_index))
-                        tile_to_use = 0x34;
+                        tile_to_use = MetatileType.LADDER_EMPTY;
                 }
             }
             else if (Link.facing_direction == Direction.DOWN)
@@ -1247,14 +1263,14 @@ namespace The_Legend_of_Zelda.Sprites
                 if (half_off)
                 {
                     if (IsTileWater(og_tile))
-                        tile_to_use = 0x30;
+                        tile_to_use = MetatileType.LADDER_LEFT;
                     og_tile_2 = Screen.meta_tiles[tile_being_used + 1].tile_index;
                     if (IsTileWater(og_tile_2))
-                        tile_to_use_2 = 0x31;
+                        tile_to_use_2 = MetatileType.LADDER_RIGHT;
                 }
                 else
                 {
-                    tile_to_use = 0x34;
+                    tile_to_use = MetatileType.LADDER_EMPTY;
                 }
             }
             else
@@ -1265,16 +1281,16 @@ namespace The_Legend_of_Zelda.Sprites
                     half_off = true;
                 }
 
-                if (!IsTileWater(Screen.GetTileIndexAtLocation(x + 8, y - 16)))
+                if (!IsTileWater(Screen.GetMetaTileTypeAtLocation(x + 8, y - 16)))
                 {
-                    tile_to_use = 0x34;
+                    tile_to_use = MetatileType.LADDER_EMPTY;
                 }
                 else
                 {
                     if (half_off)
-                        tile_to_use = 0x2f;
+                        tile_to_use = MetatileType.LADDER_BOTTOM;
                     else
-                        tile_to_use = 0x2e;
+                        tile_to_use = MetatileType.LADDER_TOP;
                 }
             }
             Screen.meta_tiles[tile_being_used].tile_index = tile_to_use;
@@ -1307,14 +1323,14 @@ namespace The_Legend_of_Zelda.Sprites
 
         public override void Action()
         {
-            if (!IsTileWater(Screen.GetTileIndexAtLocation(Link.x, Link.y + 8)) && !IsTileWater(Screen.GetTileIndexAtLocation(Link.x + 15, Link.y + 8)) &&
-                !IsTileWater(Screen.GetTileIndexAtLocation(Link.x, Link.y + 15)) && !IsTileWater(Screen.GetTileIndexAtLocation(Link.x + 15, Link.y + 15)))
+            if (!IsTileWater(Screen.GetMetaTileTypeAtLocation(Link.x, Link.y + 8)) && !IsTileWater(Screen.GetMetaTileTypeAtLocation(Link.x + 15, Link.y + 8)) &&
+                !IsTileWater(Screen.GetMetaTileTypeAtLocation(Link.x, Link.y + 15)) && !IsTileWater(Screen.GetMetaTileTypeAtLocation(Link.x + 15, Link.y + 15)))
             {
                 //if (Link.x >= x - 16 && Link.x <= x + 16 && Link.y >= y - 16 && Link.y <= y + 16)
                 //    return;
                 Link.ladder_used = false;
                 Screen.meta_tiles[tile_being_used].tile_index = og_tile;
-                if (og_tile_2 != 0xff)
+                if (og_tile_2 != (MetatileType)INVALID_TILE)
                 {
                     Screen.meta_tiles[tile_being_used + 1].tile_index = og_tile_2;
                 }
@@ -1326,22 +1342,22 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        bool IsTileWater(int index)
+        bool IsTileWater(MetatileType index)
         {
             if (gamemode == Gamemode.OVERWORLD)
             {
-                if (index >= 0xa && index <= 0x12)
+                if (index >= MetatileType.WATER && index <= MetatileType.WATER_BL)
                     return true;
-                else if (index == 0x17 || index == 0x18)
+                else if (index == MetatileType.WATERFALL || index == MetatileType.WATERFALL_BOTTOM)
                     return true;
-                else if (index >= 0x2e)
+                else if (index >= MetatileType.LADDER_TOP)
                     return true;
                 else
                     return false;
             }
             else
             {
-                return index == 2 || index >= 0x2e;
+                return index == (MetatileType)DungeonMetatile.WATER || index >= MetatileType.LADDER_TOP;
             }
         }
     }
@@ -1516,5 +1532,12 @@ namespace The_Legend_of_Zelda.Sprites
                 SaveLoad.bomb_count = SaveLoad.bomb_limit;
             Screen.sprites.Remove(this);
         }
+    }
+
+    public interface IBoomerangThrower
+    {
+        public bool boomerang_out { get; set; }
+
+        public abstract void BoomerangRetreive();
     }
 }

@@ -178,9 +178,9 @@ namespace The_Legend_of_Zelda.Gameplay
                     text_row_1 = new byte[23] { 0x1d, 0xa, 0x14, 0xe, 0x24, 0xa, 0x17, 0x22, 0x24, 0x1b, 0x18, 0xa, 0xd, 0x24, 0x22, 0x18, 0x1e, 0x24, 0x20, 0xa, 0x17, 0x1d, 0x2c }; // TAKE ANY ROAD YOU WANT.
 
                     // add the three staircases to the screen
-                    Screen.meta_tiles[101].tile_index = 0x15;
-                    Screen.meta_tiles[104].tile_index = 0x15;
-                    Screen.meta_tiles[107].tile_index = 0x15;
+                    Screen.meta_tiles[101].tile_index = MetatileType.STAIRS;
+                    Screen.meta_tiles[104].tile_index = MetatileType.STAIRS;
+                    Screen.meta_tiles[107].tile_index = MetatileType.STAIRS;
                     for (int i = 0; i < 3; i++)
                     {
                         Textures.ppu[0x28a + i * 6] = 0x70;
@@ -436,7 +436,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 TextTick();
 
             // link can only move if the text is done scrolling and the fire has appeared
-            if (Link.current_action is not (Link.Action.ITEM_GET or Link.Action.ITEM_HELD_UP) && !Menu.menu_open)
+            if (Link.current_action is not (LinkAction.ITEM_GET or LinkAction.ITEM_HELD_UP) && !Menu.menu_open)
                 Link.can_move = text_counter >= text_row_1.Length + text_row_2.Length && fire_appeared;
 
             // check for item collection
@@ -532,14 +532,14 @@ namespace The_Legend_of_Zelda.Gameplay
                     item_get_timer = 0;
                     items[i].x = Link.x;
                     items[i].y = Link.y - 16;
-                    Link.current_action = Link.Action.ITEM_GET;
+                    Link.current_action = LinkAction.ITEM_GET;
                     Link.can_move = false;
                     // check for heart container (double sprite)
                     // why is heart container not a full sprite with a counterpart?
                     // because the there's no class for a static sprite with a counterpart.
                     if (warp_info == WarpType.HEALTH_UPGRADE && i != 0)
                     {
-                        Link.current_action = Link.Action.ITEM_HELD_UP;
+                        Link.current_action = LinkAction.ITEM_HELD_UP;
                         items[1].x = Link.x + 0;
                         items[1].y = Link.y - 16;
                         items[2].x = Link.x + 8;

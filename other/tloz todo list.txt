@@ -1,9 +1,9 @@
 tloz todo list:
 
 bugs:
+- walk during menu/walk anim
 
 to make:
-- enum for metatiles
 - enum for dungeon room types
 - get dungeon working
 - add item collision to sword

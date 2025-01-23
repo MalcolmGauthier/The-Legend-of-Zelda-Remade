@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Runtime.CompilerServices;
+using The_Legend_of_Zelda.Sprites;
 using The_Legend_of_Zelda.Rendering;
 using static SDL2.SDL;
 using static SDL2.SDL_mixer;
@@ -40,6 +41,7 @@ namespace The_Legend_of_Zelda.Gameplay
         public static Random RNG = new Random();
         public static OverworldCode OC = new();
         public static DungeonCode DC = new();
+        public static LinkSprite Link = new();
 
         // debug
         static long last_fps_display = DateTime.Now.Ticks;

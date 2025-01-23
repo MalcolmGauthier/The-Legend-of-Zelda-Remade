@@ -40,7 +40,7 @@ namespace The_Legend_of_Zelda.Gameplay
             if (death_timer == 0)
             {
                 Link.can_move = false;
-                Link.current_action = Link.Action.WALKING_DOWN;
+                Link.current_action = LinkAction.WALKING_DOWN;
                 // forces animation to update next frame
                 Link.animation_timer += 6;
                 // sets flash timer for 32 frames
@@ -74,14 +74,14 @@ namespace The_Legend_of_Zelda.Gameplay
             {
                 if (death_timer % 5 == 0)
                 {
-                    if (Link.current_action == Link.Action.WALKING_DOWN)
-                        Link.current_action = Link.Action.WALKING_RIGHT;
-                    else if (Link.current_action == Link.Action.WALKING_RIGHT)
-                        Link.current_action = Link.Action.WALKING_UP;
-                    else if (Link.current_action == Link.Action.WALKING_UP)
-                        Link.current_action = Link.Action.WALKING_LEFT;
+                    if (Link.current_action == LinkAction.WALKING_DOWN)
+                        Link.current_action = LinkAction.WALKING_RIGHT;
+                    else if (Link.current_action == LinkAction.WALKING_RIGHT)
+                        Link.current_action = LinkAction.WALKING_UP;
+                    else if (Link.current_action == LinkAction.WALKING_UP)
+                        Link.current_action = LinkAction.WALKING_LEFT;
                     else
-                        Link.current_action = Link.Action.WALKING_DOWN;
+                        Link.current_action = LinkAction.WALKING_DOWN;
 
                     // forces link animation to update
                     Link.animation_timer += 6;

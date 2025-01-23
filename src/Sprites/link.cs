@@ -16,56 +16,57 @@ namespace The_Legend_of_Zelda.Sprites
         RIGHT
     }
 
-    public static class Link
+    public enum LinkAction
     {
-        public static int x, y;
-        public static int animation_timer = 0;
-        static int safe_x, safe_y;
+        WALKING_LEFT,
+        WALKING_RIGHT,
+        WALKING_UP,
+        WALKING_DOWN,
+        ATTACK_LEFT,
+        ATTACK_RIGHT,
+        ATTACK_UP,
+        ATTACK_DOWN,
+        ITEM_GET,
+        ITEM_HELD_UP,
+    }
 
-        public static float hp = 3;
+    public class LinkSprite : IBoomerangThrower
+    {
+        public int x, y;
+        public int animation_timer = 0;
+        int safe_x, safe_y;
 
-        public static byte nb_of_ens_killed = 0;
-        public static byte nb_of_ens_killed_damageless = 0;
-        public static byte iframes_timer;
-        public static byte knockback_timer;
-        static byte longer_attack_anim = 0;
-        static byte dungeon_wall_push_timer = 0;
+        public float hp = 3;
 
-        public static bool ladder_used = false;
-        public static bool can_move = false;
-        public static bool has_moved_after_warp_flag = true;
-        public static bool sword_out = false;
-        public static bool wand_out = false;
-        public static bool using_item = false;
-        public static bool shown;
-        public static bool full_heal_flag = false;
-        public static bool clock_flash = false;
-        static bool stair_speed = false;
+        public byte nb_of_ens_killed = 0;
+        public byte nb_of_ens_killed_damageless = 0;
+        public byte iframes_timer;
+        public byte knockback_timer;
+        byte longer_attack_anim = 0;
+        public int dungeon_wall_push_timer { get; private set; } = 0;
 
-        public static Direction facing_direction;
-        public static Direction knockback_direction;
-        public static Action current_action;
+        public bool ladder_used = false;
+        public bool can_move = false;
+        public bool has_moved_after_warp_flag = true;
+        public bool sword_out { get; private set; } = false;
+        public bool wand_out { get; private set; } = false;
+        public bool using_item = false;
+        public bool full_heal_flag = false;
+        public bool clock_flash = false;
+        public bool shown { get; private set; }
+        public bool boomerang_out { get => Menu.boomerang_out; set => Menu.boomerang_out = value; }
+        bool stair_speed = false;
 
-        public static StaticSprite self = new StaticSprite(0x00, 4, 0, 0);
-        public static StaticSprite counterpart = new StaticSprite(0x00, 4, 8, 0);
-        static StaticSprite sword_1 = new StaticSprite(0x20, 4, 0, 0);
-        static StaticSprite sword_2 = new StaticSprite(0x20, 4, 0, 0);
+        public Direction facing_direction;
+        public Direction knockback_direction;
+        public LinkAction current_action;
 
-        public enum Action
-        {
-            WALKING_LEFT,
-            WALKING_RIGHT,
-            WALKING_UP,
-            WALKING_DOWN,
-            ATTACK_LEFT,
-            ATTACK_RIGHT,
-            ATTACK_UP,
-            ATTACK_DOWN,
-            ITEM_GET,
-            ITEM_HELD_UP,
-        }
+        public StaticSprite self = new StaticSprite(0x00, 4, 0, 0);
+        public StaticSprite counterpart = new StaticSprite(0x00, 4, 8, 0);
+        StaticSprite sword_1 = new StaticSprite(0x20, 4, 0, 0);
+        StaticSprite sword_2 = new StaticSprite(0x20, 4, 0, 0);
 
-        public static void Init()
+        public void Init()
         {
             shown = false;
 
@@ -74,7 +75,7 @@ namespace The_Legend_of_Zelda.Sprites
             if (!sprites.Contains(counterpart))
                 sprites.Add(counterpart);
 
-            current_action = Action.WALKING_UP;
+            current_action = LinkAction.WALKING_UP;
             facing_direction = Direction.UP;
             SetPos(120, 144);
 
@@ -89,7 +90,7 @@ namespace The_Legend_of_Zelda.Sprites
             Tick();
         }
 
-        public static void Tick()
+        public void Tick()
         {
             CheckIfRecorderPlaying();
 
@@ -150,7 +151,7 @@ namespace The_Legend_of_Zelda.Sprites
             boomerang = true;
         }
 
-        static void CheckIfRecorderPlaying()
+        void CheckIfRecorderPlaying()
         {
             if (Sound.recorder_playing && !Sound.RecorderPlaying())
             {
@@ -159,14 +160,14 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        static void Move()
+        void Move()
         {
             if (IsHeld(Buttons.UP) ^ IsHeld(Buttons.DOWN))
             {
                 animation_timer++;
                 if (IsHeld(Buttons.UP))
                 {
-                    current_action = Action.WALKING_UP;
+                    current_action = LinkAction.WALKING_UP;
                     ChangePos(false, false);
                     if (facing_direction == Direction.LEFT || facing_direction == Direction.RIGHT)
                         GotoMod8();
@@ -174,7 +175,7 @@ namespace The_Legend_of_Zelda.Sprites
                 }
                 else
                 {
-                    current_action = Action.WALKING_DOWN;
+                    current_action = LinkAction.WALKING_DOWN;
                     ChangePos(false, true);
                     if (facing_direction == Direction.LEFT || facing_direction == Direction.RIGHT)
                         GotoMod8();
@@ -186,7 +187,7 @@ namespace The_Legend_of_Zelda.Sprites
                 animation_timer++;
                 if (IsHeld(Buttons.LEFT))
                 {
-                    current_action = Action.WALKING_LEFT;
+                    current_action = LinkAction.WALKING_LEFT;
                     ChangePos(true, false);
                     if (facing_direction == Direction.UP || facing_direction == Direction.DOWN)
                         GotoMod8();
@@ -194,7 +195,7 @@ namespace The_Legend_of_Zelda.Sprites
                 }
                 else
                 {
-                    current_action = Action.WALKING_RIGHT;
+                    current_action = LinkAction.WALKING_RIGHT;
                     ChangePos(true, true);
                     if (facing_direction == Direction.UP || facing_direction == Direction.DOWN)
                         GotoMod8();
@@ -203,20 +204,20 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        static void Attack()
+        void Attack()
         {
-            if (current_action == Action.WALKING_LEFT)
-                current_action = Action.ATTACK_LEFT;
-            else if (current_action == Action.WALKING_UP)
-                current_action = Action.ATTACK_UP;
-            else if (current_action == Action.WALKING_DOWN)
-                current_action = Action.ATTACK_DOWN;
-            else if (current_action == Action.WALKING_RIGHT)
-                current_action = Action.ATTACK_RIGHT;
+            if (current_action == LinkAction.WALKING_LEFT)
+                current_action = LinkAction.ATTACK_LEFT;
+            else if (current_action == LinkAction.WALKING_UP)
+                current_action = LinkAction.ATTACK_UP;
+            else if (current_action == LinkAction.WALKING_DOWN)
+                current_action = LinkAction.ATTACK_DOWN;
+            else if (current_action == LinkAction.WALKING_RIGHT)
+                current_action = LinkAction.ATTACK_RIGHT;
         }
 
         // returns true if link is attacking
-        static bool AButton()
+        bool AButton()
         {
             if (IsPressed(Buttons.A) && Menu.hud_sword.shown && !using_item)
             {
@@ -240,7 +241,7 @@ namespace The_Legend_of_Zelda.Sprites
             return false;
         }
 
-        public static void MeleeAttack(bool magic_wand)
+        public void MeleeAttack(bool magic_wand)
         {
             if (animation_timer == 5)
             {
@@ -260,7 +261,7 @@ namespace The_Legend_of_Zelda.Sprites
                 }
 
                 sword_1.yflip = false;
-                if (current_action == Action.ATTACK_LEFT)
+                if (current_action == LinkAction.ATTACK_LEFT)
                 {
                     sword_1.xflip = true;
                     sword_2.xflip = true;
@@ -270,7 +271,7 @@ namespace The_Legend_of_Zelda.Sprites
                     sword_2.y = y + 1;
                     sprites.Add(sword_2);
                 }
-                else if (current_action == Action.ATTACK_UP)
+                else if (current_action == LinkAction.ATTACK_UP)
                 {
                     if (magic_wand)
                         sword_1.tile_index = 0x4a;
@@ -280,7 +281,7 @@ namespace The_Legend_of_Zelda.Sprites
                     sword_1.x = x + 3;
                     sword_1.y = y - 12;
                 }
-                else if (current_action == Action.ATTACK_RIGHT)
+                else if (current_action == LinkAction.ATTACK_RIGHT)
                 {
                     sword_1.xflip = false;
                     sword_2.xflip = false;
@@ -304,16 +305,16 @@ namespace The_Legend_of_Zelda.Sprites
             }
             else if (animation_timer == 13)
             {
-                if (current_action == Action.WALKING_LEFT)
+                if (current_action == LinkAction.WALKING_LEFT)
                 {
                     sword_2.x += 4;
                     sprites.Remove(sword_1);
                 }
-                else if (current_action == Action.WALKING_UP)
+                else if (current_action == LinkAction.WALKING_UP)
                 {
                     sword_1.y += 4;
                 }
-                else if (current_action == Action.WALKING_RIGHT)
+                else if (current_action == LinkAction.WALKING_RIGHT)
                 {
                     sword_2.x -= 4;
                     sprites.Remove(sword_1);
@@ -332,11 +333,11 @@ namespace The_Legend_of_Zelda.Sprites
             }
             else if (animation_timer == 14)
             {
-                if (current_action == Action.WALKING_LEFT || current_action == Action.ATTACK_LEFT)
+                if (current_action == LinkAction.WALKING_LEFT || current_action == LinkAction.ATTACK_LEFT)
                     sword_2.x += 4;
-                else if (current_action == Action.WALKING_UP || current_action == Action.ATTACK_UP)
+                else if (current_action == LinkAction.WALKING_UP || current_action == LinkAction.ATTACK_UP)
                     sword_1.y += 4;
-                else if (current_action == Action.WALKING_RIGHT || current_action == Action.ATTACK_RIGHT)
+                else if (current_action == LinkAction.WALKING_RIGHT || current_action == LinkAction.ATTACK_RIGHT)
                     sword_2.x -= 4;
                 else
                     sword_1.y -= 4;
@@ -363,7 +364,7 @@ namespace The_Legend_of_Zelda.Sprites
         }
 
         // returns true if in animation for smthn related to the B button
-        static bool BButton()
+        bool BButton()
         {
             if (using_item)
             {
@@ -482,7 +483,7 @@ namespace The_Legend_of_Zelda.Sprites
 
                     Attack();
                     pos = FindItemPos(false);
-                    new BoomerangSprite(pos[0], pos[1], true);
+                    new BoomerangSprite(pos[0], pos[1], true, this);
                     Menu.boomerang_out = true;
                     break;
 
@@ -519,7 +520,7 @@ namespace The_Legend_of_Zelda.Sprites
         }
 
         // find location relative to link for where item spawns
-        static int[] FindItemPos(bool double_wide)
+        int[] FindItemPos(bool double_wide)
         {
             int[] pos = new int[2];
 
@@ -553,7 +554,7 @@ namespace The_Legend_of_Zelda.Sprites
             };
         }
 
-        static void ChangePos(bool is_x, bool is_positive)
+        void ChangePos(bool is_x, bool is_positive)
         {
             int change;
             if (stair_speed)
@@ -578,8 +579,8 @@ namespace The_Legend_of_Zelda.Sprites
                 self.y += change;
         }
 
-        // snap Link to the nearest multiple of 8
-        static void GotoMod8()
+        // snap Link to the nearest multiple of 8 when he turns 90deg
+        void GotoMod8()
         {
             // why the fuck does this work
             if (facing_direction == Direction.LEFT || facing_direction == Direction.RIGHT)
@@ -608,7 +609,7 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        static void FillHealth()
+        void FillHealth()
         {
             Menu.can_open_menu = false;
             can_move = false;
@@ -635,9 +636,9 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        // sets Link'S position to a specific value.
+        // sets Link's position to a specific value.
         // !! bypasses wall collision checks by overriting safe_x and safe_y !!
-        public static void SetPos(int new_x = -1, int new_y = -1)
+        public void SetPos(int new_x = -1, int new_y = -1)
         {
             if (new_x != -1)
             {
@@ -657,7 +658,7 @@ namespace The_Legend_of_Zelda.Sprites
         }
 
         // method to show or hide link
-        public static void Show(bool show)
+        public void Show(bool show)
         {
             shown = show;
             self.shown = show;
@@ -665,20 +666,20 @@ namespace The_Legend_of_Zelda.Sprites
         }
 
         // method to set Link's background state
-        public static void SetBGState(bool bg_mod_activated)
+        public void SetBGState(bool bg_mod_activated)
         {
             self.background = bg_mod_activated;
             counterpart.background = bg_mod_activated;
         }
 
-        static void Animation()
+        void Animation()
         {
             if (gamemode == Gamemode.DEATH && DeathCode.death_timer > 120)
                 return;
 
             switch (current_action)
             {
-                case Action.WALKING_DOWN:
+                case LinkAction.WALKING_DOWN:
                     if (animation_timer % 12 < 6)
                     {
                         if (magical_shield)
@@ -708,7 +709,7 @@ namespace The_Legend_of_Zelda.Sprites
                         counterpart.xflip = true;
                     }
                     break;
-                case Action.WALKING_UP:
+                case LinkAction.WALKING_UP:
                     if (animation_timer % 12 < 6)
                     {
                         self.tile_index = 0xc;
@@ -724,7 +725,7 @@ namespace The_Legend_of_Zelda.Sprites
                         counterpart.xflip = true;
                     }
                     break;
-                case Action.WALKING_LEFT:
+                case LinkAction.WALKING_LEFT:
                     if (animation_timer % 12 < 6)
                     {
                         if (magical_shield)
@@ -754,7 +755,7 @@ namespace The_Legend_of_Zelda.Sprites
                         counterpart.xflip = true;
                     }
                     break;
-                case Action.WALKING_RIGHT:
+                case LinkAction.WALKING_RIGHT:
                     if (animation_timer % 12 < 6)
                     {
                         if (magical_shield)
@@ -784,10 +785,10 @@ namespace The_Legend_of_Zelda.Sprites
                         counterpart.xflip = false;
                     }
                     break;
-                case Action.ITEM_GET:
+                case LinkAction.ITEM_GET:
                     counterpart.tile_index = 0x08;
                     goto item_anim;
-                case Action.ITEM_HELD_UP:
+                case LinkAction.ITEM_HELD_UP:
                     counterpart.tile_index = 0x78;
                 item_anim:
                     self.tile_index = 0x78;
@@ -800,12 +801,12 @@ namespace The_Legend_of_Zelda.Sprites
                     if (animation_timer == 128)
                     {
                         facing_direction = Direction.DOWN;
-                        current_action = Action.WALKING_DOWN;
+                        current_action = LinkAction.WALKING_DOWN;
                         can_move = true;
-                        goto case Action.WALKING_DOWN;
+                        goto case LinkAction.WALKING_DOWN;
                     }
                     break;
-                case Action.ATTACK_UP:
+                case LinkAction.ATTACK_UP:
                     if (animation_timer > 20)
                         animation_timer = 0;
                     if (animation_timer == 0)
@@ -823,13 +824,13 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     else if (animation_timer == 12 + longer_attack_anim / 6)
                     {
-                        current_action = Action.WALKING_UP;
+                        current_action = LinkAction.WALKING_UP;
                         if (!wand_out && !sword_out)
                             using_item = false;
-                        goto case Action.WALKING_UP;
+                        goto case LinkAction.WALKING_UP;
                     }
                     break;
-                case Action.ATTACK_DOWN:
+                case LinkAction.ATTACK_DOWN:
                     if (animation_timer > 20)
                         animation_timer = 0;
                     if (animation_timer == 0)
@@ -849,13 +850,13 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     else if (animation_timer == 12 + longer_attack_anim / 6)
                     {
-                        current_action = Action.WALKING_DOWN;
+                        current_action = LinkAction.WALKING_DOWN;
                         if (!wand_out && !sword_out)
                             using_item = false;
-                        goto case Action.WALKING_DOWN;
+                        goto case LinkAction.WALKING_DOWN;
                     }
                     break;
-                case Action.ATTACK_LEFT:
+                case LinkAction.ATTACK_LEFT:
                     if (animation_timer > 20)
                         animation_timer = 0;
                     if (animation_timer == 0)
@@ -876,13 +877,13 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     else if (animation_timer == 12 + longer_attack_anim / 6)
                     {
-                        current_action = Action.WALKING_LEFT;
+                        current_action = LinkAction.WALKING_LEFT;
                         if (!wand_out && !sword_out)
                             using_item = false;
-                        goto case Action.WALKING_LEFT;
+                        goto case LinkAction.WALKING_LEFT;
                     }
                     break;
-                case Action.ATTACK_RIGHT:
+                case LinkAction.ATTACK_RIGHT:
                     if (animation_timer > 20)
                         animation_timer = 0;
                     if (animation_timer == 0)
@@ -901,10 +902,10 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     else if (animation_timer == 12 + longer_attack_anim / 6)
                     {
-                        current_action = Action.WALKING_RIGHT;
+                        current_action = LinkAction.WALKING_RIGHT;
                         if (!wand_out && !sword_out)
                             using_item = false;
-                        goto case Action.WALKING_RIGHT;
+                        goto case LinkAction.WALKING_RIGHT;
                     }
                     break;
                 default:
@@ -930,7 +931,7 @@ namespace The_Legend_of_Zelda.Sprites
 
         // the top half of link doesn't have collision. thus collision is only checked for the bottom 16x8 pixel box of link's sprites
         // returns true if link collided
-        static bool Collision()
+        bool Collision()
         {
             bool collision = false;
 
@@ -987,11 +988,12 @@ namespace The_Legend_of_Zelda.Sprites
         }
 
         // checks if the tile at position Link.x + x_add, Link.y + y_add is solid. returns true if collision found
-        static bool CheckCollision(int x_add, int y_add) // create duplicate for dungeon
+        // this also executes code for special tiles that do something when touched
+        bool CheckCollision(int x_add, int y_add)
         {
-            int metatile_index = (self.y + y_add & ~0xF) + (self.x + x_add) / 16 - 64;
+            int metatile_index = GetMetaTileIndexAtLocation(self.x + x_add, self.y + y_add);
 
-            if (metatile_index < 0 || metatile_index > meta_tiles.Length)
+            if (metatile_index < 0)
             {
                 return false;
             }
@@ -1003,6 +1005,7 @@ namespace The_Legend_of_Zelda.Sprites
                 // room 31 where you can walk through the wall to room 15
                 if (OC.current_screen == 31 && (metatile_index == 8 || metatile_index == 24))
                 {
+                    // disable stair speed in case we're returning from screen above
                     stair_speed = false;
                     return false;
                 }
@@ -1015,20 +1018,25 @@ namespace The_Legend_of_Zelda.Sprites
 
                 switch (meta_tiles[metatile_index].tile_index)
                 {
-                    case 0x00 or 0x02 or 0x09 or 0x17 or 0x1a or 0x1b or 0x1c or 0x1d or 0x1e or 0x1f or 0x20 or 0x21 or 0x22 or 0x23 or 0x24:
+                    case MetatileType.ROCK or MetatileType.ROCK_TOP or MetatileType.TREE or MetatileType.WATERFALL or MetatileType.STUMP_TL or 
+                    MetatileType.STUMP_BL or MetatileType.STUMP_BR or MetatileType.STUMP_TR or MetatileType.STUMP_FACE or MetatileType.RUINS_TL or 
+                    MetatileType.RUINS_BL or MetatileType.RUINS_TR or MetatileType.RUINS_BR or MetatileType.RUINS_FACE_1_EYE or MetatileType.RUINS_FACE_2_EYES:
                         return true;
 
-                    case 0x08:
+                    case MetatileType.ROCK_SNAIL:
                         if (meta_tiles[metatile_index].special && power_bracelet)
                         {
                             new MovingTileSprite(OC.current_screen == 73 ? MovingTileSprite.MovingTile.GREEN_ROCK : MovingTileSprite.MovingTile.ROCK, metatile_index);
                         }
                         return true;
 
-                    case 0x19:
+                    case MetatileType.TOMBSTONE:
+                        // even though the original tile loses its special status upon being touched,
+                        // it changes its metatile to a rock to prevent ghinis from being spawned from it during its moving animation
                         if (meta_tiles[metatile_index].special)
                         {
-                            if (facing_direction is Direction.UP or Direction.DOWN &&
+                            // intentional, you can only push the grave up or down in the original game. it's dumb
+                            if (facing_direction is (Direction.UP or Direction.DOWN) &&
                                 self.x % 16 == 0)
                             {
                                 new MovingTileSprite(MovingTileSprite.MovingTile.TOMBSTONE, metatile_index);
@@ -1040,9 +1048,6 @@ namespace The_Legend_of_Zelda.Sprites
                         byte ghini_count = 0;
                         int mtl_x = metatile_index % 16 * 16;
                         int mtl_y = (metatile_index >> 4) * 16 + 64;
-                        //TODO: ???
-                        if (mtl_x == 144 && mtl_y == 144 && OC.current_screen == 33)
-                            return true;
 
                         foreach (Sprite spr in sprites)
                         {
@@ -1059,7 +1064,7 @@ namespace The_Legend_of_Zelda.Sprites
                         new Ghini(false, mtl_x, mtl_y);
                         return true;
 
-                    case 0x25:
+                    case MetatileType.STATUE:
                         int mtl_x2 = metatile_index % 16 * 16;
                         int mtl_y2 = metatile_index / 16 * 16 + 64;
 
@@ -1075,92 +1080,99 @@ namespace The_Legend_of_Zelda.Sprites
                         new Armos(metatile_index, mtl_x2, mtl_y2);
                         return true;
 
-                    case 0x04: // BL
+                    // x_add and y_add can be negative, meaning the stupid fucking modulo operator won't fucking work
+                    case MetatileType.ROCK_TR:
                         return (self.x + x_add & 15) < 8 || (self.y + y_add & 15) > 8;
-                    case 0x05: // BR
+                    case MetatileType.ROCK_TL:
                         return (self.x + x_add & 15) > 8 || (self.y + y_add & 15) > 8;
-                    case 0x06: // TL
+                    case MetatileType.ROCK_BR:
                         return (self.x + x_add & 15) < 8 || (self.y + y_add & 15) < 8;
-                    case 0x07: // TR
+                    case MetatileType.ROCK_BL:
                         return (self.x + x_add & 15) > 8 || (self.y + y_add & 15) < 8;
 
-                    case 0x03:
+                    case MetatileType.BLACK_SQUARE_WARP:
                         if (self.x % 16 == 0 && self.y % 16 == 0 && has_moved_after_warp_flag)
                             OC.black_square_stairs_flag = true;
                         return (self.y + y_add & 15) < 8;
 
-                    case 0x18:
+                    case MetatileType.WATERFALL_BOTTOM:
                         if (self.x % 16 == 0 && self.y % 16 == 0)
                         {
                             OC.stair_warp_flag = true;
                         }
                         return (self.y + y_add & 15) < 8;
 
-                    case 0x15:
+                    case MetatileType.STAIRS:
                         if ((self.x + 1) % 16 < 3 && (self.y + 1) % 16 < 3)
                         {
-                            int mt_i = GetTileIndexAtLocation(x + 8, y + 8);
-                            //TODO: ??
-                            if (mt_i != 0x15)
+                            // checks to make sure link is centered on the stairs
+                            MetatileType mt_i = GetMetaTileTypeAtLocation(x + 8, y + 8);
+                            if (mt_i != MetatileType.STAIRS)
                                 return false;
 
                             OC.stair_warp_flag = true;
                         }
                         return false;
 
-                    case 0x13:
+                    case MetatileType.BLUE_STAIRS:
                         stair_speed = true;
                         return false;
 
-                    case 0x14:
-                        // TODO: why check for which screen??
-                        if (raft && (OC.current_screen == 63 || OC.current_screen == 85))
+                    case MetatileType.DOCK:
+                        if (!raft)
+                            return false;
+
+                        // verify which screen we're on because dock tile is also used elsewhere
+                        if ((self.x + 1) % 16 < 3 && (self.y + 1) % 16 < 3
+                            && GetMetaTileTypeAtLocation(self.x + 8, self.y + 8) == MetatileType.DOCK
+                            && OC.current_screen is (63 or 85))
                         {
-                            if ((self.x + 1) % 16 < 3 && (self.y + 1) % 16 < 3)
-                            {
-                                if (self.y < 80)
-                                    facing_direction = Direction.DOWN;
-                                else
-                                    facing_direction = Direction.UP;
+                            // center link on the dock if he arrives from the side via ladder
+                            GotoMod8();
 
-                                if (!OC.raft_flag)
-                                    new RaftSprite();
+                            if (self.y < 80)
+                                facing_direction = Direction.DOWN;
+                            else
+                                facing_direction = Direction.UP;
 
-                                OC.raft_flag = true;
-                                can_move = false;
-                            }
+                            if (!OC.raft_flag)
+                                new RaftSprite();
+
+                            OC.raft_flag = true;
+                            can_move = false;
                         }
                         return false;
 
                     // special tiles that ladder turns water into (half block)
-                    case 0x2e: // U
+                    case MetatileType.LADDER_TOP: // U
                         return (self.y + y_add) % 16 < 8;
-                    case 0x2f: // D
+                    case MetatileType.LADDER_BOTTOM: // D
                         return (self.y + y_add) % 16 > 8;
-                    case 0x30: // L
+                    case MetatileType.LADDER_LEFT: // L
                         return (self.x + x_add) % 16 < 8;
-                    case 0x31: // R
+                    case MetatileType.LADDER_RIGHT: // R
                         return (self.x + x_add) % 16 > 8;
-                    case 0x32: // TL
+                    case MetatileType.LADDER_TL: // TL
                         return (self.x + x_add) % 16 < 8 || (self.y + y_add) % 16 < 8;
-                    case 0x33: // TR
+                    case MetatileType.LADDER_TR: // TR
                         return (self.x + x_add) % 16 > 8 || (self.y + y_add) % 16 < 8;
-                    case 0x34: // none
+                    case MetatileType.LADDER_EMPTY: // none
                         return false;
 
-                    case 0x0a:
+                    case MetatileType.WATER:
                         if (metatile_index > 16 && metatile_index < 32)
                         {
                             if (meta_tiles[metatile_index - 16].special)
                             {
                                 SetPos(new_y: y - 1);
-                                goto case 0x14;
+                                goto case MetatileType.DOCK;
                             }
                         }
-                        goto case 0x0b;
+                        goto case MetatileType.WATER_L;
 
-                    case 0x0b:
-                    case 0x0c or 0x0d or 0x0e or 0x0f or 0x10 or 0x11 or 0x12:
+                    case MetatileType.WATER_L:
+                    case MetatileType.WATER_R or MetatileType.WATER_TL or MetatileType.WATER_T or MetatileType.WATER_TR or 
+                    MetatileType.WATER_B or MetatileType.WATER_BL or MetatileType.WATER_BR:
                         // only activate ladder if you have it, it's not being used, scrolling is done and you,re not near the edge of the screen
                         if (ladder && !ladder_used && OC.ScrollingDone() &&
                             y >= 66 && y <= 222 && x >= 2 && x <= 238)
@@ -1177,112 +1189,79 @@ namespace The_Legend_of_Zelda.Sprites
             }
             else if (gamemode == Gamemode.DUNGEON)
             {
-                switch (meta_tiles[metatile_index].tile_index)
+                DebugLog(dungeon_wall_push_timer);
+                switch (meta_tiles[metatile_index].tile_index_D)
                 {
-                    // ???
-                    //TODO: enum + wtf is this first one
-                    case 0 or 5 or 7 or 9:
-                        if (!IsHeld(Buttons.UP) && !IsHeld(Buttons.DOWN) && !IsHeld(Buttons.LEFT) && !IsHeld(Buttons.RIGHT))
+
+                    case DungeonMetatile.GROUND or DungeonMetatile.SAND or DungeonMetatile.VOID or DungeonMetatile.GRAY_STAIRS:
+                        //if (!IsHeld(Buttons.UP) && !IsHeld(Buttons.DOWN) && !IsHeld(Buttons.LEFT) && !IsHeld(Buttons.RIGHT))
                             dungeon_wall_push_timer = 0;
                         return false;
-                    case 1 or 3 or 4 or 8:
-                        KeyCode();
+
+                    case DungeonMetatile.WALL:
+                        if (metatile_index is (7 or 151 or 81 or 94) && (Math.Abs(self.x - 120) < 3 || Math.Abs(self.y - 144) < 3))
+                            dungeon_wall_push_timer++;
+                        else
+                            dungeon_wall_push_timer = 0;
                         return true;
-                    case 2:
+                    case DungeonMetatile.LEFT_STATUE or DungeonMetatile.RIGHT_STATUE or DungeonMetatile.GRAY_BRICKS:
+                        return true;
+
+                    case DungeonMetatile.WATER:
                         if (ladder && !ladder_used)
                         {
                             new LadderSprite(metatile_index);
                             return false;
                         }
                         return true;
-                    case 6:
+
+                    case DungeonMetatile.STAIRS:
                         DC.warp_flag = true;
                         return false;
 
-                    case 10: // top of dungeon room
-                        return (self.y + y_add & 15) < 8 && self.x != 120;
-                    case 11: // left of up/down doors
-                        return (self.x + x_add & 15) < 8;
-                    case 12: // right of up/down doors
-                        return (self.x + x_add & 15) > 8;
+                    case DungeonMetatile.ROOM_TOP: // top of dungeon room
+                        if (metatile_index is 39 && Math.Abs(self.x - 120) < 4)
+                            dungeon_wall_push_timer++;
+                        else
+                            dungeon_wall_push_timer = 0;
+                        return ((self.y + y_add) % 16) < 8/* && (self.x != 120)*/;
+                    case DungeonMetatile.VERT_DOOR_LEFT: // left of up/down doors
+                        return ((self.x + x_add) % 16) < 8;
+                    case DungeonMetatile.VERT_DOOR_RIGHT: // right of up/down doors
+                        return ((self.x + x_add) % 16) > 8;
 
-                    case 13: // walk-through tile
+                    case DungeonMetatile.WALK_THROUGH_WALL: // walk-through tile
                         // TODO: 8 frame timer before animation
                         return true;
 
+                    case DungeonMetatile.TOP_DOOR_OPEN_L:
+                        return (self.x + x_add) % 16 < 8 && (self.y + y_add) % 16 < 8;
+                    case DungeonMetatile.TOP_DOOR_OPEN_R:
+                        return (self.x + x_add) % 16 > 8 && (self.y + y_add) % 16 < 8;
+
                     // LADDER SHENANIGANS
                     // special tiles that ladder turns water into (half block)
-                    case 0x2e: // U
+                    case (DungeonMetatile)MetatileType.LADDER_TOP: // U
                         return (self.y + y_add) % 16 < 8;
-                    case 0x2f: // D
+                    case (DungeonMetatile)MetatileType.LADDER_BOTTOM: // D
                         return (self.y + y_add) % 16 > 8;
-                    case 0x30: // L
+                    case (DungeonMetatile)MetatileType.LADDER_LEFT: // L
                         return (self.x + x_add) % 16 < 8;
-                    case 0x31: // R
+                    case (DungeonMetatile)MetatileType.LADDER_RIGHT: // R
                         return (self.x + x_add) % 16 > 8;
-                    case 0x32: // TL
+                    case (DungeonMetatile)MetatileType.LADDER_TL: // TL
                         return (self.x + x_add) % 16 < 8 || (self.y + y_add) % 16 < 8;
-                    case 0x33: // TR
+                    case (DungeonMetatile)MetatileType.LADDER_TR: // TR
                         return (self.x + x_add) % 16 > 8 || (self.y + y_add) % 16 < 8;
-                    case 0x34: // none
+                    case (DungeonMetatile)MetatileType.LADDER_EMPTY: // none
                         return false;
                 }
             }
 
             return false;
-
-            //TODO: move this up
-            void KeyCode()
-            {
-                if (!meta_tiles[metatile_index].special)
-                {
-                    return;
-                }
-
-                dungeon_wall_push_timer++;
-                if (dungeon_wall_push_timer < 8)
-                {
-                    return;
-                }
-
-                if (!magical_key)
-                {
-                    if (key_count <= 0)
-                    {
-                        return;
-                    }
-
-                    key_count--;
-                }
-
-                // jesus christ...
-                // SET OPENED KEY DOOR FLAG TO TRUE.
-                // WHICH KEY DOOR? WELL ITS ID IS GOING TO BE ITS INDEX IN THIS LIST.
-                // WHICH VALUE IN THE LIST HOWEVER? WELL ITS VALUE IS ITS CONNECTION_ID.
-                // WHAT IS ITS CONNECTION_ID? IT'S CALCULATED WITH THE CURRENT SCREEN AND THE DIRECTION OF THE DOOR.
-                // WHAT DIRECTION IS THIS SPECIFIC DOOR POINTING IN? THE INDEX OF THE METATILE IN THIS LIST, CASTED TO A DIRECTION.
-                //TODO: find a way to cut this bullshit
-                SetOpenedKeyDoorsFlag(
-                    (byte)Array.IndexOf(
-                        DC.key_door_connections,
-                        (short)DC.getConnectionID(
-                            DC.current_screen,
-                            (Direction)Array.IndexOf(
-                                DC.door_metatiles,
-                                (byte)metatile_index
-                            )
-                        )
-                    ),
-                true
-                );
-
-                DC.door_types[Array.IndexOf(DC.door_metatiles, (byte)metatile_index)] = DungeonCode.DoorType.OPEN;
-                DC.DrawDoors(DC.current_screen, 0, true);
-                // TODO: play door opening sfx
-            }
         }
 
-        public static void TakeDamage(float damage)
+        public void TakeDamage(float damage)
         {
             if (!can_move || iframes_timer > 0)
                 return;
@@ -1324,7 +1303,7 @@ namespace The_Legend_of_Zelda.Sprites
         }
 
         // checks to se eif link should flash, does it if so
-        static void HitFlash()
+        void HitFlash()
         {
             if (iframes_timer <= 0 && !clock_flash)
                 return;
@@ -1340,7 +1319,7 @@ namespace The_Legend_of_Zelda.Sprites
             iframes_timer--;
         }
 
-        static bool Knockback()
+        bool Knockback()
         {
             if (knockback_timer <= 0)
                 return false;
@@ -1379,7 +1358,7 @@ namespace The_Legend_of_Zelda.Sprites
 
         // returns false if underflow or overflow, true if not
         // "perform_addition" performs the change. no matter what the rupy count is.set it to false to just check if link has enough
-        public static bool AddRupees(int change, bool perform_addition = true)
+        public bool AddRupees(int change, bool perform_addition = true)
         {
             int new_val = rupy_count + change;
 
@@ -1391,6 +1370,20 @@ namespace The_Legend_of_Zelda.Sprites
             }
 
             return new_val == clamped_val;
+        }
+
+        // from IBoomerangThrower
+        public void BoomerangRetreive()
+        {
+            if (Link.current_action == LinkAction.WALKING_LEFT)
+                Link.current_action = LinkAction.ATTACK_LEFT;
+            else if (Link.current_action == LinkAction.WALKING_UP)
+                Link.current_action = LinkAction.ATTACK_UP;
+            else if (Link.current_action == LinkAction.WALKING_DOWN)
+                Link.current_action = LinkAction.ATTACK_DOWN;
+            else if (Link.current_action == LinkAction.WALKING_RIGHT)
+                Link.current_action = LinkAction.ATTACK_RIGHT;
+            Link.using_item = true;
         }
     }
 }

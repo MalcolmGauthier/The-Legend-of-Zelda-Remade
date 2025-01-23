@@ -3,6 +3,7 @@ using The_Legend_of_Zelda.Rendering;
 using The_Legend_of_Zelda.Sprites;
 using static The_Legend_of_Zelda.SaveLoad;
 using static The_Legend_of_Zelda.Rendering.Screen;
+using static The_Legend_of_Zelda.Gameplay.Program;
 
 namespace The_Legend_of_Zelda.Gameplay
 {
@@ -28,7 +29,7 @@ namespace The_Legend_of_Zelda.Gameplay
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 85;
+        public const byte DEFAULT_SPAWN_ROOM = 116;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;
@@ -55,51 +56,6 @@ namespace The_Legend_of_Zelda.Gameplay
         public readonly byte[] screens_with_secrets_list = {
             1, 3, 5, 7, 13, 16, 18, 19, 20, 22, 29, 30, 35, 39, 40, 44, 45, 51, 70, 71, 72, 73, 75, 77, 81, 86, 91, 98, 99, 103, 104,
             106, 107, 109, 113, 118, 120, 121, 123, 124, 125
-        };
-        // ppu indices of all overworld metatiles
-        public readonly byte[,] overworld_tileset_indexes = {
-            {0xd8,0xda,0xd9,0xdb}, // rock
-            {0x26,0x26,0x26,0x26}, // ground
-            {0xce,0xd0,0xcf,0xd1}, // rock T
-            {0x24,0x24,0x24,0x24}, // black hole
-            {0xd0,0xd2,0xd1,0xd3}, // rock TR
-            {0xcc,0xce,0xcd,0xcf}, // rock TL
-            {0xdc,0xde,0xdd,0xdf}, // rock BR
-            {0xd4,0xd6,0xd5,0xd7}, // rock BL
-            {0xc8,0xca,0xc9,0xcb}, // rock snail
-            {0xc4,0xc6,0xc5,0xc7}, // tree
-            {0x90,0x90,0x95,0x95}, // water
-            {0x8e,0x90,0x93,0x95}, // water R
-            {0x8d,0x8f,0x8e,0x90}, // water TL
-            {0x8f,0x8f,0x90,0x90}, // water T
-            {0x8f,0x91,0x90,0x92}, // water TR
-            {0x90,0x92,0x95,0x97}, // water L
-            {0x95,0x97,0x96,0x98}, // water BR
-            {0x95,0x95,0x96,0x96}, // water B
-            {0x93,0x95,0x94,0x96}, // water BL
-            {0x74,0x75,0x74,0x75}, // ladder
-            {0x76,0x76,0x77,0x77}, // dock
-            {0x70,0x72,0x71,0x73}, // stairs
-            {0x84,0x86,0x85,0x87}, // sand
-            {0x89,0x8b,0x8a,0x8c}, // waterfall
-            {0x89,0x8b,0x88,0x88}, // waterfall bottom
-            {0xbc,0xbe,0xbd,0xbf}, // tombstone
-            {0xb0,0xb2,0xb1,0xb3}, // stump TL
-            {0xac,0xae,0xad,0xaf}, // stump BL
-            {0xb8,0xba,0xb9,0xbb}, // stump BR
-            {0xaa,0xac,0xab,0xad}, // stump TR
-            {0xb4,0xb6,0xb5,0xb7}, // stump face
-            {0x9c,0x9e,0x9d,0x9f}, // ruins TL
-            {0xa2,0xa4,0xa3,0xa5}, // ruins BL
-            {0x9a,0x9c,0x9b,0x9d}, // ruins TR
-            {0xa0,0xa2,0xa1,0xa3}, // ruins BR
-            {0xe0,0xe2,0xe1,0xe3}, // ruins face 1 eye
-            {0xa6,0xa8,0xa7,0xa9}, // ruins face 2 eyes
-            {0xc0,0xc2,0xc1,0xc3}, // statue
-            {0x7a,0x7c,0x7b,0x7d}, // water I TR
-            {0x78,0x7a,0x79,0x7b}, // water I TL
-            {0x7e,0x80,0x7f,0x81}, // water I BL
-            {0x80,0x82,0x81,0x83}, // water I BR
         };
         // (room, y); x is always 128
         public readonly byte[] dungeon_location_list = {
@@ -198,6 +154,16 @@ namespace The_Legend_of_Zelda.Gameplay
                 SpawnEnemies();
                 if (current_screen == 95 && !GetHeartContainerFlag(12))
                     new HeartContainerSprite(192, 144, 12);
+
+                // check if scrolled onto water raft tile (which is a full water tile with special flag)
+                MetaTile mt = meta_tiles[GetMetaTileIndexAtLocation(Link.x + 8, Link.y + 8)];
+                if (mt.tile_index == MetatileType.WATER && mt.special)
+                {
+                    // force raft activation
+                    new RaftSprite();
+                    raft_flag = true;
+                    Link.can_move = false;
+                }
                 return false;
             }
 
@@ -384,7 +350,7 @@ namespace The_Legend_of_Zelda.Gameplay
             {
                 warp_animation_timer = 65;
                 BlackSquareLinkAnimation(true);
-                Link.current_action = Link.Action.WALKING_UP;
+                Link.current_action = LinkAction.WALKING_UP;
                 Sound.PauseMusic();
 
             }
@@ -477,14 +443,14 @@ namespace The_Legend_of_Zelda.Gameplay
                 Link.SetBGState(true);
                 if (entering)
                 {
-                    Link.current_action = Link.Action.WALKING_UP;
+                    Link.current_action = LinkAction.WALKING_UP;
                     UnloadSpritesRoomTransition();
                     Sound.PauseMusic();
                     Sound.PlaySFX(Sound.SoundEffects.STAIRS, true);
                 }
                 else
                 {
-                    Link.current_action = Link.Action.WALKING_DOWN;
+                    Link.current_action = LinkAction.WALKING_DOWN;
                     if (WarpCode.warp_info == WarpCode.WarpType.TAKE_ANY_ROAD)
                         SetWarpReturnPosition();
                     Link.SetPos(return_x, return_y);
@@ -638,10 +604,11 @@ namespace The_Legend_of_Zelda.Gameplay
                     {
                         for (int j = 0; j < 6; j++)
                         {
-                            meta_tiles[i + j + mt_index].tile_index = 1;
+                            meta_tiles[i + j + mt_index].tile_index = MetatileType.GROUND;
                         }
                     }
-                    meta_tiles[86].tile_index = 0x15;
+                    // the actual entrance
+                    meta_tiles[86].tile_index = MetatileType.STAIRS;
                     Textures.ppu[18 * 32 + 13] = 0x70;
                     Textures.ppu[18 * 32 + 14] = 0x72;
                     Textures.ppu[19 * 32 + 13] = 0x71;

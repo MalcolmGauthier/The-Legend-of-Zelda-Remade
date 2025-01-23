@@ -2,6 +2,7 @@
 using The_Legend_of_Zelda.Rendering;
 using The_Legend_of_Zelda.Sprites;
 using static The_Legend_of_Zelda.Rendering.Screen;
+using static The_Legend_of_Zelda.Gameplay.Program;
 namespace The_Legend_of_Zelda.Gameplay
 {
     internal static class FileSelectCode

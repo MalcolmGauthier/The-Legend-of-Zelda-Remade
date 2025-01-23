@@ -40,10 +40,12 @@ namespace The_Legend_of_Zelda.Sprites
             STUNNED,
         }
 
+        const int NOT_STUNNED = -1;
+
         protected int local_timer = 0;
         protected int target_x;
         protected int target_y;
-        int time_when_stunned = -1;
+        int time_when_stunned = NOT_STUNNED;
 
         protected bool pause_animation = false;
         protected bool can_damage_link = true;
@@ -116,7 +118,7 @@ namespace The_Legend_of_Zelda.Sprites
 
         public override void Action()
         {
-            if (!Link.can_move)
+            if (!Link.can_move && !OC.raft_flag)
                 return;
 
             if (!appeared)
@@ -160,11 +162,11 @@ namespace The_Legend_of_Zelda.Sprites
 
         bool IsPositionValid(int x, int y)
         {
-            byte tile_id = Screen.GetTileIndexAtLocation(x, y);
+            MetatileType tile_id = Screen.GetMetaTileTypeAtLocation(x, y);
 
             switch (tile_id)
             {
-                case 1 or 3 or 0x13 or 0x14 or 0x15 or 0x16:
+                case MetatileType.GROUND or MetatileType.BLACK_SQUARE_WARP or MetatileType.BLUE_STAIRS or MetatileType.DOCK or MetatileType.STAIRS or MetatileType.SAND:
                     return true;
                 default:
                     return false;
@@ -276,7 +278,7 @@ namespace The_Legend_of_Zelda.Sprites
                         break;
                 }
 
-                if (IsValidTile(Screen.GetTileIndexAtLocation(x, y)) && !IsWithinLink() &&
+                if (IsValidTile(Screen.GetMetaTileTypeAtLocation(x, y)) && !IsWithinLink() &&
                     (care_about_dir ? facing_direction != Link.facing_direction : true))
                     break;
             }
@@ -470,7 +472,7 @@ namespace The_Legend_of_Zelda.Sprites
                 new_x = RNG.Next(2, 14);
                 new_y = RNG.Next(2, 9);
 
-                byte tile = Screen.meta_tiles[new_y * 16 + new_x].tile_index;
+                MetatileType tile = Screen.meta_tiles[new_y * 16 + new_x].tile_index;
                 if (IsValidTile(tile))
                 {
                     break;
@@ -485,9 +487,10 @@ namespace The_Legend_of_Zelda.Sprites
             y = new_y * 16 + 64;
         }
 
-        bool IsValidTile(byte tile)
+        bool IsValidTile(MetatileType tile)
         {
-            return tile == 1 || tile == 3 || tile >= 0x14 && tile <= 0x16 || tile >= 0x26 && tile <= 0x29;
+            return tile is (MetatileType.GROUND or MetatileType.BLACK_SQUARE_WARP or MetatileType.DOCK or MetatileType.STAIRS or MetatileType.SAND) || 
+                (tile >= MetatileType.WATER_INNER_TR && tile <= MetatileType.WATER_INNER_BR);
         }
 
         public void Walk()
@@ -679,13 +682,13 @@ namespace The_Legend_of_Zelda.Sprites
 
         public void Stunned()
         {
-            if (time_when_stunned == -1)
+            if (time_when_stunned == NOT_STUNNED)
                 time_when_stunned = gTimer;
 
             if (gTimer >= time_when_stunned + 180 || !stunnable)
             {
                 current_action = unstunned_action;
-                time_when_stunned = -1;
+                time_when_stunned = NOT_STUNNED;
                 local_timer -= 180;
                 return;
             }
@@ -714,8 +717,8 @@ namespace The_Legend_of_Zelda.Sprites
             else
                 x += 4;
 
-            if (!(IsValidTile(Screen.GetTileIndexAtLocation(x, y)) && IsValidTile(Screen.GetTileIndexAtLocation(x + 15, y)) &&
-                  IsValidTile(Screen.GetTileIndexAtLocation(x, y + 15)) && IsValidTile(Screen.GetTileIndexAtLocation(x + 15, y + 15)))
+            if (!(IsValidTile(Screen.GetMetaTileTypeAtLocation(x, y)) && IsValidTile(Screen.GetMetaTileTypeAtLocation(x + 15, y)) &&
+                  IsValidTile(Screen.GetMetaTileTypeAtLocation(x, y + 15)) && IsValidTile(Screen.GetMetaTileTypeAtLocation(x + 15, y + 15)))
                 || y < 64 || y > 224 || x < 0 || x > 240)
             {
                 knockback_timer = 0;
@@ -1129,6 +1132,7 @@ namespace The_Legend_of_Zelda.Sprites
                     break;
             }
         }
+
         void FindNewLocation()
         {
             bool valid_location_found = false;
@@ -1142,7 +1146,7 @@ namespace The_Legend_of_Zelda.Sprites
 
                 new_x = RNG.Next(0, 16) * 16;
                 new_y = RNG.Next(4, 15) * 16;
-                if (IsTileValid(Screen.GetTileIndexAtLocation(new_x, new_y)))
+                if (IsTileValid(Screen.GetMetaTileTypeAtLocation(new_x, new_y)))
                 {
                     valid_location_found = true;
                     x = new_x;
@@ -1150,9 +1154,10 @@ namespace The_Legend_of_Zelda.Sprites
                 }
             }
         }
-        bool IsTileValid(int index)
+
+        bool IsTileValid(MetatileType index)
         {
-            return index >= 0xa && index <= 0x12;
+            return index >= MetatileType.WATER && index <= MetatileType.WATER_BL;
         }
     }
 
@@ -1254,14 +1259,17 @@ namespace The_Legend_of_Zelda.Sprites
                     break;
             }
         }
-        bool IsValidTile(byte tile)
+
+        bool IsValidTile(MetatileType tile)
         {
-            return tile == 1 || tile == 0x16;
+            return tile is (MetatileType.GROUND or MetatileType.SAND);
         }
+
         bool IsOOB(int x, int y)
         {
             return x < 0 || x > 240 || y < 64 || y > 224;
         }
+
         void PickNewLocation()
         {
             int new_x, new_y;
@@ -1271,7 +1279,7 @@ namespace The_Legend_of_Zelda.Sprites
                 {
                     new_x = RNG.Next(1, 15) * 16;
                     new_y = RNG.Next(5, 14) * 16;
-                    if (IsValidTile(Screen.GetTileIndexAtLocation(new_x, new_y)))
+                    if (IsValidTile(Screen.GetMetaTileTypeAtLocation(new_x, new_y)))
                         break;
                 }
                 CheckIfTurn();
@@ -1297,11 +1305,11 @@ namespace The_Legend_of_Zelda.Sprites
                     new_y = -new_y;
                 }
 
-                if (!IsValidTile(Screen.GetTileIndexAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
+                if (!IsValidTile(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
                 {
                     new_x = -new_x;
                     new_y = -new_y;
-                    if (!IsValidTile(Screen.GetTileIndexAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
+                    if (!IsValidTile(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
                     {
                         if (new_x == 0)
                         {
@@ -1313,7 +1321,7 @@ namespace The_Legend_of_Zelda.Sprites
                             new_x = 0;
                             new_y = 48;
                         }
-                        if (!IsValidTile(Screen.GetTileIndexAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
+                        if (!IsValidTile(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
                         {
                             new_x = -new_x;
                             new_y = -new_y;
@@ -1950,7 +1958,7 @@ namespace The_Legend_of_Zelda.Sprites
             if (screen == 11 && metatile_index == 75 || screen == 34 && metatile_index == 67 || screen == 28 && metatile_index == 75 ||
                 screen == 52 && metatile_index == 68 || screen == 61 && metatile_index == 73 || screen == 78 && metatile_index == 74)
             {
-                Screen.meta_tiles[metatile_index].tile_index = 0x15;
+                Screen.meta_tiles[metatile_index].tile_index = MetatileType.STAIRS;
                 Textures.ppu[ppu_tile_location] = 0x70;
                 Textures.ppu[ppu_tile_location + 1] = 0x72;
                 Textures.ppu[ppu_tile_location + 32] = 0x71;
@@ -1959,7 +1967,7 @@ namespace The_Legend_of_Zelda.Sprites
             }
             else
             {
-                Screen.meta_tiles[metatile_index].tile_index = 0x1;
+                Screen.meta_tiles[metatile_index].tile_index = MetatileType.GROUND;
                 Textures.ppu[ppu_tile_location] = 0x26;
                 Textures.ppu[ppu_tile_location + 1] = 0x26;
                 Textures.ppu[ppu_tile_location + 32] = 0x26;

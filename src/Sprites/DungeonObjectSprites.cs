@@ -54,7 +54,7 @@ namespace The_Legend_of_Zelda.Sprites
             {
                 case CollectionAnimState.INIT:
                     Link.can_move = false;
-                    Link.current_action = Link.Action.ITEM_HELD_UP;
+                    Link.current_action = LinkAction.ITEM_HELD_UP;
                     Link.SetPos(120, 150);
                     y = Link.y - 16;
                     counterpart.y = Link.y - 16;
