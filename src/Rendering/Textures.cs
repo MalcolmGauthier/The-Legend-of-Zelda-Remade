@@ -119,6 +119,20 @@ namespace The_Legend_of_Zelda.Rendering
             GAME_OVER
         }
 
+        public enum ROMData
+        {
+            CHR_SURFACE, // BG tiles + enemies for overworld
+            CHR_DUNGEON, // BG tiles + common enemies for dungeons
+            SPR_DUNGEON_127,
+            SPR_DUNGEON_358,
+            SPR_DUNGEON_469,
+            SPR_DUNGEON_BOSS_1257,
+            SPR_DUNGEON_BOSS_3468,
+            SPR_DUNGEON_BOSS_9
+            // a tile bank for the splash screen exists, but because the only way to load the splash screen is to 
+            // start the game, it does not need to be an option for loading, as it will just be the default starting value
+        }
+
         public const int TILE_SIZE = 8;
         public const int PPU_WIDTH = NES_OUTPUT_WIDTH / TILE_SIZE;
         public const int PPU_HEIGHT = NES_OUTPUT_HEIGHT / TILE_SIZE;
@@ -141,26 +155,13 @@ namespace The_Legend_of_Zelda.Rendering
         public const int BYTES_PER_CHR_TILE = 16;
         public const int CHR_TILESET_SIZE = 256;
         public const int HUD_HEIGHT = 64;
+        public const int HUD_TILE_COUNT = (HUD_HEIGHT / TILE_SIZE) * PPU_WIDTH; // 256
 
         public static byte[] chr_bg = new byte[CHR_TILESET_SIZE * BYTES_PER_CHR_TILE]; // 4096
         public static byte[] chr_sp = new byte[CHR_TILESET_SIZE * BYTES_PER_CHR_TILE]; // 4096
         public static byte[] vram = new byte[SCREEN_TILES * PPU_SCREENS * PIXELS_PER_TILE]; // 245000
         public static byte[] ppu = new byte[SCREEN_TILES * PPU_SCREENS]; // 3840
         public static byte[] ppu_plt = new byte[SCREEN_TILES * PPU_SCREENS]; // 3840
-
-        public enum ROMData
-        {
-            CHR_SURFACE, // BG tiles + enemies for overworld
-            CHR_DUNGEON, // BG tiles + common enemies for dungeons
-            SPR_DUNGEON_127,
-            SPR_DUNGEON_358,
-            SPR_DUNGEON_469,
-            SPR_DUNGEON_BOSS_1257,
-            SPR_DUNGEON_BOSS_3468,
-            SPR_DUNGEON_BOSS_9
-            // a tile bank for the splash screen exists, but because the only way to load the splash screen is to 
-            // start the game, it does not need to be an option for loading, as it will just be the default starting value
-        }
 
         public static void Init()
         {

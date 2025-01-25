@@ -72,7 +72,7 @@ namespace The_Legend_of_Zelda.Gameplay
             CLOSED_TRIFORCE,
             WALK_THROUGH,
             WALK_THROUGH_UL,
-            WALK_THROUGH_DR,
+            WALK_THROUGH_DR
         }
 
         enum DungeonEnemies
@@ -142,6 +142,7 @@ namespace The_Legend_of_Zelda.Gameplay
         byte link_walk_animation_timer = 0;
 
         int dark_room_animation_timer = 0;
+        int frames_since_link_can_walk = 0;
 
         public bool warp_flag = false;
         public bool block_push_flag = false;
@@ -229,6 +230,11 @@ namespace The_Legend_of_Zelda.Gameplay
             265, 279, 283, 286, 291, 293, 299, 304, 314, 318, 323, 331, 332, 339, 343, 346, 349, 350, 355, 359,
             360, 369, 375, 381, 406, 410, 418, 420, 428, 441, 442, 443, 449
         };
+        public readonly short[] key_door_connections = {
+            2, 17, 27, 28, 34, 40, 76, 80, 82, 85, 86, 89, 93, 102, 113, 122, 133, 135, 148, 151, 163, 173, 205,
+            211, 214, 221, 225, 262, 275, 284, 289, 295, 300, 308, 309, 310, 313, 320, 341, 342, 347, 348, 368,
+            384, 395, 400, 429, 438, 469, 470, 503
+        };
         // for Textures.LoadPPUPage
         public readonly byte[] rooms_with_palette_3 = {
             9, 17, 18, 30, 33, 37, 40, 41, 43, 46, 47, 49, 52, 56, 57, 59, 63, 72, 78, 79, 80, 93, 95, 110, 113, 116, 117, 121, 123, 126,
@@ -236,19 +242,6 @@ namespace The_Legend_of_Zelda.Gameplay
         };
         public readonly byte[] rooms_with_palette_1 = {
             54, 69, 131
-        };
-        // for MetaTiles
-        public readonly byte[,] dungeon_tileset_indexes = {
-            {0x74,0x76,0x75,0x77}, // floor tile
-            {0xb0,0xb2,0xb1,0xb3}, // block
-            {0xf4,0xf4,0xf4,0xf4}, // water/lava
-            {0x94,0x96,0x95,0x97}, // left statue
-            {0xb4,0xb6,0xb5,0xb7}, // right statue
-            {0x68,0x68,0x68,0x68}, // sand
-            {0x70,0x72,0x71,0x73}, // stairs
-            {0x24,0x24,0x24,0x24}, // black
-            {0xfa,0xfa,0xfa,0xfa}, // bricks
-            {0x6f,0x6f,0x6f,0x6f}  // gray stairs
         };
         // doors...
         public readonly byte[] connection_IDs = {
@@ -291,11 +284,6 @@ namespace The_Legend_of_Zelda.Gameplay
             0x13, 0x11, 0x11, 0x01, 0x01, 0x00, 0x10, 0x00, 0x00, 0x11, 0x02, 0x20, 0x01, 0x06, 0x10, 0x00,
             0x00, 0x11, 0x00, 0x00, 0x06, 0x01, 0x11, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x10, 0x00
         };
-        public readonly short[] key_door_connections = {
-            2, 17, 27, 28, 34, 40, 76, 80, 82, 85, 86, 89, 93, 102, 113, 122, 133, 135, 148, 151, 163, 173, 205,
-            211, 214, 221, 225, 262, 275, 284, 289, 295, 300, 308, 309, 310, 313, 320, 341, 342, 347, 348, 368,
-            384, 395, 400, 429, 438, 469, 470, 503
-        };
 
         // dungeon is 0 indexed. 0 is level 1, etc.
         public void Init(byte dungeon)
@@ -327,6 +315,16 @@ namespace The_Legend_of_Zelda.Gameplay
             }
 
             LoadPalette();
+            // i once had an enemy knock me into a dungeon staircase and made me keep my flash state, so i added this
+            Palettes.LoadPaletteGroup(PaletteID.SP_0, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
+            if (SaveLoad.red_ring)
+                Palettes.LoadPalette(PaletteID.SP_0, 1, Color._16_RED_ORANGE);
+            else if (SaveLoad.blue_ring)
+                Palettes.LoadPalette(PaletteID.SP_0, 1, Color._32_LIGHTER_INDIGO);
+            // ¯\_(ツ)_/¯
+            if (current_dungeon == 2)
+                Palettes.LoadPalette(PaletteID.SP_0, 2, Color._37_BEIGE);
+
             Textures.LoadNewRomData(Textures.ROMData.CHR_DUNGEON);
             UpdateBGMusic(current_dungeon == 8 ? Sound.Songs.DEATH_MOUNTAIN : Sound.Songs.DUNGEON, 0);
 
@@ -361,7 +359,7 @@ namespace The_Legend_of_Zelda.Gameplay
             if (link_walk_animation_timer > 0)
                 LinkWalkAnimation();
 
-            if (ScrollingDone())
+            if (ScrollingDone() && link_walk_animation_timer == 0)
                 DoorCode();
 
             CheckForWarp();
@@ -452,6 +450,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 return false;
             }
 
+            block_push_flag = false;
             LinkWalkAnimation();
             if (GetRoomDarkness(scroll_destination) && !is_dark)
             {
@@ -673,7 +672,7 @@ namespace The_Legend_of_Zelda.Gameplay
 
         void SpawnItems()
         {
-            if (room_list[current_screen] == 11 && !SaveLoad.GetTriforceFlag(current_dungeon))
+            if (room_list[current_screen] == 11 && ScrollingDone() && !SaveLoad.GetTriforceFlag(current_dungeon))
             {
                 new TriforcePieceSprite();
             }
@@ -693,7 +692,7 @@ namespace The_Legend_of_Zelda.Gameplay
             {
                 //TODO: extend animation if exiting bomb hole or door that's about to lock
                 link_walk_animation_timer = ANIM_LEN;
-                if (doors[(int)Link.facing_direction ^ 1] is not (DoorType.OPEN or DoorType.KEY) && ScrollingDone())
+                if (IsClosedType(doors[(int)Link.facing_direction ^ 1], (Direction)((int)Link.facing_direction ^ 1)) && ScrollingDone())
                 {
                     link_walk_animation_timer = ANIM_LEN * 2;
                 }
@@ -720,7 +719,15 @@ namespace The_Legend_of_Zelda.Gameplay
                 SpawnItems();
                 SaveLoad.SetDungeonVisitedRoomFlag(current_screen, true);
                 link_walk_animation_timer = 0;
-                //CloseDoor();
+                frames_since_link_can_walk = 0;
+                // when link exits through a closed door type, it initializes as open, but then closes the moment link can move.
+                // even if the condition to open is already meant. if that's the case, it'll open next frame.
+                Direction exit_door = (Direction)((int)Link.facing_direction ^ 1);
+                if (IsClosedType(GetDoorType(current_screen, exit_door), exit_door) && ScrollingDone())
+                {
+                    DrawDoor(exit_door, DOOR_GENERIC_CLOSED);
+                    //TODO: door opening noise
+                }
                 return;
             }
 
@@ -749,17 +756,27 @@ namespace The_Legend_of_Zelda.Gameplay
         }
 
 
+        // code that runs every frame after the screen has been fully loaded
         void DoorCode()
         {
-            bool redraw = false;
+            frames_since_link_can_walk++;
             for (int i = 0; i < doors.Length; i++)
             {
                 switch (doors[i])
                 {
                     case DoorType.KEY:
-                        if (Link.dungeon_wall_push_timer >= 8 && (Math.Abs(Link.x - 120) < 3 || Math.Abs(Link.y - 144) < 3)
-                            && Link.facing_direction == (Direction)i)
+                        if (Link.dungeon_wall_push_timer >= 8 && Link.facing_direction == (Direction)i 
+                            && GetMetaTileIndexAtLocation(Link.x + 8, Link.y + 8) is (151 or 152 or 82 or 93 or 39 or 40)
+                            && (Math.Abs(Link.x - 120) < 4 || Math.Abs(Link.y - 144) < 4))
                         {
+                            // shit code. bleh. stupid ass key door detection code.
+                            // need to do this otherwise you can remotely open doors
+                            if ((Direction)i == Direction.UP && Link.y > 120 ||
+                                (Direction)i == Direction.DOWN && Link.y < 180 ||
+                                (Direction)i == Direction.LEFT && Link.x > 64 ||
+                                (Direction)i == Direction.RIGHT && Link.x < 192)
+                                break;
+
                             if (SaveLoad.key_count == 0 && !SaveLoad.magical_key)
                                 break;
 
@@ -777,11 +794,11 @@ namespace The_Legend_of_Zelda.Gameplay
                                 true
                             );
 
-                            MakeDoorWalkable((Direction)i);
                             DrawDoor((Direction)i, DoorType.OPEN);
                             // TODO: play door opening sfx
                         }
                         break;
+
                     case DoorType.BOMBABLE:
                         // bomb sprite sets flag to true if it hit a bombable door metatile
                         if (door_statuses[i])
@@ -790,50 +807,41 @@ namespace The_Legend_of_Zelda.Gameplay
                             if (!SaveLoad.GetBombedHoleFlag(index))
                             {
                                 SaveLoad.SetBombedHoleFlag(index, true);
-                                doors[i] = DoorType.BOMBABLE;
-                                redraw = true;
+                                DrawDoor((Direction)i, DoorType.BOMBABLE);
                             }
                         }
                         break;
-                    case DoorType.CLOSED_ENEMY_DR or DoorType.CLOSED_ENEMY_UL:
-                        if (!door_statuses[i])
+
+                    case DoorType.CLOSED_ENEMY_DR or DoorType.CLOSED_ENEMY_UL or DoorType.CLOSED_ENEMY_UD or DoorType.CLOSED_ENEMY_LR:
+                        // don't check the door from the first 16 frames so that it can close before
+                        // opening when the condition of the room is met when entering it
+                        if (door_statuses[i] || frames_since_link_can_walk <= 16)
+                            break;
+
+                        if (nb_enemies_alive <= 0)
                         {
-                            if (nb_enemies_alive <= 0)
-                            {
-                                door_statuses[i] = true;
-                                redraw = true;
-                            }
-                        }
-                        else
-                        {
-                            if (nb_enemies_alive > 0)
-                            {
-                                door_statuses[i] = false;
-                                redraw = true;
-                            }
+                            door_statuses[i] = true;
+                            DrawDoor((Direction)i, DoorType.OPEN);
                         }
                         break;
                     case DoorType.CLOSED_PUSH_DR or DoorType.CLOSED_PUSH_UL:
-                        if (block_push_flag)
+                        if (block_push_flag && !door_statuses[i])
                         {
-                            doors[i] = DoorType.OPEN;
-                            redraw = true;
+                            door_statuses[i] = true;
+                            DrawDoor((Direction)i, DoorType.OPEN);
                         }
                         break;
                     case DoorType.CLOSED_TRIFORCE:
-                        if (SaveLoad.triforce_of_power)
+                        if (SaveLoad.triforce_of_power && !(door_statuses[i] || frames_since_link_can_walk <= 16))
                         {
-                            doors[i] = DoorType.OPEN;
-                            redraw = true;
+                            door_statuses[i] = true;
+                            DrawDoor((Direction)i, DoorType.OPEN);
                         }
                         break;
                     case DoorType.WALK_THROUGH:
                         break;
                 }
             }
-
-            if (redraw)
-                redraw = false;//InitDoors(current_screen, 0, true);
         }
 
         // this sets the door's entry in doors[] to its correct type, by finding and using its connectionID.
@@ -887,69 +895,21 @@ namespace The_Legend_of_Zelda.Gameplay
 
             doors[(int)door_direction] = connection_type;
             return connection_type;
+        }
 
-            //switch (connection_id)
-            //{
-            //    case 0:
-            //        return DoorType.NONE;
-            //    case 1:
-            //        return DoorType.OPEN;
-            //    case 2:
-            //        if (SaveLoad.GetOpenedKeyDoorsFlag((byte)Array.IndexOf(key_door_connections, (short)connection_index)))
-            //            return DoorType.OPEN;
-            //        else
-            //            return DoorType.KEY;
-            //    case 3:
-            //        return DoorType.BOMBABLE;
-            //    case 4:
-            //        if (door_direction is (Direction.UP or Direction.LEFT)) // will likely have to flip conditions of a-b
-            //            return DoorType.CLOSED_PUSH;
-            //        else
-            //            return DoorType.OPEN;
-            //    case 5:
-            //        if (door_direction is (Direction.DOWN or Direction.RIGHT))
-            //            return DoorType.CLOSED_ENEMY;
-            //        else
-            //            return DoorType.OPEN;
-            //    case 6:
-            //        if (door_direction is (Direction.UP or Direction.LEFT))
-            //            return DoorType.CLOSED_ENEMY;
-            //        else
-            //            return DoorType.OPEN;
-            //    case 7 or 8:
-            //        return DoorType.CLOSED_ENEMY;
-            //    case 9:
-            //        if (door_direction is (Direction.DOWN or Direction.RIGHT))
-            //            return DoorType.CLOSED_PUSH;
-            //        else
-            //            return DoorType.OPEN;
-            //    case 0xa:
-            //        if (door_direction is (Direction.UP or Direction.LEFT))
-            //            return DoorType.CLOSED_ALWAYS;
-            //        else
-            //            return DoorType.OPEN;
-            //    case 0xb:
-            //        if (door_direction is (Direction.DOWN or Direction.RIGHT))
-            //            return DoorType.CLOSED_ALWAYS;
-            //        else
-            //            return DoorType.OPEN;
-            //    case 0xc:
-            //        return DoorType.CLOSED_TRIFORCE;
-            //    case 0xd:
-            //        return DoorType.WALK_THROUGH;
-            //    case 0xe:
-            //        if (door_direction is (Direction.UP or Direction.LEFT))
-            //            return DoorType.WALK_THROUGH;
-            //        else
-            //            return DoorType.NONE;
-            //    case 0xf:
-            //        if (door_direction is (Direction.DOWN or Direction.RIGHT))
-            //            return DoorType.WALK_THROUGH;
-            //        else
-            //            return DoorType.NONE;
-            //    default:
-            //        return DoorType.NONE;
-            //}
+        // returns true if input "type" is supposed to be a closed door type
+        public bool IsClosedType(DoorType type, Direction door_direction)
+        {
+            if (door_direction is (Direction.DOWN or Direction.RIGHT))
+            {
+                return type is (DoorType.CLOSED_TRIFORCE or DoorType.CLOSED_PUSH_UL or DoorType.CLOSED_ENEMY_UL
+                or DoorType.CLOSED_ENEMY_UD or DoorType.CLOSED_ENEMY_LR or DoorType.CLOSED_ALWAYS_UL);
+            }
+            else
+            {
+                return type is (DoorType.CLOSED_TRIFORCE or DoorType.CLOSED_PUSH_DR or DoorType.CLOSED_ENEMY_DR
+                or DoorType.CLOSED_ENEMY_UD or DoorType.CLOSED_ENEMY_LR or DoorType.CLOSED_ALWAYS_DR);
+            }
         }
 
         // code that gets called after PPU page drawn to a screen. sets the doors to what they should appear like
@@ -997,15 +957,12 @@ namespace The_Legend_of_Zelda.Gameplay
                 screen_index_offset -= 256;
 
             Array.Clear(doors);
-            Array.Clear(door_statuses);
-            //foreach (byte i in door_metatiles)
-            //    meta_tiles[i].special = false;
 
             for (int i = 0; i < doors.Length; i++)
             {
                 // makes it so entrances only have open door on bottom, and not top of room below
                 // this checks for every room, so an additional check to prevent OOB indexing when checking the type of room above
-                if (i == (int)Direction.UP && room - 16 >= 0)
+                if ((Direction)i == Direction.UP && room - 16 >= 0)
                     if (room_list[room - 16] == (int)RoomType.ENTRANCE)
                         continue;
 
@@ -1021,8 +978,6 @@ namespace The_Legend_of_Zelda.Gameplay
                 {
                     if (SaveLoad.GetBombedHoleFlag((byte)Array.IndexOf(bombable_connections, (short)getConnectionID(room, (Direction)i))))
                     {
-                        MakeDoorWalkable((Direction)i);
-
                         byte[,] bomb_hole_texture_data = {
                             { 0x8c, 0x8d, 0x24, 0x24 },// up
                             { 0x24, 0x24, 0x8e, 0x8f },// down
@@ -1034,6 +989,7 @@ namespace The_Legend_of_Zelda.Gameplay
                         Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + 1] = bomb_hole_texture_data[i, 1];
                         Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH] = bomb_hole_texture_data[i, 2];
                         Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH + 1] = bomb_hole_texture_data[i, 3];
+                        MakeDoorWalkable((Direction)i);
                     }
 
                     continue;
@@ -1050,7 +1006,6 @@ namespace The_Legend_of_Zelda.Gameplay
                     { 0x98, 0x9c, 0xa0, 0xa4 },// key door
                     { 0xa8, 0xa8, 0xac, 0xac }// locked door
                 };
-
 
                 if (doors[i] == DoorType.OPEN)
                 {
@@ -1069,20 +1024,28 @@ namespace The_Legend_of_Zelda.Gameplay
                 // remaining cases are for locked doors, but if link is coming through one form the other side,
                 // then they only lock after the walking animation. on initialization, they appear open.
                 // the direction enum is set up such that (direction) ^ 1 == (opposite direction)
-                else if ((Direction)(i ^ 1) != Link.facing_direction)
+                else if ((Direction)(i ^ 1) != scroll_direction && IsClosedType(doors[i], (Direction)i))
                 {
                     Textures.ppu[door_center_ppu_locations[i] + screen_index_offset] = texture_locations[1, i];
                     Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + 1] = (byte)(texture_locations[1, i] + 2);
                     Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH] = (byte)(texture_locations[1, i] + 1);
                     Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + Textures.PPU_WIDTH + 1] = (byte)(texture_locations[1, i] + 3);
                 }
+                // there was a glitch where walking through a pushblock door would make the other side not walkable even if it was open. this is the fix
+                else if (!IsClosedType(doors[i], (Direction)i))
+                {
+                    MakeDoorWalkable((Direction)i);
+                }
             }
 
+            // do not place before loop! check above comment.
+            Array.Clear(door_statuses);
         }
 
         // replaces door metatiles with ones where link can walk through.
+        // setting make_wall to true does the opposite, and makes the door unwalkable
         // setting walk_through to true will instead replace them with walk-through tiles
-        void MakeDoorWalkable(Direction dir, bool walk_through = false)
+        void MakeDoorWalkable(Direction dir, bool make_wall = false, bool walk_through = false)
         {
             byte[] door_metatiles = {
                 7, 151, 80, 94
@@ -1091,6 +1054,31 @@ namespace The_Legend_of_Zelda.Gameplay
             if (walk_through)
             {
                 meta_tiles[door_metatiles[(int)dir]].tile_index_D = DungeonMetatile.WALK_THROUGH_WALL;
+                return;
+            }
+
+            if (make_wall)
+            {
+                switch (dir)
+                {
+                    case Direction.UP:
+                    case Direction.DOWN:
+                        meta_tiles[door_metatiles[(int)dir]].tile_index_D = DungeonMetatile.WALL;
+                        meta_tiles[door_metatiles[(int)dir] + 1].tile_index_D = DungeonMetatile.WALL;
+                        meta_tiles[door_metatiles[(int)dir] + 16].tile_index_D = DungeonMetatile.WALL;
+                        meta_tiles[door_metatiles[(int)dir] + 16 + 1].tile_index_D = DungeonMetatile.WALL;
+                        if (dir == Direction.UP)
+                        {
+                            meta_tiles[door_metatiles[(int)dir] + 16 * 2].tile_index_D = DungeonMetatile.ROOM_TOP;
+                            meta_tiles[door_metatiles[(int)dir] + 16 * 2 + 1].tile_index_D = DungeonMetatile.ROOM_TOP;
+                        }
+                        break;
+                    case Direction.LEFT:
+                    case Direction.RIGHT:
+                        meta_tiles[door_metatiles[(int)dir]].tile_index_D = DungeonMetatile.WALL;
+                        meta_tiles[door_metatiles[(int)dir] + 1].tile_index_D = DungeonMetatile.WALL;
+                        break;
+                }
                 return;
             }
 
@@ -1113,15 +1101,16 @@ namespace The_Legend_of_Zelda.Gameplay
                 case Direction.LEFT:
                 case Direction.RIGHT:
                     meta_tiles[door_metatiles[(int)dir]].tile_index_D = DungeonMetatile.ROOM_TOP;
-                    meta_tiles[door_metatiles[(int)dir]].tile_index_D = DungeonMetatile.ROOM_TOP;
-                    meta_tiles[door_metatiles[(int)dir] + 1].tile_index_D = DungeonMetatile.ROOM_TOP;
                     meta_tiles[door_metatiles[(int)dir] + 1].tile_index_D = DungeonMetatile.ROOM_TOP;
                     break;
             }
         }
 
+        // THIS SHOULD NOT BE CALLED DURING SCROLLING OR INIT!
+        // it does not keep track of which screen it needs to draw to, it only draws to screen 0.
         void DrawDoor(Direction door, DoorType new_type)
         {
+            // copied from InitDoors()
             byte[,,] door_data = {
                 {// up
                     { 0xf6,0xf6,0xf6,0xf6 },
@@ -1150,7 +1139,6 @@ namespace The_Legend_of_Zelda.Gameplay
             };
             int[] door_ppu_locations = { 0x10e, 0x34e, 0x220, 0x23c };
             int[] door_center_ppu_locations = { 0x14f, 0x34f, 0x242, 0x25c };
-            // copied from InitDoors()
             byte[] locked_door_tile_indexes = {
                 0xa8, 0xa8, 0xac, 0xac
             };
@@ -1169,6 +1157,8 @@ namespace The_Legend_of_Zelda.Gameplay
                     for (int height = 0; height < 4; height++)
                         for (int width = 0; width < 4; width++)
                             Textures.ppu[door_ppu_locations[(int)door] + height * Textures.PPU_WIDTH + width] = door_data[(int)door, height, width];
+                    MakeDoorWalkable(door);
+                    //TODO: door open noise
                     break;
 
                 case DoorType.BOMBABLE:
@@ -1176,6 +1166,7 @@ namespace The_Legend_of_Zelda.Gameplay
                     Textures.ppu[door_center_ppu_locations[(int)door] + 1] = bomb_hole_texture_data[(int)door, 1];
                     Textures.ppu[door_center_ppu_locations[(int)door] + Textures.PPU_WIDTH] = bomb_hole_texture_data[(int)door, 2];
                     Textures.ppu[door_center_ppu_locations[(int)door] + Textures.PPU_WIDTH + 1] = bomb_hole_texture_data[(int)door, 3];
+                    MakeDoorWalkable(door);
                     break;
 
                 case DOOR_GENERIC_CLOSED:
@@ -1183,6 +1174,7 @@ namespace The_Legend_of_Zelda.Gameplay
                     Textures.ppu[door_center_ppu_locations[(int)door] + 1] = (byte)(locked_door_tile_indexes[(int)door] + 2);
                     Textures.ppu[door_center_ppu_locations[(int)door] + Textures.PPU_WIDTH] = (byte)(locked_door_tile_indexes[(int)door] + 1);
                     Textures.ppu[door_center_ppu_locations[(int)door] + Textures.PPU_WIDTH + 1] = (byte)(locked_door_tile_indexes[(int)door] + 3);
+                    //TODO: door close noise
                     break;
             }
         }

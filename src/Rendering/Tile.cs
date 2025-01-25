@@ -67,7 +67,8 @@ namespace The_Legend_of_Zelda.Rendering
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    vram[(i + tile_y_pos) * VRAM_WIDTH + tile_x_pos + j] = (byte)(texture_pixels[i * 8 + j] + ppu_plt[id] * 4);
+                    // & operation on id ensures that palette acts just like nes, and affects 2x2 regions of tiles. in this case, the top left tile's palette is taken
+                    vram[(i + tile_y_pos) * VRAM_WIDTH + tile_x_pos + j] = (byte)(texture_pixels[i * 8 + j] + ppu_plt[id & (~0b100001)] * 4);
                 }
             }
         }

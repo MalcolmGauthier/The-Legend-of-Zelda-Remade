@@ -62,13 +62,19 @@ namespace The_Legend_of_Zelda.Gameplay
             // death animation part 2: background turns to red, link spins around for a second
             else if (death_timer == 60)
             {
-                //TODO: does this cover the case of dying in the graveyard? (or anywhere with gray palette)
                 Palettes.LoadPalette(PaletteID.BG_2, 1, Color._17_DARK_GOLD);
                 Palettes.LoadPalette(PaletteID.BG_2, 2, Color._16_RED_ORANGE);
                 Palettes.LoadPalette(PaletteID.BG_2, 3, Color._26_LIGHT_ORANGE);
                 Palettes.LoadPalette(PaletteID.BG_3, 1, Color._17_DARK_GOLD);
                 Palettes.LoadPalette(PaletteID.BG_3, 2, Color._16_RED_ORANGE);
                 Palettes.LoadPalette(PaletteID.BG_3, 3, Color._26_LIGHT_ORANGE);
+                if (Textures.ppu_plt[0x250] == (byte)PaletteID.BG_0)
+                {
+                    for (int i = Textures.HUD_TILE_COUNT; i < Textures.PPU_WIDTH * Textures.PPU_HEIGHT; i++)
+                    {
+                        Textures.ppu_plt[i] = (byte)PaletteID.BG_2;
+                    }
+                }
             }
             else if (death_timer > 60 && death_timer <= 120)
             {
@@ -152,11 +158,13 @@ namespace The_Legend_of_Zelda.Gameplay
             {
                 // load room 128 as background because it allows us to have a pitch black background and white text at the same time
                 Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, 128, 0);
-                byte[] game_over_text = { 0x10, 0xa, 0x16, 0xe, 0x24, 0x18, 0x1f, 0xe, 0x1b };
+                byte[] game_over_text = { 0x10, 0xa, 0x16, 0xe, 0x24, 0x18, 0x1f, 0xe, 0x1b, 0x24 }; // "GAME OVER " (space at the end is intentional)
                 for (int i = 0; i < game_over_text.Length; i++)
                 {
                     Textures.ppu[0x24c + i] = game_over_text[i];
                     Textures.ppu_plt[0x24c + i] = (byte)PaletteID.BG_0;
+                    // ensures tiles around text are also black
+                    Textures.ppu[0x24c + Textures.PPU_WIDTH + i] = 0x24;
                 }
             }
             else if (death_timer >= 330)

@@ -1,4 +1,5 @@
-﻿using The_Legend_of_Zelda.Sprites;
+﻿using The_Legend_of_Zelda.Gameplay;
+using The_Legend_of_Zelda.Sprites;
 using static The_Legend_of_Zelda.Gameplay.Program;
 
 namespace The_Legend_of_Zelda.Rendering
@@ -129,6 +130,22 @@ namespace The_Legend_of_Zelda.Rendering
             {0x7e,0x80,0x7f,0x81}, // water I BL
             {0x80,0x82,0x81,0x83}, // water I BR
         };
+        public readonly byte[,] dungeon_tileset_indexes = {
+            {0x74,0x76,0x75,0x77}, // floor tile
+            {0xb0,0xb2,0xb1,0xb3}, // block
+            {0xf4,0xf4,0xf4,0xf4}, // water/lava
+            {0x94,0x96,0x95,0x97}, // left statue
+            {0xb4,0xb6,0xb5,0xb7}, // right statue
+            {0x68,0x68,0x68,0x68}, // sand
+            {0x70,0x72,0x71,0x73}, // stairs
+            {0x24,0x24,0x24,0x24}, // black
+            {0xfa,0xfa,0xfa,0xfa}, // bricks
+            {0x6f,0x6f,0x6f,0x6f}  // gray stairs
+        };
+        readonly byte[] dungeon_rooms_with_pushblock =
+        {
+            1, 13, 14, 26, 42, 48, 50, 51, 58, 74, 108, 133, 139, 140, 141, 143, 146, 151, 152, 161, 168, 184, 221, 233, 244, 252
+        };
 
         public short id;
         public byte _tile_index;
@@ -162,14 +179,41 @@ namespace The_Legend_of_Zelda.Rendering
 
             int index_in_ppu_arr = (y + y_offset) * Textures.PPU_WIDTH + x;
 
+            this._tile_index = tile_index;
+            special = false;
+
             if (gamemode == Gamemode.DUNGEON)
             {
-                special = false;
-                this._tile_index = tile_index;
-                Textures.ppu[index_in_ppu_arr] = DC.dungeon_tileset_indexes[tile_index, 0];
-                Textures.ppu[index_in_ppu_arr + 1] = DC.dungeon_tileset_indexes[tile_index, 1];
-                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH] = DC.dungeon_tileset_indexes[tile_index, 2];
-                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = DC.dungeon_tileset_indexes[tile_index, 3];
+                if (tile_index == 1 && Array.IndexOf(dungeon_rooms_with_pushblock, DC.scroll_destination) != -1)
+                {
+                    switch ((DungeonCode.RoomType)DC.room_list[DC.scroll_destination])
+                    {
+                        case DungeonCode.RoomType.SINGLE_PUSH_BLOCK:
+                            if (id == 87)
+                                special = true;
+                            break;
+
+                        case DungeonCode.RoomType.DOUBLE_PUSH_BLOCK:
+                            if (id == 86)
+                                special = true;
+                            break;
+
+                        case DungeonCode.RoomType.SIDEWAYS_U:
+                            if (id == 92)
+                                special = true;
+                            break;
+
+                        case DungeonCode.RoomType.CENTRAL_STAIRS:
+                            if (id == 86)
+                                special = true;
+                            break;
+                    }
+                }
+
+                Textures.ppu[index_in_ppu_arr] = dungeon_tileset_indexes[tile_index, 0];
+                Textures.ppu[index_in_ppu_arr + 1] = dungeon_tileset_indexes[tile_index, 1];
+                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH] = dungeon_tileset_indexes[tile_index, 2];
+                Textures.ppu[index_in_ppu_arr + Textures.PPU_WIDTH + 1] = dungeon_tileset_indexes[tile_index, 3];
                 return;
             }
 

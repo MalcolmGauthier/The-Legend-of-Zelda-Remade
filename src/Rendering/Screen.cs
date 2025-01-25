@@ -13,7 +13,6 @@ namespace The_Legend_of_Zelda.Rendering
         public static IntPtr window_surface_palette;
 
         static SDL_Rect window_display;
-        public static SDL_Rect screen_display;
 
         public static Tile[] tiles = new Tile[ppu.Length];
         public static MetaTile[] meta_tiles = new MetaTile[704];
@@ -28,7 +27,6 @@ namespace The_Legend_of_Zelda.Rendering
             SDL_SetRenderDrawBlendMode(render, SDL_BlendMode.SDL_BLENDMODE_BLEND);
             window_surface = SDL_CreateRGBSurface(0, 256, 240, 8, 0, 0, 0, 0);
             window_display = new SDL_Rect() { x = 0, y = 0, w = 256, h = 240 };
-            screen_display = new SDL_Rect() { x = 0, y = 0, w = 256, h = 240 };
             unsafe { window_surface_palette = ((SDL_PixelFormat*)((SDL_Surface*)window_surface)->format)->palette; }
             for (int i = 0; i < tiles.Length; i++)
             {

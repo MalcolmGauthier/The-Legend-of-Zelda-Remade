@@ -149,7 +149,13 @@ namespace The_Legend_of_Zelda.Gameplay
                 else if (scroll_direction == Direction.UP)
                 {
                     // scrolling up is tricky because of the HUD, so we swap the screens, warp to screen one then scroll back up to 0
-                    Textures.LoadPPUPage(data_group, current_screen, 1);
+                    // we copy the data instead of loading the page to *not* initialize anything in the current screen
+                    int tiles_per_screen = Textures.PPU_WIDTH * Textures.PPU_HEIGHT;
+                    for (int i = 256; i < tiles_per_screen; i++)
+                    {
+                        Textures.ppu[i + (tiles_per_screen - 256)] = Textures.ppu[i];
+                        Textures.ppu_plt[i + (tiles_per_screen - 256)] = Textures.ppu_plt[i];
+                    }
                     Textures.LoadPPUPage(data_group, scroll_destination, 0);
                     Screen.y_scroll = 176;
                     Link.SetPos(new_y: 240);

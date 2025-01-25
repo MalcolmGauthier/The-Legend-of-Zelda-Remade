@@ -14,6 +14,7 @@ namespace The_Legend_of_Zelda.Sprites
             HEAL,
             WAIT2,
             ERASE_BG,
+            WAIT3,
             EXIT
         }
 
@@ -83,8 +84,9 @@ namespace The_Legend_of_Zelda.Sprites
                         DC.LoadPalette();
                     }
 
-                    if (local_timer > 46)
+                    if (local_timer > 47)
                     {
+                        DC.LoadPalette();
                         anim_state = CollectionAnimState.HEAL;
                     }
                     break;
@@ -119,14 +121,23 @@ namespace The_Legend_of_Zelda.Sprites
 
                         anim_row_index++;
 
-                        if (left_index_start + anim_row_index > right_index_start + anim_row_index)
+                        if (left_index_start + anim_row_index > right_index_start - anim_row_index)
                         {
-                            anim_state = CollectionAnimState.EXIT;
+                            local_timer = 0;
+                            anim_state = CollectionAnimState.WAIT3;
                         }
                     }
                     break;
 
+                case CollectionAnimState.WAIT3:
+                    if (local_timer >= 128)
+                    {
+                        anim_state = CollectionAnimState.EXIT;
+                    }
+                    break;
+
                 case CollectionAnimState.EXIT:
+                    Screen.sprites.Remove(DC.compass_dot);
                     OC.black_square_stairs_return_flag = true;
                     OC.current_screen = OC.return_screen;
                     SaveLoad.SetTriforceFlag(DC.current_dungeon, true);
@@ -144,7 +155,7 @@ namespace The_Legend_of_Zelda.Sprites
     {
         public MapSprite(int x, int y) : base(x, y, false)
         {
-            tile_index = 0x4c;
+            tile_index = (byte)SpriteID.MAP;
             palette_index = 6;
         }
         public override void ItemSpecificActions()
@@ -158,8 +169,21 @@ namespace The_Legend_of_Zelda.Sprites
         }
     }
 
-    internal class CompassSprite
+    internal class CompassSprite : ItemDropSprite
     {
-
+        public CompassSprite(int x, int y) : base(x, y, false)
+        {
+            tile_index = (byte)SpriteID.COMPASS;
+            palette_index = 6;
+        }
+        public override void ItemSpecificActions()
+        {
+            if (collected)
+            {
+                SaveLoad.SetCompassFlag(DC.current_dungeon, true);
+                DC.compass_dot.shown = true;
+                Screen.sprites.Remove(this);
+            }
+        }
     }
 }

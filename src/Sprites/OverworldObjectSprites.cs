@@ -1,4 +1,5 @@
-﻿using The_Legend_of_Zelda.Rendering;
+﻿using The_Legend_of_Zelda.Gameplay;
+using The_Legend_of_Zelda.Rendering;
 using static The_Legend_of_Zelda.Gameplay.Program;
 
 namespace The_Legend_of_Zelda.Sprites
@@ -145,26 +146,25 @@ namespace The_Legend_of_Zelda.Sprites
             this.moving_tile = moving_tile;
             this.metatile_index = metatile_index;
 
-            byte new_tile;
-            if (moving_tile == MovingTile.ROCK)
+            byte new_tile = 0;
+            switch (moving_tile)
             {
-                new_tile = 0xc8;
-                plt_to_pick = 3;
-            }
-            else if (moving_tile == MovingTile.GREEN_ROCK)
-            {
-                new_tile = 0xc8;
-                plt_to_pick = 2;
-            }
-            else if (moving_tile == MovingTile.TOMBSTONE)
-            {
-                new_tile = 0xbc;
-                plt_to_pick = 0;
-            }
-            else
-            {
-                new_tile = 0xb0;
-                plt_to_pick = 2;
+                case MovingTile.ROCK:
+                    new_tile = 0xc8;
+                    plt_to_pick = 3;
+                    break;
+                case MovingTile.GREEN_ROCK:
+                    new_tile = 0xc8;
+                    plt_to_pick = 2;
+                    break;
+                case MovingTile.TOMBSTONE:
+                    new_tile = 0xbc;
+                    plt_to_pick = 0;
+                    break;
+                case MovingTile.DUNGEON_BLOCK:
+                    new_tile = 0xb0;
+                    plt_to_pick = 2;
+                    break;
             }
 
             tile_index = new_tile;
@@ -176,10 +176,13 @@ namespace The_Legend_of_Zelda.Sprites
 
             UpdateTexture();
             counterpart.UpdateTexture();
-            Screen.meta_tiles[metatile_index].tile_index = MetatileType.ROCK;
+            if (moving_tile == MovingTile.DUNGEON_BLOCK)
+                Screen.meta_tiles[metatile_index].tile_index_D = DungeonMetatile.WALL;
+            else
+                Screen.meta_tiles[metatile_index].tile_index = MetatileType.ROCK;
             Screen.meta_tiles[metatile_index].special = false;
             x = metatile_index % 16 * 16;
-            y = (metatile_index >> 4) * 16 + 64;
+            y = (metatile_index / 16) * 16 + 64;
 
             ppu_tile_location = 256 + (metatile_index >> 4) * 64 + metatile_index % 16 * 2;
             if (moving_tile == MovingTile.DUNGEON_BLOCK)
@@ -259,6 +262,7 @@ namespace The_Legend_of_Zelda.Sprites
                 {
                     Screen.meta_tiles[metatile_index].tile_index_D = DungeonMetatile.GROUND;
                     Screen.meta_tiles[metatile_index + offset].tile_index_D = DungeonMetatile.WALL;
+                    DC.block_push_flag = true;
                 }
                 Screen.meta_tiles[metatile_index + offset].special = false;
 

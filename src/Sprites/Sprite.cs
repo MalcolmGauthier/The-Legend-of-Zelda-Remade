@@ -35,6 +35,10 @@ namespace The_Legend_of_Zelda.Sprites
             if (!shown)
                 return;
 
+            // sprites cannot use background palettes.
+            if (palette_index < (byte)PaletteID.SP_0)
+                palette_index += 4;
+
             byte pixel_color, x_count = 0, y_count = 0;
             int i, j, i_inc = 1, j_inc = 1, i_start = 0, j_start = -1;
             bool link_mask_flag = false;

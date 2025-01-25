@@ -1,13 +1,18 @@
 tloz todo list:
 
 bugs:
-- walk during menu/walk anim
 
 to make:
-- enum for dungeon room types
+- advance early in bomb holes
+- add sea noise
+- maybe fix audio by separating into channels?
 - get dungeon working
+	- add enemies
+	- add bosses
+	- add gifts
 - add item collision to sword
 - finish sfx
 	- item get
-	- fairy appearence
+	- fairy apparence
 	- water
+	- door open

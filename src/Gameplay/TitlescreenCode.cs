@@ -178,12 +178,13 @@ namespace The_Legend_of_Zelda.Gameplay
                     Palettes.LoadPalette(PaletteID.BG_3, 3, Color._09_DARK_GREEN);
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.STORY, 1);
+                    y_scroll = 8;
                     break;
                 case 1425:
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.STORY, 0);
                     break;
                 case 1684:
-                    y_scroll = 0;
+                    y_scroll = 8;
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_1, 1);
                     break;
             }
@@ -202,13 +203,13 @@ namespace The_Legend_of_Zelda.Gameplay
                 case 2650:
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_3, 1);
                     break;
-                case 3150:
+                case 3108:
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_4, 0);
                     break;
-                case 3600:
+                case 3606:
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_5, 1);
                     break;
-                case 4120:
+                case 4070:
                     Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.INTRO_6, 0);
                     break;
             }

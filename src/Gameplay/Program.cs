@@ -318,6 +318,7 @@ namespace The_Legend_of_Zelda.Gameplay
             Screen.y_scroll = 0;
             OC = new();
             DC = new();
+            Link = new();
             Sound.PlaySong(Sound.Songs.SPLASH, false);
         }
 

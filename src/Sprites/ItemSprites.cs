@@ -619,7 +619,7 @@ namespace The_Legend_of_Zelda.Sprites
             {
                 for (int j = -16; j < 17; j += 16)
                 {
-                    metatile_index = Screen.GetMetaTileIndexAtLocation(j, i);
+                    metatile_index = Screen.GetMetaTileIndexAtLocation(x + j, y + i);
 
                     if (metatile_index < 0)
                         continue;
@@ -639,10 +639,11 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     else
                     {
-                        //if (MemoryExtensions.Contains(DC.door_metatiles, (byte)metatile_index)) // byte[].Contains marche pas
-                        //{
-                        //    DC.door_statuses[Array.IndexOf(DC.door_metatiles, (byte)metatile_index)] = true;
-                        //}
+                        byte[] door_metatiles = { 23, 151, 81, 94 };
+                        if (door_metatiles.Contains((byte)metatile_index))
+                        {
+                            DC.door_statuses[Array.IndexOf(door_metatiles, (byte)metatile_index)] = true;
+                        }
                     }
                 }
             }

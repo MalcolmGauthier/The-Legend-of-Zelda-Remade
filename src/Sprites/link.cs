@@ -149,6 +149,7 @@ namespace The_Legend_of_Zelda.Sprites
             ladder = true;
             raft = true;
             boomerang = true;
+            power_bracelet = true;
         }
 
         void CheckIfRecorderPlaying()
@@ -967,7 +968,7 @@ namespace The_Legend_of_Zelda.Sprites
             // link always spawns lined up on the metatile grid when warping. being off the grid means he moved after a warp.
             // this is useful because you can't enter a warp until you've moved after a warp transition
             if (!has_moved_after_warp_flag &&
-                (x % 16 != 0 || y % 16 != 0))
+                (x % 8 != 0 || y % 16 != 0))
             {
                 has_moved_after_warp_flag = true;
             }
@@ -1091,7 +1092,7 @@ namespace The_Legend_of_Zelda.Sprites
                         return (self.x + x_add & 15) > 8 || (self.y + y_add & 15) < 8;
 
                     case MetatileType.BLACK_SQUARE_WARP:
-                        if (self.x % 16 == 0 && self.y % 16 == 0 && has_moved_after_warp_flag)
+                        if (self.x % 8 == 0 && self.y % 16 == 0 && has_moved_after_warp_flag)
                             OC.black_square_stairs_flag = true;
                         return (self.y + y_add & 15) < 8;
 
@@ -1189,20 +1190,21 @@ namespace The_Legend_of_Zelda.Sprites
             }
             else if (gamemode == Gamemode.DUNGEON)
             {
-                DebugLog(dungeon_wall_push_timer);
                 switch (meta_tiles[metatile_index].tile_index_D)
                 {
-
                     case DungeonMetatile.GROUND or DungeonMetatile.SAND or DungeonMetatile.VOID or DungeonMetatile.GRAY_STAIRS:
-                        //if (!IsHeld(Buttons.UP) && !IsHeld(Buttons.DOWN) && !IsHeld(Buttons.LEFT) && !IsHeld(Buttons.RIGHT))
+                        // checking if dpad held makes it so if the first collision point is on ground but the second on a block,
+                        // the push timer keeps going
+                        if (!IsHeld(Buttons.UP) && !IsHeld(Buttons.DOWN) && !IsHeld(Buttons.LEFT) && !IsHeld(Buttons.RIGHT))
                             dungeon_wall_push_timer = 0;
                         return false;
 
                     case DungeonMetatile.WALL:
-                        if (metatile_index is (7 or 151 or 81 or 94) && (Math.Abs(self.x - 120) < 3 || Math.Abs(self.y - 144) < 3))
-                            dungeon_wall_push_timer++;
-                        else
-                            dungeon_wall_push_timer = 0;
+                        dungeon_wall_push_timer++;
+                        if (meta_tiles[metatile_index].special && dungeon_wall_push_timer >= 8 && DC.nb_enemies_alive == 0)
+                        {
+                            new MovingTileSprite(MovingTileSprite.MovingTile.DUNGEON_BLOCK, metatile_index);
+                        }
                         return true;
                     case DungeonMetatile.LEFT_STATUE or DungeonMetatile.RIGHT_STATUE or DungeonMetatile.GRAY_BRICKS:
                         return true;
@@ -1220,11 +1222,12 @@ namespace The_Legend_of_Zelda.Sprites
                         return false;
 
                     case DungeonMetatile.ROOM_TOP: // top of dungeon room
-                        if (metatile_index is 39 && Math.Abs(self.x - 120) < 4)
+                        bool is_colliding = ((self.y + y_add) % 16) < 8;
+                        if (is_colliding)
                             dungeon_wall_push_timer++;
                         else
                             dungeon_wall_push_timer = 0;
-                        return ((self.y + y_add) % 16) < 8/* && (self.x != 120)*/;
+                        return is_colliding;
                     case DungeonMetatile.VERT_DOOR_LEFT: // left of up/down doors
                         return ((self.x + x_add) % 16) < 8;
                     case DungeonMetatile.VERT_DOOR_RIGHT: // right of up/down doors
