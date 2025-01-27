@@ -503,16 +503,64 @@ namespace The_Legend_of_Zelda.Rendering
                     }
                     break;
                 case ROMData.SPR_DUNGEON_127:
+                    using (Stream stream = File.OpenRead(@"Data\SPR_DUNGEON_127.bin"))
+                    {
+                        BinaryReader reader = new BinaryReader(stream);
+                        for (int i = 0; i < stream.Length; i++)
+                        {
+                            chr_sp[i + 0x8E0] = reader.ReadByte();
+                        }
+                    }
                     break;
                 case ROMData.SPR_DUNGEON_358:
+                    using (Stream stream = File.OpenRead(@"Data\SPR_DUNGEON_358.bin"))
+                    {
+                        BinaryReader reader = new BinaryReader(stream);
+                        for (int i = 0; i < stream.Length; i++)
+                        {
+                            chr_sp[i + 0x8E0] = reader.ReadByte();
+                        }
+                    }
                     break;
                 case ROMData.SPR_DUNGEON_469:
+                    using (Stream stream = File.OpenRead(@"Data\SPR_DUNGEON_469.bin"))
+                    {
+                        BinaryReader reader = new BinaryReader(stream);
+                        for (int i = 0; i < stream.Length; i++)
+                        {
+                            chr_sp[i + 0x8E0] = reader.ReadByte();
+                        }
+                    }
                     break;
                 case ROMData.SPR_DUNGEON_BOSS_1257:
+                    using (Stream stream = File.OpenRead(@"Data\SPR_DUNGEON_BOSS_1257.bin"))
+                    {
+                        BinaryReader reader = new BinaryReader(stream);
+                        for (int i = 0; i < stream.Length; i++)
+                        {
+                            chr_sp[i + 0xC00] = reader.ReadByte();
+                        }
+                    }
                     break;
                 case ROMData.SPR_DUNGEON_BOSS_3468:
+                    using (Stream stream = File.OpenRead(@"Data\SPR_DUNGEON_BOSS_3468.bin"))
+                    {
+                        BinaryReader reader = new BinaryReader(stream);
+                        for (int i = 0; i < stream.Length; i++)
+                        {
+                            chr_sp[i + 0xC00] = reader.ReadByte();
+                        }
+                    }
                     break;
                 case ROMData.SPR_DUNGEON_BOSS_9:
+                    using (Stream stream = File.OpenRead(@"Data\SPR_DUNGEON_BOSS_9.bin"))
+                    {
+                        BinaryReader reader = new BinaryReader(stream);
+                        for (int i = 0; i < stream.Length; i++)
+                        {
+                            chr_sp[i + 0xC00] = reader.ReadByte();
+                        }
+                    }
                     break;
             }
         }

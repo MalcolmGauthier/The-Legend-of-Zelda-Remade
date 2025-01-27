@@ -163,18 +163,16 @@ namespace The_Legend_of_Zelda.Sprites
 
         public abstract void EnemySpecificActions();
 
-        //TODO: dungeon
         bool IsPositionValid(int x, int y)
         {
             MetatileType tile_id = Screen.GetMetaTileTypeAtLocation(x, y);
 
-            switch (tile_id)
+            if (gamemode == Gamemode.DUNGEON)
             {
-                case MetatileType.GROUND or MetatileType.BLACK_SQUARE_WARP or MetatileType.BLUE_STAIRS or MetatileType.DOCK or MetatileType.STAIRS or MetatileType.SAND:
-                    return true;
-                default:
-                    return false;
+                return IsValidTile((DungeonMetatile)tile_id);
             }
+
+            return IsValidTile(tile_id);
         }
 
         bool IsWithinLink()
@@ -297,6 +295,7 @@ namespace The_Legend_of_Zelda.Sprites
 
             switch (animation_mode)
             {
+                //TODO: one frame anims don't need updates
                 case AnimationMode.ONEFRAME or AnimationMode.ONEFRAME_M:
                     tile_index = tile_location_1;
                     if (animation_mode == AnimationMode.ONEFRAME_M)
@@ -353,6 +352,22 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     break;
 
+                case AnimationMode.TWOFRAMES_S:
+                    flip = FirstHalfOfAnimation();
+                    if (flip)
+                    {
+                        tile_index = tile_location_1;
+                        counterpart.tile_index = (byte)(tile_location_1 + next_tile);
+                    }
+                    else
+                    {
+                        tile_index = (byte)(tile_location_1 + next_tile);
+                        counterpart.tile_index = tile_location_1;
+                    }
+                    xflip = !flip;
+                    counterpart.xflip = !flip;
+                    break;
+
                 case AnimationMode.TWOFRAMES_M:
                     counterpart.xflip = true;
                     flip = FirstHalfOfAnimation();
@@ -369,12 +384,11 @@ namespace The_Legend_of_Zelda.Sprites
                     break;
 
                 case AnimationMode.TWOFRAMES_RRDU:
-                    flip = false;
+                    flip = FirstHalfOfAnimation();
                     tile_to_use = 1;
-                    if (FirstHalfOfAnimation())
+                    if (flip)
                     {
                         tile_to_use = -1;
-                        flip = !flip;
                     }
 
                     if ((int)facing_direction < 2)
@@ -477,7 +491,7 @@ namespace The_Legend_of_Zelda.Sprites
                 new_y = RNG.Next(2, 9);
 
                 MetatileType tile = Screen.meta_tiles[new_y * 16 + new_x].tile_index;
-                if (IsValidTile(tile))
+                if (gamemode == Gamemode.OVERWORLD ? IsValidTile(tile) : IsValidTile((DungeonMetatile)tile))
                 {
                     break;
                 }
@@ -499,8 +513,15 @@ namespace The_Legend_of_Zelda.Sprites
         }
         bool IsValidTile(DungeonMetatile tile)
         {
+            // left and right doors
+            // ideally the tiles used by the side doors would be different... oh well
+            if (tile is DungeonMetatile.ROOM_TOP)
+            {
+                return y < 140;
+            }
+
             return tile is (DungeonMetatile.GROUND or DungeonMetatile.SAND or DungeonMetatile.VOID or DungeonMetatile.STAIRS or 
-                DungeonMetatile.ROOM_TOP or DungeonMetatile.VERT_DOOR_LEFT or DungeonMetatile.VERT_DOOR_RIGHT);
+                DungeonMetatile.ROOM_TOP or DungeonMetatile.TOP_DOOR_OPEN_L or DungeonMetatile.TOP_DOOR_OPEN_R);
         }
 
         public void Walk()

@@ -1,4 +1,5 @@
-﻿using The_Legend_of_Zelda.Rendering;
+﻿using The_Legend_of_Zelda.Gameplay;
+using The_Legend_of_Zelda.Rendering;
 using The_Legend_of_Zelda.Sprites;
 using static The_Legend_of_Zelda.Gameplay.Program;
 
@@ -95,7 +96,7 @@ namespace The_Legend_of_Zelda.Sprites
             palette_index = palette_to_apply;
             counterpart.palette_index = palette_to_apply;
 
-            if (OC.overworld_screens_side_entrance.Contains(OC.current_screen) && gamemode == Gamemode.OVERWORLD)
+            if (OC.overworld_screens_side_entrance.Contains(OC.current_screen))
             {
                 smoke_appearance = true;
                 appeared = false;
@@ -731,7 +732,7 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     if (local_timer <= 48)
                     {
-                        if (local_timer <= 24 && local_timer % 4 == 0 || local_timer > 24 && local_timer % 8 == 0)
+                        if (local_timer % frames_between_anim == 0)
                         {
                             Move8D();
                         }
@@ -837,6 +838,33 @@ namespace The_Legend_of_Zelda.Sprites
             {
                 x++;
             }
+        }
+
+        // either turns left, turns right or continues forward
+        EightDirection PickNewDirection()
+        {
+            EightDirection return_val = direction;
+            int rng = Program.RNG.Next(3);
+
+            if (rng == 2)
+                return return_val;
+
+            if (direction == EightDirection.UP)
+                return rng == 0 ? EightDirection.UPLEFT : EightDirection.UPRIGHT;
+            if (direction == EightDirection.DOWN)
+                return rng == 0 ? EightDirection.DOWNLEFT : EightDirection.DOWNRIGHT;
+            if (direction == EightDirection.LEFT)
+                return rng == 0 ? EightDirection.UPLEFT : EightDirection.DOWNLEFT;
+            if (direction == EightDirection.RIGHT)
+                return rng == 0 ? EightDirection.UPRIGHT : EightDirection.DOWNRIGHT;
+            if (direction == EightDirection.UPLEFT)
+                return rng == 0 ? EightDirection.UP : EightDirection.LEFT;
+            if (direction == EightDirection.DOWNLEFT)
+                return rng == 0 ? EightDirection.DOWN : EightDirection.LEFT;
+            if (direction == EightDirection.UPRIGHT)
+                return rng == 0 ? EightDirection.UP : EightDirection.RIGHT;
+            else
+                return rng == 0 ? EightDirection.RIGHT : EightDirection.DOWN;
         }
     }
 

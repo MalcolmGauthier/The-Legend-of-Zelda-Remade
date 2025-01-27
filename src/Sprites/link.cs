@@ -135,7 +135,7 @@ namespace The_Legend_of_Zelda.Sprites
             y = self.y;
 
             // debug section
-            //hp = 3f;
+            hp = 3f;
             blue_candle = true;
             magical_key = true;
             recorder = true;

@@ -246,7 +246,6 @@ namespace The_Legend_of_Zelda.Sprites
         }
     }
 
-
     internal class StaticHeartSprite : FlickeringSprite
     {
         public StaticHeartSprite(int x, int y) : base(0xf2, 6, x, y, 8, 0xf2, second_palette_index: 5)
@@ -574,6 +573,7 @@ namespace The_Legend_of_Zelda.Sprites
                 }
                 shown = false;
                 Menu.bomb_out = false;
+                //TODO: hurt ennemies!!!
                 UncoverHoles();
                 Sound.PlaySFX(Sound.SoundEffects.EXPLOSION);
                 return;
@@ -960,6 +960,9 @@ namespace The_Legend_of_Zelda.Sprites
         {
             this.x = x;
             this.y = y;
+            // just in case thrower dies next frame. if that happens without this, boomerang would go to 0,0
+            return_x = this.x;
+            return_y = this.y;
             this.parent = parent;
             if (SaveLoad.magical_boomerang)
                 palette_index = 5;
@@ -1016,6 +1019,11 @@ namespace The_Legend_of_Zelda.Sprites
             }
             local_timer++;
 
+            if (parent is LinkSprite l)
+            {
+                return_x = l.x;
+                return_y = l.y;
+            }
             // only update return pos if parent still exists
             if (parent is Sprite s && Screen.sprites.Contains(s))
             {

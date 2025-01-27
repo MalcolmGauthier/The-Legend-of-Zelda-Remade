@@ -335,12 +335,12 @@ namespace The_Legend_of_Zelda.Gameplay
             else if (current_dungeon is 3 or 7 or 8)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_469);
 
-            if (current_dungeon is 0 or 1 or 4 or 6)
-                Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_1257);
-            else if (current_dungeon is 2 or 3 or 5 or 7)
-                Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_3468);
-            else if (current_dungeon == 8)
-                Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_9);
+            //if (current_dungeon is 0 or 1 or 4 or 6)
+            //    Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_1257);
+            //else if (current_dungeon is 2 or 3 or 5 or 7)
+            //    Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_3468);
+            //else if (current_dungeon == 8)
+            //    Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_9);
 
             for (int i = 0; i < meta_tiles.Length; i++)
             {
@@ -545,6 +545,9 @@ namespace The_Legend_of_Zelda.Gameplay
         // spawn ennemies and or bosses in a simillar way to overworld
         void SpawnEnemies()
         {
+            if (!ScrollingDone())
+                return;
+
             uint enemies = dungeon_enemy_list[current_screen];
             // the first 16 bits of the enemy code being FFFF is a signal to load the boss of that room instead, whose id is the 16 next bits.
             // yes, this means a dungeon room can't have 8 of the enemy of ID 15, because 0xFFFFFFFF spawns ganon.
@@ -561,9 +564,10 @@ namespace The_Legend_of_Zelda.Gameplay
                         //new Aquamentus();
                         break;
                     case Bosses.DODONGO_TRIPLE:
-                    //new Dodongo();
-                    //new Dodongo();
-                    //new Dodongo();
+                        //new Dodongo();
+                        //new Dodongo();
+                        //new Dodongo();
+                        break;
                     case Bosses.DODONGO:
                         //new Dodongo();
                         break;
@@ -628,7 +632,7 @@ namespace The_Legend_of_Zelda.Gameplay
                             //new Bubble(Bubble.RED);
                             break;
                         case DungeonEnemies.KEESE:
-                            //new Keese();
+                            new Keese(false);
                             break;
                         case DungeonEnemies.NPC:
                             // :/
@@ -638,18 +642,35 @@ namespace The_Legend_of_Zelda.Gameplay
                             break;
                     }
 
+                    enemy_selector >>= 4;
                     continue;
                 }
 
-                if (current_dungeon is 1 or 2 or 7)
+                if (current_dungeon is 0 or 1 or 6)
                 {
-                    switch (enemy_id)
+                    switch ((DungeonEnemies)enemy_id)
                     {
-                        case 0:
+                        case DungeonEnemies.STALFOS:
+                            new Stalfos();
+                            break;
+                        case DungeonEnemies.GORIYA:
+                            //new Goriya(false);
+                            break;
+                        case DungeonEnemies.GORIYA_HARDER:
+                            //new Goriya(true);
+                            break;
+                        case DungeonEnemies.WALLMASTER:
+                            //new Wallmaster();
+                            break;
+                        case DungeonEnemies.ROPE:
+                            //new Rope(false);
+                            break;
+                        case DungeonEnemies.ROPE_HARDER:
+                            //new Rope(true);
                             break;
                     }
                 }
-                else if (current_dungeon is 3 or 5 or 8)
+                else if (current_dungeon is 2 or 4 or 7)
                 {
                     switch (enemy_id)
                     {
