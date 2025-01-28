@@ -764,7 +764,7 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     else if (local_timer == 55)
                     {
-                        direction = (EightDirection)RNG.Next(8);
+                        direction = PickNewDirection();
                         when_to_stop = RNG.Next(60, 120);
                         frames_between_anim = 2;
                     }
