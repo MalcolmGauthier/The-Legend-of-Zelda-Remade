@@ -85,7 +85,7 @@ namespace The_Legend_of_Zelda.Gameplay
             BUBBLE_RED,
             KEESE,
             NPC,
-            RAZOR_TRAP,
+            BLADE_TRAP,
             //TODO: proj statues (hardcoded)
 
             // dungeons 1, 2, 7
@@ -109,8 +109,6 @@ namespace The_Legend_of_Zelda.Gameplay
             LIKELIKE,
             WIZROBE,
             WIZROBE_HARDER,
-            LANMOLA,
-            LANMOLA_HARDER,
         }
 
         enum Bosses
@@ -128,6 +126,8 @@ namespace The_Legend_of_Zelda.Gameplay
             GOHMA_HARDER,
             PATRA,
             MOLDORM,
+            LANMOLA,
+            LANMOLA_HARDER,
             GANON,
         }
 
@@ -138,9 +138,9 @@ namespace The_Legend_of_Zelda.Gameplay
         public const DoorType DOOR_GENERIC_CLOSED = DoorType.CLOSED_ENEMY_UL;
 
         public byte current_dungeon { get; private set; }
-        public byte nb_enemies_alive = 0;
         byte link_walk_animation_timer = 0;
 
+        public int nb_enemies_alive = 0;
         int dark_room_animation_timer = 0;
         int frames_since_link_can_walk = 0;
 
@@ -188,6 +188,7 @@ namespace The_Legend_of_Zelda.Gameplay
             0b0010000000000100,
             0b0000000100000000,
         };
+        //TODO: change data for bosses: lanmola
         public readonly uint[] dungeon_enemy_list = {
             0x55550000, 0xbbccc000, 0x2288aa00, 0x60000000, 0x00000000, 0x00000000, 0xffff0001, 0x00005555, 0x60000000, 0x55555555, 0x70000000, 0x00000000, 0x55550000, 0xbbbbbb00, 0x00000000, 0x55550000,
             0xffff0005, 0xaa228800, 0xbbbbbb00, 0xbbcccaaa, 0xffff0009, 0xaa228800, 0x99999000, 0x60000000, 0xffff0003, 0x00000000, 0x99999000, 0xffff0004, 0x00000000, 0x60000000, 0x55555550, 0x60000000,
@@ -201,7 +202,7 @@ namespace The_Legend_of_Zelda.Gameplay
             0x22555aaa, 0xaaaaaa00, 0x999aaa00, 0xaaaaaa00, 0xffff0008, 0xccccc000, 0xffff000a, 0xaabbcc00, 0xbbccc222, 0xee000000, 0xdd000000, 0x88aa2200, 0xaaaa0000, 0xccc00000, 0xffff000b, 0xaaabbcc2,
             0x60000000, 0x999aaa00, 0xffff0000, 0x00000000, 0x00000000, 0x00000000, 0xffff0003, 0x55550000, 0xbbccc000, 0xffff000b, 0x22aa8800, 0x11111111, 0x99999000, 0xaa228800, 0x11111111, 0xffff000b,
             0x999aaa00, 0xffff0008, 0xffff000c, 0x60000000, 0xffff0006, 0x60000000, 0xbbbbbb00, 0xbcc22999, 0x7bbcc000, 0xaaabbcc2, 0x00000000, 0x11111111, 0x55555555, 0xbbccc000, 0x22288555, 0x99999900,
-            0x60000000, 0x22555aaa, 0x55550000, 0xaaaaaa00, 0xcccccccc, 0xffff000a, 0x99922aab, 0x55550000, 0xbbcc0000, 0x7aaaa000, 0xffff000d, 0x60000000, 0xbbbbbb00, 0xbbcc2aaa, 0xcccccc00, 0x222bbcc0,
+            0x60000000, 0x22555aaa, 0x55550000, 0xaaaaaa00, 0xcccccccc, 0xffff000a, 0x99922aab, 0x55550000, 0xbbcc0000, 0x7aaaa000, 0xffff000f, 0x60000000, 0xbbbbbb00, 0xbbcc2aaa, 0xcccccc00, 0x222bbcc0,
             0xffff0002, 0x999aaa00, 0x88888888, 0x60000000, 0xaaa00000, 0x55cc9900, 0xbbbbbb00, 0xcccccccc, 0x88888000, 0xaaaaaa00, 0xffff000b, 0xbbccaaa2, 0xbbccc000, 0xdd000000, 0x2288aa00, 0xbbccc000,
             0x75555000, 0xaaaaa000, 0x55555555, 0xaaaaaa00, 0xffff0007, 0x88888888, 0xffff0003, 0x55550000, 0x55550000, 0xffff000b, 0x55555555, 0x88888000, 0x2aaabbcc, 0x222bbccc, 0x60000000, 0x55550000,
             0xccccc000, 0x00000000, 0xffff000c, 0x55550000, 0x22aab999, 0xffff0003, 0x00000000, 0x22288555, 0x55550000, 0x00000000, 0x55550000, 0xbbccc222, 0xee000000, 0x55550000, 0x00000000, 0x55550000
@@ -292,9 +293,17 @@ namespace The_Legend_of_Zelda.Gameplay
                 123, 117, 116, 121, 126, 113, 241, 246, 254
             };
 
+            // reset link
+            Link.SetPos(120, 223);
+            Link.self.palette_index = (byte)PaletteID.SP_0;
+            Link.counterpart.palette_index = (byte)PaletteID.SP_0;
+            Link.current_action = LinkAction.WALKING_UP;
+            DC.UnloadSpritesRoomTransition();
             Link.knockback_timer = 0;
             Link.iframes_timer = 0;
             Link.facing_direction = Direction.UP;
+            Link.self.dungeon_wall_mask = true;
+            Link.counterpart.dungeon_wall_mask = true;
             x_scroll = 0;
             y_scroll = 0;
 
@@ -305,6 +314,7 @@ namespace The_Legend_of_Zelda.Gameplay
             compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
             compass_dot.x = 10 + compass_coords[dungeon].x * 8;
             compass_dot.y = 24 + compass_coords[dungeon].y * 4;
+            Menu.map_dot.shown = false;
 
             current_dungeon = dungeon;
             current_screen = starting_screens[current_dungeon];
@@ -351,7 +361,6 @@ namespace The_Legend_of_Zelda.Gameplay
             opening_animation_timer = 0;
             OC.black_square_stairs_flag = false;
             OC.stair_warp_flag = false;
-            Menu.map_dot.shown = false;
         }
 
         protected override void SpecificCode()
@@ -427,6 +436,7 @@ namespace The_Legend_of_Zelda.Gameplay
             if (scroll_finished)
             {
                 LinkWalkAnimation();
+                nb_enemies_alive = 0;
                 return false;
             }
 
@@ -610,9 +620,24 @@ namespace The_Legend_of_Zelda.Gameplay
             }
 
             uint enemy_selector = 0xF0000000;
+            List<int> ignore_list = new();
             for (int i = 0; i < 8; i++)
             {
+                int kq = IsInKillQueue(current_screen, ignore_list.ToArray());
+                if (kq != -1)
+                {
+                    ignore_list.Add(kq);
+                    enemy_selector >>= 4;
+                    continue;
+                }
+
                 uint enemy_id = (enemies & enemy_selector) >> (7 - i) * 4;
+
+                if (enemy_id != (uint)DungeonEnemies.NONE)
+                {
+                    nb_enemies_alive++;
+                }
+
                 if (enemy_id < 8)
                 {
                     switch ((DungeonEnemies)enemy_id)
@@ -620,7 +645,7 @@ namespace The_Legend_of_Zelda.Gameplay
                         case DungeonEnemies.NONE:
                             break;
                         case DungeonEnemies.GEL:
-                            //new Gel();
+                            new Gel(null);
                             break;
                         case DungeonEnemies.BUBBLE:
                             //new Bubble(Bubble.NORMAL);
@@ -637,8 +662,9 @@ namespace The_Legend_of_Zelda.Gameplay
                         case DungeonEnemies.NPC:
                             // :/
                             break;
-                        case DungeonEnemies.RAZOR_TRAP:
-                            //new RazorTrap();
+                        case DungeonEnemies.BLADE_TRAP:
+                            BladeTrapManager.CreateTraps();
+                            nb_enemies_alive--;
                             break;
                     }
 
@@ -654,13 +680,13 @@ namespace The_Legend_of_Zelda.Gameplay
                             new Stalfos();
                             break;
                         case DungeonEnemies.GORIYA:
-                            //new Goriya(false);
+                            new Goriya(false);
                             break;
                         case DungeonEnemies.GORIYA_HARDER:
-                            //new Goriya(true);
+                            new Goriya(true);
                             break;
                         case DungeonEnemies.WALLMASTER:
-                            //new Wallmaster();
+                            new Wallmaster();
                             break;
                         case DungeonEnemies.ROPE:
                             //new Rope(false);
@@ -672,17 +698,31 @@ namespace The_Legend_of_Zelda.Gameplay
                 }
                 else if (current_dungeon is 2 or 4 or 7)
                 {
-                    switch (enemy_id)
+                    switch ((DungeonEnemies)enemy_id + 6)
                     {
-                        case 0:
+                        case DungeonEnemies.ZOL:
+                            new Zol();
+                            break;
+                        case DungeonEnemies.GIBDO:
+                            //new Gibdo();
+                            break;
+                        case DungeonEnemies.DARKNUT:
+                            new Darknut(false);
+                            break;
+                        case DungeonEnemies.DARKNUT_HARDER:
+                            new Darknut(true);
+                            break;
+                        case DungeonEnemies.POLSVOICE:
+                            //new PolsVoice();
                             break;
                     }
                 }
                 else
                 {
-                    switch (enemy_id)
+                    switch ((DungeonEnemies)enemy_id + 11)
                     {
-                        case 0:
+                        case DungeonEnemies.ZOL:
+                            new Zol();
                             break;
                     }
                 }
@@ -706,14 +746,17 @@ namespace The_Legend_of_Zelda.Gameplay
             }
         }
 
+        // animation of link walking on his own when entering or exiting a room
         public void LinkWalkAnimation()
         {
             const byte ANIM_LEN = 11;
             if (link_walk_animation_timer == 0)
             {
-                //TODO: extend animation if exiting bomb hole or door that's about to lock
+                //TODO: extend animation if entering bomb door
                 link_walk_animation_timer = ANIM_LEN;
-                if (IsClosedType(doors[(int)Link.facing_direction ^ 1], (Direction)((int)Link.facing_direction ^ 1)) && ScrollingDone())
+                Direction link_opposite_dir = Link.facing_direction.Opposite();
+                if ((IsClosedType(doors[(int)link_opposite_dir], link_opposite_dir) ||
+                    GetDoorType(current_screen, link_opposite_dir) == DoorType.BOMBABLE) && ScrollingDone())
                 {
                     link_walk_animation_timer = ANIM_LEN * 2;
                 }
@@ -743,7 +786,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 frames_since_link_can_walk = 0;
                 // when link exits through a closed door type, it initializes as open, but then closes the moment link can move.
                 // even if the condition to open is already meant. if that's the case, it'll open next frame.
-                Direction exit_door = (Direction)((int)Link.facing_direction ^ 1);
+                Direction exit_door = Link.facing_direction.Opposite();
                 if (IsClosedType(GetDoorType(current_screen, exit_door), exit_door) && ScrollingDone())
                 {
                     DrawDoor(exit_door, DOOR_GENERIC_CLOSED);
@@ -1044,8 +1087,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 }
                 // remaining cases are for locked doors, but if link is coming through one form the other side,
                 // then they only lock after the walking animation. on initialization, they appear open.
-                // the direction enum is set up such that (direction) ^ 1 == (opposite direction)
-                else if ((Direction)(i ^ 1) != scroll_direction && IsClosedType(doors[i], (Direction)i))
+                else if (((Direction)i).Opposite() != scroll_direction && IsClosedType(doors[i], (Direction)i))
                 {
                     Textures.ppu[door_center_ppu_locations[i] + screen_index_offset] = texture_locations[1, i];
                     Textures.ppu[door_center_ppu_locations[i] + screen_index_offset + 1] = (byte)(texture_locations[1, i] + 2);

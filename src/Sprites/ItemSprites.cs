@@ -98,12 +98,17 @@ namespace The_Legend_of_Zelda.Sprites
             {
                 for (int i = 0; i < Screen.sprites.Count; i++)
                 {
-                    if (Screen.sprites[i].GetType().BaseType != typeof(Enemy))
+                    if (Screen.sprites[i] is not Enemy enemy)
                     {
                         continue;
                     }
 
-                    Enemy enemy = (Enemy)Screen.sprites[i];
+                    //if (Screen.sprites[i].GetType().BaseType != typeof(Enemy))
+                    //{
+                    //    continue;
+                    //}
+
+                    //Enemy enemy = (Enemy)Screen.sprites[i];
 
                     // if no collision or enemy is invincible, continue
                     if (!(x < enemy.x + 16 &&
@@ -146,8 +151,8 @@ namespace The_Legend_of_Zelda.Sprites
                 return;
             }
 
-            // if link is... uh... facing the projectile
-            if ((int)Link.facing_direction == ((int)direction ^ 1) && !((int)Link.current_action >= 4 && (int)Link.current_action <= 7))
+            // if link is facing the projectile
+            if (Link.facing_direction == direction.Opposite() && !(Link.current_action >= LinkAction.ATTACK_LEFT && Link.current_action <= LinkAction.ATTACK_DOWN))
             {
                 // small rocks and arrows can be reflected by any shield, swords and beams need the magic shield
                 if (this is RockProjectileSprite || this is ArrowSprite ||
@@ -545,6 +550,7 @@ namespace The_Legend_of_Zelda.Sprites
 
         public BombSprite(int x, int y) : base(true, true, 4)
         {
+            // important for darknuts!
             direction = Link.facing_direction;
             tile_index = 0x34;
             palette_index = 5;
@@ -573,7 +579,7 @@ namespace The_Legend_of_Zelda.Sprites
                 }
                 shown = false;
                 Menu.bomb_out = false;
-                //TODO: hurt ennemies!!!
+                HurtEnemies();
                 UncoverHoles();
                 Sound.PlaySFX(Sound.SoundEffects.EXPLOSION);
                 return;
@@ -645,6 +651,23 @@ namespace The_Legend_of_Zelda.Sprites
                             DC.door_statuses[Array.IndexOf(door_metatiles, (byte)metatile_index)] = true;
                         }
                     }
+                }
+            }
+        }
+
+        void HurtEnemies()
+        {
+            foreach (Sprite s in Screen.sprites)
+            {
+                if (s is not Enemy e)
+                    continue;
+
+                if (e.y < y + 24 &&
+                    e.y > y - 24 &&
+                    e.x < x + 24 &&
+                    e.x > x - 24)
+                {
+                    e.TakeDamage(4);
                 }
             }
         }
@@ -956,7 +979,7 @@ namespace The_Legend_of_Zelda.Sprites
         EightDirection m_direction;
         IBoomerangThrower parent;
 
-        public BoomerangSprite(int x, int y, bool is_from_link, IBoomerangThrower parent) : base(is_from_link, true, 1)
+        public BoomerangSprite(int x, int y, bool is_from_link, bool blue, IBoomerangThrower parent) : base(is_from_link, true, 1)
         {
             this.x = x;
             this.y = y;
@@ -964,12 +987,19 @@ namespace The_Legend_of_Zelda.Sprites
             return_x = this.x;
             return_y = this.y;
             this.parent = parent;
-            if (SaveLoad.magical_boomerang)
+            if (blue)
                 palette_index = 5;
             unload_during_transition = true;
-            m_direction = FindBoomerangDirection();
             parent.boomerang_out = true;
-            Link.animation_timer = 0;
+            if (parent is LinkSprite)
+            {
+                m_direction = FindBoomerangDirection();
+                Link.animation_timer = 0;
+            }
+            else
+            {
+                m_direction = (EightDirection)parent.boomerang_throw_dir;
+            }
         }
 
         public override void ProjSpecificActions()
@@ -1546,6 +1576,7 @@ namespace The_Legend_of_Zelda.Sprites
     public interface IBoomerangThrower
     {
         public bool boomerang_out { get; set; }
+        public Direction boomerang_throw_dir { get; set; }
 
         public abstract void BoomerangRetreive();
     }

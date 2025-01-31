@@ -16,6 +16,14 @@ namespace The_Legend_of_Zelda.Sprites
         RIGHT
     }
 
+    public static class DirectionFunctions
+    {
+        public static Direction Opposite(this Direction direction)
+        {
+            return (Direction)((int)direction ^ 1);
+        }
+    }
+
     public enum LinkAction
     {
         WALKING_LEFT,
@@ -55,6 +63,7 @@ namespace The_Legend_of_Zelda.Sprites
         public bool clock_flash = false;
         public bool shown { get; private set; }
         public bool boomerang_out { get => Menu.boomerang_out; set => Menu.boomerang_out = value; }
+        public Direction boomerang_throw_dir { get => facing_direction; set => facing_direction = value; }
         bool stair_speed = false;
 
         public Direction facing_direction;
@@ -150,6 +159,7 @@ namespace The_Legend_of_Zelda.Sprites
             raft = true;
             boomerang = true;
             power_bracelet = true;
+            wooden_sword = true;
         }
 
         void CheckIfRecorderPlaying()
@@ -484,7 +494,7 @@ namespace The_Legend_of_Zelda.Sprites
 
                     Attack();
                     pos = FindItemPos(false);
-                    new BoomerangSprite(pos[0], pos[1], true, this);
+                    new BoomerangSprite(pos[0], pos[1], true, SaveLoad.magical_boomerang, this);
                     Menu.boomerang_out = true;
                     break;
 

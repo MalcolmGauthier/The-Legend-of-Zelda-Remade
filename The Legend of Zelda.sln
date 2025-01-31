@@ -5,8 +5,6 @@ VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "The Legend of Zelda", "The Legend of Zelda.csproj", "{1789A5F9-C706-476D-B66A-1FAB5789EC67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sdl test 4", "..\sdl test 4\sdl test 4.csproj", "{4ECB6A91-ABDA-4E5C-AF6E-93476801F260}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,10 +15,6 @@ Global
 		{1789A5F9-C706-476D-B66A-1FAB5789EC67}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1789A5F9-C706-476D-B66A-1FAB5789EC67}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1789A5F9-C706-476D-B66A-1FAB5789EC67}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4ECB6A91-ABDA-4E5C-AF6E-93476801F260}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4ECB6A91-ABDA-4E5C-AF6E-93476801F260}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4ECB6A91-ABDA-4E5C-AF6E-93476801F260}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4ECB6A91-ABDA-4E5C-AF6E-93476801F260}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

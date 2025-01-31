@@ -57,6 +57,7 @@ namespace The_Legend_of_Zelda.Sprites
         protected bool stronger = false;
         protected bool spawn_hidden = false;
         protected bool stunnable = true;
+        protected bool die_when_stunned = false;
         public bool invincible = false;
         public bool bomb_death = false;
         bool target_antilink = false;
@@ -116,14 +117,22 @@ namespace The_Legend_of_Zelda.Sprites
                 counterpart.shown = true;
             }
 
+            OnInit();
             Animation();
+        }
+
+        protected virtual void OnInit()
+        {
+            return;
         }
 
         public override void Action()
         {
+            // only do stuff if link can move!!! (and he's not on a raft)
             if (!Link.can_move && !OC.raft_flag)
                 return;
 
+            // not being appeared either means you're smoking or dying
             if (!appeared)
             {
                 if (HP <= 0)
@@ -137,13 +146,17 @@ namespace The_Legend_of_Zelda.Sprites
             }
             else
             {
-                Animation();
+                if (animation_mode is not (AnimationMode.ONEFRAME or AnimationMode.ONEFRAME_M))
+                {
+                    Animation();
+                }
 
                 if (IsWithinLink() && !Link.clock_flash && can_damage_link)
                 {
-                    Link.knockback_direction = (Direction)((int)Link.facing_direction ^ 1);
+                    Link.knockback_direction = Link.facing_direction.Opposite();
                     Link.TakeDamage(damage);
                 }
+
                 TouchingSword();
 
                 if (current_action == ActionState.STUNNED || Link.clock_flash)
@@ -286,7 +299,6 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        // readable code? no thanks, i'm full.
         void Animation()
         {
             bool flip;
@@ -352,6 +364,16 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     break;
 
+                case AnimationMode.TWOFRAMES_HM:
+                    tile_to_use = tile_location_1 + next_tile;
+                    if (FirstHalfOfAnimation())
+                    {
+                        tile_to_use = tile_location_2;
+                    }
+                    tile_index = tile_location_1;
+                    counterpart.tile_index = (byte)tile_to_use;
+                    break;
+
                 case AnimationMode.TWOFRAMES_S:
                     flip = FirstHalfOfAnimation();
                     if (flip)
@@ -366,6 +388,17 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     xflip = !flip;
                     counterpart.xflip = !flip;
+                    break;
+
+                case AnimationMode.TWOFRAMES_SOLO:
+                    if (FirstHalfOfAnimation())
+                    {
+                        tile_index = tile_location_1;
+                    }
+                    else
+                    {
+                        tile_index = tile_location_2;
+                    }
                     break;
 
                 case AnimationMode.TWOFRAMES_M:
@@ -467,6 +500,72 @@ namespace The_Legend_of_Zelda.Sprites
 
                         tile_index = (byte)(tile_location_1 + 5 + tile_to_use + next_tile * 2);
                         counterpart.tile_index = (byte)(tile_location_1 + 5 - tile_to_use + next_tile * 2);
+                    }
+                    break;
+
+                case AnimationMode.TWOFRAMES_DURR:
+                    flip = FirstHalfOfAnimation();
+                    switch (facing_direction)
+                    {
+                        case Direction.DOWN:
+                            if (flip)
+                            {
+                                tile_index = tile_location_1;
+                                counterpart.tile_index = (byte)(tile_location_1 + next_tile);
+                            }
+                            else
+                            {
+                                tile_index = (byte)(tile_location_1 + next_tile);
+                                counterpart.tile_index = tile_location_1;
+                            }
+                            xflip = !flip;
+                            counterpart.xflip = !flip;
+                            break;
+
+                        case Direction.UP:
+                            if (flip)
+                            {
+                                tile_index = (byte)(tile_location_1 + 4);
+                                counterpart.tile_index = (byte)(tile_location_1 + next_tile + 4);
+                            }
+                            else
+                            {
+                                tile_index = (byte)(tile_location_1 + next_tile + 4);
+                                counterpart.tile_index = (byte)(tile_location_1 + 4);
+                            }
+                            xflip = !flip;
+                            counterpart.xflip = !flip;
+                            break;
+
+                        case Direction.LEFT:
+                            if (flip)
+                            {
+                                tile_index = (byte)(tile_location_2 + next_tile);
+                                counterpart.tile_index = (byte)(tile_location_2);
+                            }
+                            else
+                            {
+                                tile_index = (byte)(tile_location_2 + next_tile + 4);
+                                counterpart.tile_index = (byte)(tile_location_2 + 4);
+                            }
+                            xflip = true;
+                            counterpart.xflip = true;
+                            break;
+
+                        case Direction.RIGHT:
+                            if (flip)
+                            {
+                                tile_index = (byte)(tile_location_2);
+                                counterpart.tile_index = (byte)(tile_location_2 + next_tile);
+                            }
+                            else
+                            {
+                                tile_index = (byte)(tile_location_2 + 4);
+                                counterpart.tile_index = (byte)(tile_location_2 + next_tile + 4);
+                            }
+                            xflip = false;
+                            counterpart.xflip = false;
+                            break;
                     }
                     break;
             }
@@ -693,6 +792,13 @@ namespace The_Legend_of_Zelda.Sprites
             if (invincible || iframes_timer > 0)
                 return;
 
+            // parry this mf
+            if (this is Darknut && knockback_direction == facing_direction.Opposite())
+            {
+                Sound.PlaySFX(Sound.SoundEffects.BLOCK);
+                return;
+            }
+
             HP -= damage_taken;
             if (damage != 0)
             {
@@ -708,6 +814,7 @@ namespace The_Legend_of_Zelda.Sprites
                 local_timer = 0;
                 appeared = false;
                 knockback_timer = 0;
+                OnDeath();
             }
         }
 
@@ -717,6 +824,14 @@ namespace The_Legend_of_Zelda.Sprites
 
             if (time_when_stunned == NOT_STUNNED)
                 time_when_stunned = gTimer;
+
+            if (die_when_stunned)
+            {
+                HP = 0;
+                appeared = false;
+                local_timer = 0;
+                return;
+            }
 
             if (gTimer >= time_when_stunned + FRAME_STUNNED || !stunnable)
             {
@@ -750,8 +865,8 @@ namespace The_Legend_of_Zelda.Sprites
             else
                 x += 4;
 
-            if (!(IsValidTile(Screen.GetMetaTileTypeAtLocation(x, y)) && IsValidTile(Screen.GetMetaTileTypeAtLocation(x + 15, y)) &&
-                  IsValidTile(Screen.GetMetaTileTypeAtLocation(x, y + 15)) && IsValidTile(Screen.GetMetaTileTypeAtLocation(x + 15, y + 15)))
+            if (!(IsValidTile((DungeonMetatile)Screen.GetMetaTileTypeAtLocation(x, y)) && IsValidTile((DungeonMetatile)Screen.GetMetaTileTypeAtLocation(x + 15, y)) &&
+                  IsValidTile((DungeonMetatile)Screen.GetMetaTileTypeAtLocation(x, y + 15)) && IsValidTile((DungeonMetatile)Screen.GetMetaTileTypeAtLocation(x + 15, y + 15)))
                 || y < 64 || y > 224 || x < 0 || x > 240)
             {
                 knockback_timer = 0;
@@ -865,6 +980,7 @@ namespace The_Legend_of_Zelda.Sprites
             xflip = false;
             counterpart.xflip = true;
 
+
             if (local_timer <= 6 || local_timer >= 13)
             {
                 tile_index = 0x62;
@@ -876,7 +992,7 @@ namespace The_Legend_of_Zelda.Sprites
                 counterpart.tile_index = 0x64;
             }
 
-            if (local_timer == 20)
+            if (local_timer >= 20)
             {
                 if (this is not Zora)
                 {
@@ -887,10 +1003,16 @@ namespace The_Legend_of_Zelda.Sprites
                 }
                 Link.nb_of_ens_killed++;
                 Link.nb_of_ens_killed_damageless++;
+                DC.nb_enemies_alive--;
                 DropItem();
                 Screen.sprites.Remove(counterpart);
                 Screen.sprites.Remove(this);
             }
+        }
+
+        protected virtual void OnDeath()
+        {
+            return;
         }
     }
 }

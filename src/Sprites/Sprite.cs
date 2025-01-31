@@ -17,6 +17,7 @@ namespace The_Legend_of_Zelda.Sprites
         public bool shown = true;
         public bool background = false;
         public bool unload_during_transition = false;
+        public bool dungeon_wall_mask = false;
         public bool use_chr_rom = false;
 
         public Sprite(byte tile_index, byte palette_index)
@@ -56,10 +57,10 @@ namespace The_Legend_of_Zelda.Sprites
             }
 
             // mask for borders of dungeon
-            if ((this == Link.self || this == Link.counterpart) && Program.gamemode == Program.Gamemode.DUNGEON)
-            {
-                link_mask_flag = true;
-            }
+            //if ((this == Link.self || this == Link.counterpart) && Program.gamemode == Program.Gamemode.DUNGEON)
+            //{
+            //    link_mask_flag = true;
+            //}
 
             i = i_start;
             while (y_count++ < 16)
@@ -75,7 +76,7 @@ namespace The_Legend_of_Zelda.Sprites
 
                     int location = TrueMod((y + (y_count - 1)) * Textures.VRAM_WIDTH + (x_count - 1) + x, Textures.vram.Length);
 
-                    if (link_mask_flag)
+                    if (dungeon_wall_mask)
                         if (y + (y_count - 1) <= 80 || y + (y_count - 1) >= 224 || x_count - 1 + x <= 16 || x_count - 1 + x >= 240)
                             continue;
 

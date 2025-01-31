@@ -118,6 +118,8 @@ namespace The_Legend_of_Zelda.Gameplay
             //Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, current_screen, 0);
             Link.can_move = false;
             Link.Show(false);
+            Link.self.dungeon_wall_mask = false;
+            Link.counterpart.dungeon_wall_mask = false;
             Menu.hud_sword.shown = false;
             Menu.hud_B_item.shown = false;
             opening_animation_timer = 0;

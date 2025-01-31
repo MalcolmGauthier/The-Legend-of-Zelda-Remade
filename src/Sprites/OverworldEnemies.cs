@@ -552,7 +552,7 @@ namespace The_Legend_of_Zelda.Sprites
                     else
                         x++;
 
-                    facing_direction = (Direction)((int)Link.facing_direction ^ 1);
+                    facing_direction = Link.facing_direction.Opposite();
 
                     if (y > 240)
                     {
