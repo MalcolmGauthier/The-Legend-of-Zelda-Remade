@@ -1,4 +1,5 @@
-﻿using The_Legend_of_Zelda.Gameplay;
+﻿using System.Runtime.CompilerServices;
+using The_Legend_of_Zelda.Gameplay;
 using The_Legend_of_Zelda.Rendering;
 using static The_Legend_of_Zelda.Gameplay.Program;
 
@@ -103,13 +104,6 @@ namespace The_Legend_of_Zelda.Sprites
                         continue;
                     }
 
-                    //if (Screen.sprites[i].GetType().BaseType != typeof(Enemy))
-                    //{
-                    //    continue;
-                    //}
-
-                    //Enemy enemy = (Enemy)Screen.sprites[i];
-
                     // if no collision or enemy is invincible, continue
                     if (!(x < enemy.x + 16 &&
                         x + width > enemy.x &&
@@ -120,8 +114,11 @@ namespace The_Legend_of_Zelda.Sprites
                         continue;
                     }
 
+                    enemy.hit_cause = this.GetType();
+
                     //TODO: some enemies are vincible to the boomerang!
                     //TODO: some enemies don't get stunned by the boomerang!
+                    //TODO: put all this bs in virtual func
                     if (this is BoomerangSprite)
                     {
                         if (enemy.current_action != Enemy.ActionState.STUNNED)
@@ -130,11 +127,13 @@ namespace The_Legend_of_Zelda.Sprites
                             enemy.current_action = Enemy.ActionState.STUNNED;
                         }
                     }
-                    else
+
+                    if (!enemy.OnProjectileHit())
                     {
-                        enemy.TakeDamage(damage);
+                        continue;
                     }
 
+                    enemy.TakeDamage(damage);
                     hit_target = true;
                     break;
                 }
@@ -657,9 +656,9 @@ namespace The_Legend_of_Zelda.Sprites
 
         void HurtEnemies()
         {
-            foreach (Sprite s in Screen.sprites)
+            for (int i = 0; i < Screen.sprites.Count; i++)
             {
-                if (s is not Enemy e)
+                if (Screen.sprites[i] is not Enemy e)
                     continue;
 
                 if (e.y < y + 24 &&
@@ -667,7 +666,8 @@ namespace The_Legend_of_Zelda.Sprites
                     e.x < x + 24 &&
                     e.x > x - 24)
                 {
-                    e.TakeDamage(4);
+                    if (e.TakeDamage(4))
+                        i--;
                 }
             }
         }
@@ -1429,12 +1429,14 @@ namespace The_Legend_of_Zelda.Sprites
         float x_speed, y_speed;
         float true_x, true_y;
 
-        public MagicOrbProjectileSprite(int x, int y) : base(false, true, 0.5f)
+        public MagicOrbProjectileSprite(int x, int y, bool no_charge = false) : base(false, true, 0.5f)
         {
             this.x = x;
             this.y = y;
             tile_index = 0x44;
             unload_during_transition = true;
+            if (no_charge)
+                animation_timer = 15;
         }
 
         public override void ProjSpecificActions()

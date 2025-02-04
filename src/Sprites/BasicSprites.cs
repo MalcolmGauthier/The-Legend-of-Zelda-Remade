@@ -98,10 +98,8 @@ namespace The_Legend_of_Zelda.Sprites
 
         StaticSprite counterpart = new StaticSprite(0x70, 5, 0, 0);
 
-        public UndergroundFireSprite(byte tile_index, byte palette_index, int x, int y) : base(tile_index, palette_index)
+        public UndergroundFireSprite(int x, int y) : base(0x5c, (byte)PaletteID.SP_1)
         {
-            this.tile_index = tile_index;
-            this.palette_index = palette_index;
             this.x = x;
             this.y = y;
             unload_during_transition = true;

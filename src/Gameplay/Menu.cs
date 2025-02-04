@@ -481,7 +481,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 hud_B_item.y -= 328;
                 hud_B_item.shown = false;
                 y_scroll++;
-                //???
+
                 if (current_B_item == menu_item_list[0] && !(boomerang || magical_boomerang))
                     current_B_item = 0;
                 RemoveMenu();

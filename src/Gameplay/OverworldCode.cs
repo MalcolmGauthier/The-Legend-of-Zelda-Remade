@@ -29,7 +29,7 @@ namespace The_Legend_of_Zelda.Gameplay
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 55;
+        public const byte DEFAULT_SPAWN_ROOM = 34;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;
@@ -85,12 +85,12 @@ namespace The_Legend_of_Zelda.Gameplay
             75, 77, 78, 82, 87, 88, 91, 92, 93, 97, 98, 104, 107, 108, 109, 110, 113, 114, 115, 120
         };
         // screens with water
-        //TODO: these are only the screens with zora. find which ones have sea noise
-        readonly byte[] screens_with_water =
+        readonly byte[] screens_with_zora =
         {
             10, 23, 24, 25, 26, 30, 38, 39, 40, 45, 46, 53, 54, 56, 62, 63, 68, 70, 71, 72, 79,
             84, 85, 86, 89, 90, 95, 101, 105, 106, 111, 117, 123, 124, 125, 126, 127
         };
+        readonly byte[] screens_with_sea = { };
 
         public void Init()
         {
@@ -301,7 +301,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 enemy_mask >>= 4;
             }
 
-            if (screens_with_water.Contains(current_screen))
+            if (screens_with_zora.Contains(current_screen))
             {
                 new Zora();
             }
@@ -354,7 +354,6 @@ namespace The_Legend_of_Zelda.Gameplay
                 BlackSquareLinkAnimation(true);
                 Link.current_action = LinkAction.WALKING_UP;
                 Sound.PauseMusic();
-
             }
 
             if (Link.y < 200)
@@ -433,7 +432,8 @@ namespace The_Legend_of_Zelda.Gameplay
                 Menu.can_open_menu = Link.can_move;
         }
 
-        // code for animation that plays with black square on overworld
+        // code for animation that plays with warps on overworld
+        // THIS IS THE WORST CODE IN THE ENTIRE CODEBASE. YOU HAVE BEEN WARNED.
         void BlackSquareLinkAnimation(bool entering, bool immediate_exit = false)
         {
             if (warp_animation_timer == 0)
@@ -491,8 +491,8 @@ namespace The_Legend_of_Zelda.Gameplay
                     if (WarpCode.screen_warp_info[current_screen] != 0xe)
                     {
                         Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, 128, 0);
-                        sprites.Add(new UndergroundFireSprite(0x5c, 5, 72, 128));
-                        sprites.Add(new UndergroundFireSprite(0x5c, 5, 168, 128));
+                        sprites.Add(new UndergroundFireSprite(72, 128));
+                        sprites.Add(new UndergroundFireSprite(168, 128));
                         Link.SetPos(112, 223);
                     }
                     else
@@ -509,7 +509,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 }
                 else
                 {
-                    int overshoot_protection = Link.y & 15;
+                    int overshoot_protection = Link.y % 16;
                     if (overshoot_protection >= 8)
                         Link.SetPos(new_y: Link.y + (16 - overshoot_protection));
                     else

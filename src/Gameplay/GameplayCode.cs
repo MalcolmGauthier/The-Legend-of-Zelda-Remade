@@ -57,9 +57,11 @@ namespace The_Legend_of_Zelda.Gameplay
                 Sound.PlaySong(bg_music, false);
                 Program.can_pause = true;
                 Link.can_move = true;
-                if (this is DungeonCode dc && SaveLoad.GetCompassFlag(dc.current_dungeon))
+                if (this is DungeonCode dc)
                 {
-                    Screen.sprites.Add(dc.compass_dot);
+                    Link.can_move = false;
+                    if (SaveLoad.GetCompassFlag(dc.current_dungeon))
+                        Screen.sprites.Add(dc.compass_dot);
                 }
                 return;
             }
@@ -131,6 +133,8 @@ namespace The_Legend_of_Zelda.Gameplay
                 Menu.can_open_menu = false;
                 UnloadSpritesRoomTransition();
                 ResetLinkPowerUps();
+                if (!Link.can_use_sword && !Bubble.perma_sword_loss)
+                    Link.can_use_sword = true;
                 // prevents interrupted bomb explosion from keeping grayscale mode on
                 Palettes.grayscale_mode = false;
 

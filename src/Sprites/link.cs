@@ -61,6 +61,7 @@ namespace The_Legend_of_Zelda.Sprites
         public bool using_item = false;
         public bool full_heal_flag = false;
         public bool clock_flash = false;
+        public bool can_use_sword = true;
         public bool shown { get; private set; }
         public bool boomerang_out { get => Menu.boomerang_out; set => Menu.boomerang_out = value; }
         public Direction boomerang_throw_dir { get => facing_direction; set => facing_direction = value; }
@@ -94,6 +95,7 @@ namespace The_Legend_of_Zelda.Sprites
             knockback_timer = 0;
             self.palette_index = 4;
             counterpart.palette_index = 4;
+            animation_timer = 100;
             sword_out = false;
             wand_out = false;
             Tick();
@@ -148,12 +150,15 @@ namespace The_Legend_of_Zelda.Sprites
             blue_candle = true;
             magical_key = true;
             recorder = true;
+            arrow = true;
+            bow = true;
+            rupy_count = 255;
             // c# doesn't have c++'s friend keyword, so fuck you c#, et reflection and die :)
             // (this is only used for testing ofc)
-            FieldInfo? lol = typeof(SaveLoad).GetField("map_flags", BindingFlags.NonPublic | BindingFlags.Static);
-            lol?.SetValue(null, new ushort[] { 0xffff, 0, 0 });
-            lol = typeof(SaveLoad).GetField("compass_flags", BindingFlags.NonPublic | BindingFlags.Static);
-            lol?.SetValue(null, new ushort[] { 0xffff, 0, 0 });
+            //FieldInfo? lol = typeof(SaveLoad).GetField("map_flags", BindingFlags.NonPublic | BindingFlags.Static);
+            //lol?.SetValue(null, new ushort[] { 0xffff, 0, 0 });
+            //lol = typeof(SaveLoad).GetField("compass_flags", BindingFlags.NonPublic | BindingFlags.Static);
+            //lol?.SetValue(null, new ushort[] { 0xffff, 0, 0 });
             bomb_count = 8;
             ladder = true;
             raft = true;
@@ -230,7 +235,7 @@ namespace The_Legend_of_Zelda.Sprites
         // returns true if link is attacking
         bool AButton()
         {
-            if (IsPressed(Buttons.A) && Menu.hud_sword.shown && !using_item)
+            if (IsPressed(Buttons.A) && Menu.hud_sword.shown && !using_item && can_use_sword)
             {
                 Attack();
 
@@ -313,6 +318,7 @@ namespace The_Legend_of_Zelda.Sprites
                     sword_1.y = y + 11;
                 }
                 sprites.Add(sword_1);
+                sword_1.UpdateTexture(true);
             }
             else if (animation_timer == 13)
             {

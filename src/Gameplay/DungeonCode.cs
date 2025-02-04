@@ -311,7 +311,8 @@ namespace The_Legend_of_Zelda.Gameplay
             // set number in hud "LEVEL-X"
             Textures.ppu[0x48] = (byte)(dungeon + 1);
             // THE COMPASS DOT DOES NOT SHOW UP UNLESS IT'S MODIFIED AFTER CONSTRUCTION???? WHY
-            compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
+            //compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
+            compass_dot.UpdateTexture(true);
             compass_dot.x = 10 + compass_coords[dungeon].x * 8;
             compass_dot.y = 24 + compass_coords[dungeon].y * 4;
             Menu.map_dot.shown = false;
@@ -342,7 +343,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_127);
             else if (current_dungeon is 2 or 4 or 7)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_358);
-            else if (current_dungeon is 3 or 7 or 8)
+            else if (current_dungeon is 3 or 5 or 8)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_469);
 
             //if (current_dungeon is 0 or 1 or 4 or 6)
@@ -424,8 +425,8 @@ namespace The_Legend_of_Zelda.Gameplay
             Palettes.LoadPaletteGroup(PaletteID.BG_3, chosen_palette);
             Palettes.LoadPaletteGroup(PaletteID.SP_3, chosen_palette);
 
-            // dungeons 2, 3, 5 and 9 have red water (lava)
-            if (current_dungeon + 1 is 2 or 3 or 5 or 9)
+            // dungeons 3, 5, 6 and 9 have red water (lava?)
+            if (current_dungeon is 2 or 4 or 5 or 8)
                 Palettes.LoadPalette(PaletteID.BG_3, 1, Color._16_RED_ORANGE);
             else
                 Palettes.LoadPalette(PaletteID.BG_3, 1, Color._12_SMEI_DARK_BLUE);
@@ -437,6 +438,8 @@ namespace The_Legend_of_Zelda.Gameplay
             {
                 LinkWalkAnimation();
                 nb_enemies_alive = 0;
+                // static variables that need to be reset upon unload
+                WizrobeOrange.ResetData();
                 return false;
             }
 
@@ -623,15 +626,19 @@ namespace The_Legend_of_Zelda.Gameplay
             List<int> ignore_list = new();
             for (int i = 0; i < 8; i++)
             {
-                int kq = IsInKillQueue(current_screen, ignore_list.ToArray());
-                if (kq != -1)
-                {
-                    ignore_list.Add(kq);
-                    enemy_selector >>= 4;
-                    continue;
-                }
-
                 uint enemy_id = (enemies & enemy_selector) >> (7 - i) * 4;
+
+                if ((DungeonEnemies)enemy_id is not (DungeonEnemies.BUBBLE or DungeonEnemies.BUBBLE_BLUE or DungeonEnemies.BUBBLE_RED
+                    or DungeonEnemies.BLADE_TRAP or DungeonEnemies.NPC))
+                {
+                    int kq = IsInKillQueue(current_screen, ignore_list.ToArray());
+                    if (kq != -1)
+                    {
+                        ignore_list.Add(kq);
+                        enemy_selector >>= 4;
+                        continue;
+                    }
+                }
 
                 if (enemy_id != (uint)DungeonEnemies.NONE)
                 {
@@ -648,19 +655,26 @@ namespace The_Legend_of_Zelda.Gameplay
                             new Gel(null);
                             break;
                         case DungeonEnemies.BUBBLE:
-                            //new Bubble(Bubble.NORMAL);
+                            new Bubble(Bubble.BubbleType.NORMAL);
+                            nb_enemies_alive--;
                             break;
                         case DungeonEnemies.BUBBLE_BLUE:
-                            //new Bubble(Bubble.BLUE);
+                            new Bubble(Bubble.BubbleType.BLUE);
+                            nb_enemies_alive--;
                             break;
                         case DungeonEnemies.BUBBLE_RED:
-                            //new Bubble(Bubble.RED);
+                            new Bubble(Bubble.BubbleType.RED);
+                            nb_enemies_alive--;
                             break;
                         case DungeonEnemies.KEESE:
                             new Keese(false);
                             break;
                         case DungeonEnemies.NPC:
-                            // :/
+                            //TODO
+                            new CaveNPC(WarpCode.NPC.OLD_MAN);
+                            new UndergroundFireSprite(72, 128);
+                            new UndergroundFireSprite(168, 128);
+                            nb_enemies_alive--;
                             break;
                         case DungeonEnemies.BLADE_TRAP:
                             BladeTrapManager.CreateTraps();
@@ -689,10 +703,10 @@ namespace The_Legend_of_Zelda.Gameplay
                             new Wallmaster();
                             break;
                         case DungeonEnemies.ROPE:
-                            //new Rope(false);
+                            new Rope(false);
                             break;
                         case DungeonEnemies.ROPE_HARDER:
-                            //new Rope(true);
+                            new Rope(true);
                             break;
                     }
                 }
@@ -704,7 +718,7 @@ namespace The_Legend_of_Zelda.Gameplay
                             new Zol();
                             break;
                         case DungeonEnemies.GIBDO:
-                            //new Gibdo();
+                            new Gibdo();
                             break;
                         case DungeonEnemies.DARKNUT:
                             new Darknut(false);
@@ -713,21 +727,39 @@ namespace The_Legend_of_Zelda.Gameplay
                             new Darknut(true);
                             break;
                         case DungeonEnemies.POLSVOICE:
-                            //new PolsVoice();
+                            new PolsVoice();
                             break;
                     }
                 }
                 else
                 {
-                    switch ((DungeonEnemies)enemy_id + 11)
+                    switch ((DungeonEnemies)enemy_id + 10)
                     {
-                        case DungeonEnemies.ZOL:
+                        // woops, the enemy table uses the wrong value for zols in 469 dungeons. oh well
+                        case DungeonEnemies.ZOL or (DungeonEnemies)18:
                             new Zol();
+                            break;
+                        case DungeonEnemies.VIRE:
+                            new Vire();
+                            break;
+                        case DungeonEnemies.LIKELIKE:
+                            new LikeLike();
+                            break;
+                        case DungeonEnemies.WIZROBE:
+                            new WizrobeOrange();
+                            break;
+                        case DungeonEnemies.WIZROBE_HARDER:
+                            new WizrobeBlue();
                             break;
                     }
                 }
 
                 enemy_selector >>= 4;
+            }
+
+            if (room_list[current_screen] is ((byte)RoomType.STATUE_DUO or (byte)RoomType.ARENA))
+            {
+                new Statues();
             }
         }
 

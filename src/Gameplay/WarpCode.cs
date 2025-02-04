@@ -33,7 +33,10 @@ namespace The_Legend_of_Zelda.Gameplay
             PAID_INFO,
             FREE_INFO,
             DUNGEON,
-            HEALTH_UPGRADE
+            HEALTH_UPGRADE,
+            GRUMBLE_GRUMBLE,
+            BOMB_UPGRADE,
+            LIFE_OR_MONEY
         }
 
         const byte EMPTY_TILE = 0x24;
@@ -92,7 +95,25 @@ namespace The_Legend_of_Zelda.Gameplay
             side_rupee.unload_during_transition = true;
             side_rupee.shown = true;
 
-            warp_info = (WarpType)screen_warp_info[OC.return_screen];
+            if (gamemode == Gamemode.OVERWORLD)
+            {
+                warp_info = (WarpType)screen_warp_info[OC.return_screen];
+            }
+            else
+            {
+                if (DC.current_screen == 160)
+                {
+                    warp_info = WarpType.GRUMBLE_GRUMBLE;
+                }
+                else if (DC.current_screen is (192 or 31))
+                {
+                    warp_info = WarpType.BOMB_UPGRADE;
+                }
+                else
+                {
+                    warp_info = WarpType.FREE_INFO;
+                }
+            }
             text_counter = 0;
 
             // init text, NPC, flags, prices and other stuff
@@ -657,9 +678,11 @@ namespace The_Legend_of_Zelda.Gameplay
                     {
                         if (chosen_item == i)
                         {
+                            // continue if entry in table not found
                             if (!data_map.TryGetValue(new(warp_info, i), out (byte price, Action action) data_shop))
                                 continue;
 
+                            // continue if link is too poor
                             if (!Link.AddRupees(-data_shop.price, false))
                                 continue;
 

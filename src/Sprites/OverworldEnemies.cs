@@ -33,7 +33,7 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             switch (current_action)
             {
@@ -104,7 +104,7 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             if (current_action == ActionState.SHOOTING_PROJECTILE)
             {
@@ -166,7 +166,7 @@ namespace The_Legend_of_Zelda.Sprites
             current_action = ActionState.WALKING;
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             if (current_action == ActionState.SHOOTING_PROJECTILE)
             {
@@ -215,7 +215,7 @@ namespace The_Legend_of_Zelda.Sprites
             spawn_hidden = true;
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             switch (current_action)
             {
@@ -330,7 +330,7 @@ namespace The_Legend_of_Zelda.Sprites
             spawn_hidden = true;
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             switch (current_action)
             {
@@ -404,7 +404,7 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        bool IsValidTile(MetatileType tile)
+        bool IsValidTileLeever(MetatileType tile)
         {
             return tile is (MetatileType.GROUND or MetatileType.SAND);
         }
@@ -423,7 +423,7 @@ namespace The_Legend_of_Zelda.Sprites
                 {
                     new_x = RNG.Next(1, 15) * 16;
                     new_y = RNG.Next(5, 14) * 16;
-                    if (IsValidTile(Screen.GetMetaTileTypeAtLocation(new_x, new_y)))
+                    if (IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(new_x, new_y)))
                         break;
                 }
                 CheckIfTurn();
@@ -449,11 +449,11 @@ namespace The_Legend_of_Zelda.Sprites
                     new_y = -new_y;
                 }
 
-                if (!IsValidTile(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
+                if (!IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
                 {
                     new_x = -new_x;
                     new_y = -new_y;
-                    if (!IsValidTile(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
+                    if (!IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
                     {
                         if (new_x == 0)
                         {
@@ -465,7 +465,7 @@ namespace The_Legend_of_Zelda.Sprites
                             new_x = 0;
                             new_y = 48;
                         }
-                        if (!IsValidTile(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
+                        if (!IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
                         {
                             new_x = -new_x;
                             new_y = -new_y;
@@ -517,7 +517,7 @@ namespace The_Legend_of_Zelda.Sprites
             Spawn();
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             switch (current_action)
             {
@@ -621,7 +621,7 @@ namespace The_Legend_of_Zelda.Sprites
             current_action = ActionState.RESTING;
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             switch (current_action)
             {
@@ -717,7 +717,7 @@ namespace The_Legend_of_Zelda.Sprites
             direction = EightDirection.UP;
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             switch (current_action)
             {
@@ -917,7 +917,7 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             switch (current_action)
             {
@@ -1093,7 +1093,7 @@ namespace The_Legend_of_Zelda.Sprites
             this.metatile_index = metatile_index;
         }
 
-        public override void EnemySpecificActions()
+        protected override void EnemySpecificActions()
         {
             switch (current_action)
             {

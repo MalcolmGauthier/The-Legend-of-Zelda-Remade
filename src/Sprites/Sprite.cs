@@ -42,7 +42,6 @@ namespace The_Legend_of_Zelda.Sprites
 
             byte pixel_color, x_count = 0, y_count = 0;
             int i, j, i_inc = 1, j_inc = 1, i_start = 0, j_start = -1;
-            bool link_mask_flag = false;
 
             // order of pixel readings changes when flipped
             if (xflip)
@@ -55,12 +54,6 @@ namespace The_Legend_of_Zelda.Sprites
                 i_start = 15;
                 i_inc = -1;
             }
-
-            // mask for borders of dungeon
-            //if ((this == Link.self || this == Link.counterpart) && Program.gamemode == Program.Gamemode.DUNGEON)
-            //{
-            //    link_mask_flag = true;
-            //}
 
             i = i_start;
             while (y_count++ < 16)
@@ -98,6 +91,13 @@ namespace The_Legend_of_Zelda.Sprites
             if (tile_index == current_tile_index && !use_chr_rom)
                 return;
 
+            pixels = Textures.LoadSPRTexture(tile_index, use_chr_rom);
+            current_tile_index = tile_index;
+        }
+        // sometimes for some fucking reason a sprite is loaded and yet it updates current_tile_index WITHOUT updating its pixels??
+        // if that happens, use this cool beans method instead of finding the cause of the problem. this is the equavalent of -f.
+        public void UpdateTexture(bool FORCE = true)
+        {
             pixels = Textures.LoadSPRTexture(tile_index, use_chr_rom);
             current_tile_index = tile_index;
         }
