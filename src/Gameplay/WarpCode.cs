@@ -13,6 +13,7 @@ namespace The_Legend_of_Zelda.Gameplay
             OLD_WOMAN,
             SHOPKEEPER,
             GOBLIN,
+            GORYIA,
             ZELDA
         }
 
@@ -36,6 +37,7 @@ namespace The_Legend_of_Zelda.Gameplay
             HEALTH_UPGRADE,
             GRUMBLE_GRUMBLE,
             BOMB_UPGRADE,
+            TRIFORCE_CHECK,
             LIFE_OR_MONEY
         }
 
@@ -47,8 +49,10 @@ namespace The_Legend_of_Zelda.Gameplay
 
         static int starting_byte_1 = 0;
         static int starting_byte_2 = 0;
+        static int starting_byte_3 = 0;
 
         public static bool fire_appeared = false;
+        public static bool npc_gone = false;
         static bool item_collected = false;
 
         public static Sprite[] items = new Sprite[3];
@@ -59,6 +63,8 @@ namespace The_Legend_of_Zelda.Gameplay
 
         static byte[] text_row_1 = new byte[0];
         static byte[] text_row_2 = new byte[0];
+        static byte[] text_row_3 = new byte[0];
+
         public static readonly byte[] screen_warp_info = {
             0x00, 0x00, 0x00, 0x00, 0x04, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x0B, 0x0E, 0x07, 0x04, 0x0B, 0x03,
             0x05, 0x00, 0x08, 0x02, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x0D, 0x06, 0x00, 0x05,
@@ -89,11 +95,13 @@ namespace The_Legend_of_Zelda.Gameplay
             // initialization
             text_row_1 = new byte[0];
             text_row_2 = new byte[0];
+            text_row_3 = new byte[0];
             text_counter = 0;
             current_npc = NPC.NONE;
             item_collected = false;
             side_rupee.unload_during_transition = true;
             side_rupee.shown = true;
+            fire_appeared = false;
 
             if (gamemode == Gamemode.OVERWORLD)
             {
@@ -401,18 +409,83 @@ namespace The_Legend_of_Zelda.Gameplay
                     break;
 
                 case WarpType.FREE_INFO:
-                    if (OC.return_screen == 117)
+                    Dictionary<byte, (NPC, byte[], byte[])> overworld_advice = new()
                     {
-                        current_npc = NPC.OLD_WOMAN;
-                        text_row_1 = new byte[16] { 0x16, 0xe, 0xe, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x18, 0x15, 0xd, 0x24, 0x16, 0xa, 0x17 }; // MEET THE OLD MAN
-                        text_row_2 = new byte[13] { 0xa, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x10, 0x1b, 0xa, 0x1f, 0xe, 0x2c }; // AT THE GRAVE.
+                        { 117, (NPC.OLD_WOMAN,
+                        new byte[] { 0x16, 0xe, 0xe, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x18, 0x15, 0xd, 0x24, 0x16, 0xa, 0x17 }, // MEET THE OLD MAN
+                        new byte[] { 0xa, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x10, 0x1b, 0xa, 0x1f, 0xe, 0x2c }) }, // AT THE GRAVE.
+                        { 28, (NPC.OLD_MAN,
+                        new byte[] { 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d, 0x24, 0x12, 0x1c, 0x24, 0x12, 0x17, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x1d, 0x1b, 0xe, 0xe }, // SECRET IS IN THE TREE
+                        new byte[] { 0xa, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0xd, 0xe, 0xa, 0xd, 0x2f, 0xe, 0x17, 0xd, 0x2c }) }, // AT THE DEAD-END.
+                    };
+
+                    Dictionary<byte, (NPC, byte[], byte[])> dungeon_advice = new()
+                    {
+                        { 3, (NPC.OLD_MAN,
+                        new byte[] { 0x1d, 0x11, 0xe, 0x1b, 0xe, 0x24, 0xa, 0x1b, 0xe, 0x24, 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d, 0x1c, 0x24, 0x20, 0x11, 0xe, 0x1b, 0xe }, // THERE ARE SECRETS WHERE
+                        new byte[] { 0xf, 0xa, 0x12, 0x1b, 0x12, 0xe, 0x1c, 0x24, 0xd, 0x18, 0x17, 0x2a, 0x1d, 0x24, 0x15, 0x12, 0x1f, 0xe, 0x2c }) }, // FAIRIES DON'T LIVE.
+                        { 8, (NPC.OLD_MAN,
+                        new byte[] { 0x20, 0xa, 0x15, 0x14, 0x24, 0x12, 0x17, 0x1d, 0x18, 0x24, 0x1d, 0x11, 0xe }, // WALK INTO THE
+                        new byte[] { 0x20, 0xa, 0x1d, 0xe, 0x1b, 0xf, 0xa, 0x15, 0x15, 0x2c }) }, // WATERFALL.
+                        { 23, (NPC.OLD_MAN,
+                        new byte[] { 0xd, 0x18, 0xd, 0x18, 0x17, 0x10, 0x18, 0x24, 0xd, 0x12, 0x1c, 0x15, 0x12, 0x14, 0xe, 0x1c, 0x24, 0x1c, 0x16, 0x18, 0x14, 0xe, 0x2c }, // DODONGO DISLIKES SMOKE.
+                        new byte[] {  }) },
+                        { 29, (NPC.OLD_MAN,
+                        new byte[] { 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d, 0x24, 0x19, 0x18, 0x20, 0xe, 0x1b, 0x24, 0x12, 0x1c, 0x24, 0x1c, 0xa, 0x12, 0xd }, // SECRET POWER IS SAID
+                        new byte[] { 0x1d, 0x18, 0x24, 0xb, 0xe, 0x24, 0x12, 0x17, 0x24, 0x1d, 0x11, 0xe, 0x24, 0xa, 0x1b, 0x1b, 0x18, 0x20, 0x2c }) }, // TO BE IN THE ARROW.
+                        { 35, (NPC.OLD_MAN,
+                        new byte[] { 0xd, 0x12, 0xd, 0x24, 0x22, 0x18, 0x1e, 0x24, 0x10, 0xe, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x1c, 0x20, 0x18, 0x1b, 0xd }, // DID YOU GET THE SWORD
+                        new byte[] { 0xf, 0x1b, 0x18, 0x16, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x18, 0x15, 0xd, 0x24, 0x16, 0xa, 0x17, 0x24, 0x18, 0x17 }) }, // FROM THE OLD MAN ON
+                        // { 0x1d, 0x18, 0x19, 0x24, 0x18, 0xf, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x20, 0xa, 0x1d, 0xe, 0x1b, 0xf, 0xa, 0x15, 0x15, 0x2e } // TOP OF THE WATERFALL
+                        { 73, (NPC.OLD_MAN,
+                        new byte[] { 0xe, 0xa, 0x1c, 0x1d, 0x16, 0x18, 0x1c, 0x1d, 0x24, 0x19, 0xe, 0x17, 0x17, 0x12, 0x17, 0x1c, 0x1e, 0x15, 0xa }, // EASTMOST PENNINSULA
+                        new byte[] { 0x12, 0x1c, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d, 0x2c }) }, // IS THE SECRET.
+                        { 98, (NPC.OLD_MAN,
+                        new byte[] { 0xa, 0x12, 0x16, 0x24, 0xa, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0xe, 0x22, 0xe, 0x1c }, // AIM AT THE EYES
+                        new byte[] { 0x18, 0xf, 0x24, 0x10, 0x18, 0x11, 0x16, 0xa, 0x2c }) }, // OF GOHMA.
+                        { 111, (NPC.OLD_MAN,
+                        new byte[] { 0xd, 0x12, 0x10, 0xd, 0x18, 0x10, 0x10, 0xe, 0x1b, 0x24, 0x11, 0xa, 0x1d, 0xe, 0x1c }, // DIGDOGGER HATES 
+                        new byte[] { 0xc, 0xe, 0x1b, 0x1d, 0xa, 0x12, 0x17, 0x24, 0x14, 0x12, 0x17, 0xd, 0x24, 0x18, 0xf, 0x24, 0x1c, 0x18, 0x1e, 0x17, 0xd, 0x2c }) }, // CERTAIN KIND OF SOUND.
+                        { 138, (NPC.OLD_MAN,
+                        new byte[] { 0xe, 0x22, 0xe, 0x1c, 0x24, 0x18, 0xf, 0x24, 0x1c, 0x14, 0x1e, 0x15, 0x15 }, // EYES OF SKULL
+                        new byte[] { 0x11, 0xa, 0x1c, 0x24, 0xa, 0x24, 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d, 0x2c }) }, // HAS A SECRET.
+                        { 142, (NPC.OLD_MAN,
+                        new byte[] { 0x10, 0x18, 0x24, 0x1d, 0x18, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x17, 0xe, 0x21, 0x1d, 0x24, 0x1b, 0x18, 0x18, 0x16, 0x2c }, // GO TO THE NEXT ROOM.
+                        new byte[] {  }) },
+                        { 179, (NPC.OLD_MAN,
+                        new byte[] { 0x1, 0x0, 0x1d, 0x11, 0x24, 0xe, 0x17, 0xe, 0x16, 0x22, 0x24, 0x11, 0xa, 0x1c, 0x24, 0x1d, 0x11, 0xe, 0x24, 0xb, 0x18, 0x16, 0xb, 0x2c }, // 10TH ENEMY HAS THE BOMB.
+                        new byte[] {  }) },
+                        { 181, (NPC.OLD_MAN,
+                        new byte[] { 0x1c, 0x19, 0xe, 0xc, 0x1d, 0xa, 0xc, 0x15, 0xe, 0x24, 0x1b, 0x18, 0xc, 0x14, 0x24, 0x12, 0x1c }, // SPECTACLE ROCK IS
+                        new byte[] { 0xa, 0x17, 0x24, 0xe, 0x17, 0x1d, 0x1b, 0xa, 0x17, 0xc, 0xe, 0x24, 0x1d, 0x18, 0x24, 0xd, 0xe, 0xa, 0x1d, 0x11, 0x2c }) }, // AN ENTRANCE TO DEATH.
+                        { 203, (NPC.OLD_MAN,
+                        new byte[] { 0x19, 0xa, 0x1d, 0x1b, 0xa, 0x24, 0x11, 0xa, 0x1c, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x16, 0xa, 0x19, 0x2c }, // PATRA HAS THE MAP.
+                        new byte[] {  }) },
+                        { 211, (NPC.OLD_MAN,
+                        new byte[] { 0x1d, 0x11, 0xe, 0x1b, 0xe, 0x2a, 0x1c, 0x24, 0xa, 0x24, 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d, 0x24, 0x12, 0x17 }, // THERE'S A SECRET IN
+                        new byte[] { 0x1d, 0x11, 0xe, 0x24, 0x1d, 0x12, 0x19, 0x24, 0x18, 0xf, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x17, 0x18, 0x1c, 0xe, 0x2c }) }, // THE TIP OF THE NOSE.
+                    };
+
+                    (NPC npc, byte[] text1, byte[] text2) data = (0, new byte[0], new byte[0]);
+
+                    if (gamemode == Gamemode.OVERWORLD)
+                    {
+                        if (!overworld_advice.TryGetValue(OC.current_screen, out data))
+                            break;
                     }
                     else
                     {
-                        current_npc = NPC.OLD_MAN;
-                        text_row_1 = new byte[21] { 0x1c, 0xe, 0xc, 0x1b, 0xe, 0x1d, 0x24, 0x12, 0x1c, 0x24, 0x12, 0x17, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x1d, 0x1b, 0xe, 0xe }; // SECRET IS IN THE TREE
-                        text_row_2 = new byte[16] { 0xa, 0x1d, 0x24, 0x1d, 0x11, 0xe, 0x24, 0xd, 0xe, 0xa, 0xd, 0x2f, 0xe, 0x17, 0xd, 0x2c }; // AT THE DEAD-END.
+                        if (!dungeon_advice.TryGetValue(DC.current_screen, out data))
+                            break;
+
+                        // the only screen in the game to have 3 text rows
+                        if (DC.current_screen == 35)
+                            text_row_3 = new byte[] { 0x1d, 0x18, 0x19, 0x24, 0x18, 0xf, 0x24, 0x1d, 0x11, 0xe, 0x24, 0x20, 0xa, 0x1d, 0xe, 0x1b, 0xf, 0xa, 0x15, 0x15, 0x2e };
                     }
+
+                    current_npc = data.npc;
+                    text_row_1 = data.text1;
+                    text_row_2 = data.text2;
                     break;
 
                 case WarpType.DUNGEON:
@@ -438,22 +511,64 @@ namespace The_Legend_of_Zelda.Gameplay
                     items[0].tile_index = 0x40;
                     text_row_1 = new byte[22] { 0x1d, 0xa, 0x14, 0xe, 0x24, 0xa, 0x17, 0x22, 0x24, 0x18, 0x17, 0xe, 0x24, 0x22, 0x18, 0x1e, 0x24, 0x20, 0xa, 0x17, 0x1d, 0x2c }; // TAKE ANY ONE YOU WANT.
                     break;
+
+                case WarpType.GRUMBLE_GRUMBLE:
+                    if (SaveLoad.GetDungeonGiftFlag(DC.current_screen))
+                        break;
+
+                    current_npc = NPC.GORYIA;
+                    text_row_1 = new byte[] { 0x10, 0x1b, 0x1e, 0x16, 0xb, 0x15, 0xe, 0x28, 0x10, 0x1b, 0x1e, 0x16, 0xb, 0x15, 0xe, 0x2c, 0x2c, 0x2c}; // GRUMBLE,GRUMBLE...
+                    break;
+
+                case WarpType.BOMB_UPGRADE:
+                    if (SaveLoad.GetDungeonGiftFlag(DC.current_screen))
+                        break;
+
+                    current_npc = NPC.OLD_MAN;
+                    text_row_1 = new byte[] { 0x12, 0x24, 0xb, 0xe, 0x1d, 0x24, 0x22, 0x18, 0x1e, 0x2a, 0xd, 0x24, 0x15, 0x12, 0x14, 0xe }; // I BET YOU'D LIKE
+                    text_row_2 = new byte[] { 0x1d, 0x18, 0x24, 0x11, 0xa, 0x1f, 0xe, 0x24, 0x16, 0x18, 0x1b, 0xe, 0x24, 0xb, 0x18, 0x16, 0xb, 0x1c, 0x2c }; // TO HAVE MORE BOMBS.
+                    items[0] = new FlickeringSprite((byte)SpriteID.RUPEE, (byte)PaletteID.SP_1, 124, 152, 8, (byte)SpriteID.RUPEE, second_palette_index: (byte)PaletteID.SP_2);
+                    items[0].shown = true;
+                    items[1].shown = true;
+                    items[1].tile_index = (byte)SpriteID.BOMB;
+                    items[1].palette_index = (byte)PaletteID.SP_1;
+                    Screen.sprites.Add(items[0]);
+                    Screen.sprites.Add(items[1]);
+                    Textures.ppu[0x2cd] = (byte)Text.DASH;
+                    Textures.ppu[0x2ce] = (byte)Text._1;
+                    Textures.ppu[0x2cf] = (byte)Text._0;
+                    Textures.ppu[0x230] = (byte)Text._0;
+                    break;
+
+                case WarpType.TRIFORCE_CHECK:
+                    if (SaveLoad.GetTriforceFlag(0) && SaveLoad.GetTriforceFlag(1) && SaveLoad.GetTriforceFlag(2) && SaveLoad.GetTriforceFlag(3) &&
+                        SaveLoad.GetTriforceFlag(4) && SaveLoad.GetTriforceFlag(5) && SaveLoad.GetTriforceFlag(6) && SaveLoad.GetTriforceFlag(7))
+                        break;
+
+                    current_npc = NPC.OLD_MAN;
+                    text_row_1 = new byte[] { 0x18, 0x17, 0xe, 0x1c, 0x24, 0x20, 0x11, 0x18, 0x24, 0xd, 0x18, 0xe, 0x1c, 0x24, 0x17, 0x18, 0x1d, 0x24, 0x11, 0xa, 0x1f, 0xe }; // ONES WHO DOES NOT HAVE
+                    text_row_2 = new byte[] { 0x1d, 0x1b, 0x12, 0xf, 0x18, 0x1b, 0xc, 0xe, 0x24, 0xc, 0xa, 0x17, 0x2a, 0x1d, 0x24, 0x10, 0x18, 0x24, 0x12, 0x17, 0x2c }; // TRIFORCE CAN'T COME IN.
+                    break;
             }
 
             // ppu index for which the first text character will be on
             starting_byte_1 = 0x1b0 - text_row_1.Length / 2;
             starting_byte_2 = 0x1d0 - text_row_2.Length / 2;
+            starting_byte_3 = 0x1f0 - text_row_3.Length / 2;
 
             // removal needed for when re-initializating cave after activating potion shop (and also reality check)
             Screen.sprites.Remove(cave_npc);
             cave_npc = new CaveNPC(current_npc);
             Screen.sprites.Add(cave_npc);
+
+            if (current_npc == NPC.NONE)
+                npc_gone = true;
         }
 
         public static void Tick()
         {
             // advance text only when link can't move
-            if (!Link.can_move)
+            if (!Link.can_move && fire_appeared)
                 TextTick();
 
             // link can only move if the text is done scrolling and the fire has appeared
@@ -473,32 +588,34 @@ namespace The_Legend_of_Zelda.Gameplay
             }
 
             // prevent link from going in top half of room
-            if (Link.y < 144)
+            if (Link.y < 144 && !(npc_gone && gamemode == Gamemode.DUNGEON))
                 Link.SetPos(new_y: 144);
         }
 
         // advances text forward if not finished
         static void TextTick()
         {
-            if (gTimer % 6 != 0 || !fire_appeared)
+            if (gTimer % 6 != 0)
                 return;
 
+            Sound.PlaySFX(Sound.SoundEffects.TEXT, true);
             if (text_counter < text_row_1.Length)
             {
-                Sound.PlaySFX(Sound.SoundEffects.TEXT, true);
                 Textures.ppu[starting_byte_1 + text_counter] = text_row_1[text_counter];
-                text_counter++;
             }
             else if (text_counter < text_row_1.Length + text_row_2.Length)
             {
-                Sound.PlaySFX(Sound.SoundEffects.TEXT, true);
                 Textures.ppu[starting_byte_2 + text_counter - text_row_1.Length] = text_row_2[text_counter - text_row_1.Length];
-                text_counter++;
-
-                // make sure that link can't escape the fine
-                if (text_counter == text_row_1.Length + text_row_2.Length && warp_info == WarpType.DOOR_REPAIR_CHARGE)
-                    Link.AddRupees(-20);
             }
+            else if (text_counter < text_row_1.Length + text_row_2.Length + text_row_3.Length)
+            {
+                Textures.ppu[starting_byte_3 + text_counter - text_row_1.Length - text_row_2.Length] = text_row_2[text_counter - text_row_1.Length - text_row_2.Length];
+            }
+            text_counter++;
+
+            // make sure that link can't escape the fine
+            if (text_counter == text_row_1.Length + text_row_2.Length + text_row_3.Length && warp_info == WarpType.DOOR_REPAIR_CHARGE)
+                Link.AddRupees(-20);
         }
 
         // checks if link is touching an item, then runs logic for item collection (which is also found in GiveItem)

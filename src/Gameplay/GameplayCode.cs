@@ -313,7 +313,7 @@ namespace The_Legend_of_Zelda.Gameplay
             killed_enemy_queue_index %= killed_enenmy_queue.Length;
             killed_enenmy_queue[killed_enemy_queue_index] = room_index;
         }
-        public void EmptyEnenmyKillQueue()
+        public void EmptyEnemyKillQueue()
         {
             Array.Clear(killed_enenmy_queue, 0, killed_enenmy_queue.Length);
         }

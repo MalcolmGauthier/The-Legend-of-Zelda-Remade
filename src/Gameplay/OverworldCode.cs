@@ -29,7 +29,7 @@ namespace The_Legend_of_Zelda.Gameplay
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 34;
+        public const byte DEFAULT_SPAWN_ROOM = 69;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;
@@ -491,8 +491,8 @@ namespace The_Legend_of_Zelda.Gameplay
                     if (WarpCode.screen_warp_info[current_screen] != 0xe)
                     {
                         Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, 128, 0);
-                        sprites.Add(new UndergroundFireSprite(72, 128));
-                        sprites.Add(new UndergroundFireSprite(168, 128));
+                        new UndergroundFireSprite(72, 128);
+                        new UndergroundFireSprite(168, 128);
                         Link.SetPos(112, 223);
                     }
                     else

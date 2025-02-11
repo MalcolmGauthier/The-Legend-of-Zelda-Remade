@@ -2,6 +2,7 @@
 using static The_Legend_of_Zelda.Gameplay.Program;
 using The_Legend_of_Zelda.Sprites;
 using The_Legend_of_Zelda.Rendering;
+using System.Runtime.CompilerServices;
 
 namespace The_Legend_of_Zelda.Gameplay
 {
@@ -145,6 +146,7 @@ namespace The_Legend_of_Zelda.Gameplay
         int frames_since_link_can_walk = 0;
 
         public bool warp_flag = false;
+        public bool npc_active = false;
         public bool block_push_flag = false;
         public bool is_dark { get; private set; } = false;
 
@@ -222,6 +224,68 @@ namespace The_Legend_of_Zelda.Gameplay
             (2, 2),
             (2, 3)
         };
+        readonly byte[] gift_data =
+#region documentation
+        // BIT LAYOUT: PPPPTiii or 1111iiii
+        // 0xFF = nothing
+        //position:
+        // 0 - center, slightly right
+        // 1 - top right
+        // 2 - top left
+        // 3 - bottom right
+        // 4 - bottom left
+        // 5 - 1 above pos 0
+        // 6 - 2 above pos 0
+        // 7 - 1 right of pos 0
+        // 8 - 4 right of pos 0
+        // 9 - 1 below pos 0
+        // a - bottom middle, 2 tiles right
+        // b - attached to enemy (type ignored, always 0)
+        // c-e - invalid id
+        // f - sidescroll room (next 4 bits are all item id, pos is 0):
+        //    0 - bow
+        //    1 - raft
+        //    2 - ladder
+        //    3 - recorder
+        //    4 - rod
+        //    5 - red candle
+        //    6 - magic book
+        //    7 - magic key
+        //    8 - red ring
+        //    9 - silver arrow
+        //    a-e - invalid id
+        //    f - nothing
+        //type:
+        // 0 (+0) - always there
+        // 1 (+8) - on room clear
+        //item:
+        // 0 (8) - 5 rupees
+        // 1 (9) - map
+        // 2 (a) - compass
+        // 3 (b) - heart container
+        // 4 (c) - bombs
+        // 5 (d) - key
+        // 6 (e) - boomerang
+        // 7 (f) - magical boomerang
+#endregion
+        {
+            0xF4, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x0b, 0xFF, 0xFF, 0x55, 0xFF, 0xFF, 0xF3, 0xFF, 0xFF, 0xFF,
+            0xFF, 0x09, 0x05, 0xFF, 0x0b, 0xFF, 0x1c, 0xFF, 0xFF, 0xFF, 0xFF, 0x3b, 0xFF, 0xFF, 0x95, 0xFF,
+            0x18, 0x05, 0x05, 0xFF, 0xFF, 0x0d, 0xFF, 0x08, 0xFF, 0x31, 0xFF, 0x6d, 0x6b, 0xFF, 0x9d, 0x95,
+            0xFF, 0xFF, 0xFF, 0xFF, 0x0c, 0xFF, 0xFF, 0x04, 0xFF, 0xFF, 0xFF, 0xb5, 0xFF, 0x8b, 0xFF, 0x9a,
+            0xFF, 0x05, 0x0c, 0x0d, 0x01, 0x0b, 0x0d, 0x0f, 0x55, 0xFF, 0xFF, 0x81, 0x6e, 0xa5, 0x91, 0x9d,
+            0x0d, 0xFF, 0x02, 0x0c, 0xFF, 0x28, 0xFF, 0x01, 0xFF, 0x75, 0xFF, 0x6d, 0x82, 0x9d, 0x6c, 0x98,
+            0x02, 0x0c, 0xFF, 0x0d, 0x05, 0xFF, 0xFF, 0x12, 0xF2, 0xFF, 0x52, 0xFF, 0xFF, 0xb4, 0xb5, 0xFF,
+            0xFF, 0xFF, 0x0d, 0x05, 0xFF, 0xFF, 0x0d, 0xF1, 0x7d, 0xFF, 0xad, 0xFF, 0xb5, 0xF0, 0xFF, 0x9d,
+            0xFF, 0x08, 0x05, 0x0c, 0x0c, 0xFF, 0x0c, 0xF6, 0xF9, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0x01, 0xFF, 0xFF, 0x0c, 0xFF, 0x0c, 0xFF, 0xFF, 0xFF, 0x0c, 0x08, 0xFF, 0xFF, 0x08, 0x0c, 0xFF,
+            0xFF, 0xFF, 0x0b, 0xFF, 0xFF, 0xFF, 0x09, 0xF7, 0xFF, 0xFF, 0xFF, 0x14, 0xFF, 0x0c, 0x08, 0x09,
+            0x18, 0xFF, 0x0d, 0xFF, 0x4b, 0xFF, 0xFF, 0x0c, 0xFF, 0xFF, 0xFF, 0xFF, 0x08, 0x0a, 0xFF, 0x0c,
+            0xFF, 0xFF, 0xFF, 0x05, 0x15, 0xFF, 0x08, 0xFF, 0x08, 0xFF, 0xFF, 0xFF, 0x08, 0xFF, 0xFF, 0x15,
+            0x08, 0xFF, 0xb2, 0xFF, 0x0d, 0x05, 0x0d, 0x02, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x0d, 0x0d,
+            0x0c, 0x0c, 0xFF, 0xFF, 0x0c, 0xb5, 0x08, 0xFF, 0xFF, 0x15, 0x08, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0x05, 0xFF, 0x0c, 0xF5, 0xFF, 0x08, 0xFF, 0x05, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+        };
         // for save file flags
         public readonly byte[] rooms_with_boses = {
             61, 54, 6, 69, 24, 27, 94, 44, 16, 20, 131, 132, 148, 162, 177, 178, 208, 228, 242, 245, 230, 197, 166, 150, 233, 218, 169, 175, 158, 202
@@ -232,7 +296,7 @@ namespace The_Legend_of_Zelda.Gameplay
             360, 369, 375, 381, 406, 410, 418, 420, 428, 441, 442, 443, 449
         };
         public readonly short[] key_door_connections = {
-            2, 17, 27, 28, 34, 40, 76, 80, 82, 85, 86, 89, 93, 102, 113, 122, 133, 135, 148, 151, 163, 173, 205,
+            2, 17, 27, 28, 34, 40, 76, 80, 82, 85, 86, 89, 93, 02, 113, 122, 133, 135, 148, 151, 163, 173, 196, 205,
             211, 214, 221, 225, 262, 275, 284, 289, 295, 300, 308, 309, 310, 313, 320, 341, 342, 347, 348, 368,
             384, 395, 400, 429, 438, 469, 470, 503
         };
@@ -299,6 +363,7 @@ namespace The_Legend_of_Zelda.Gameplay
             Link.counterpart.palette_index = (byte)PaletteID.SP_0;
             Link.current_action = LinkAction.WALKING_UP;
             DC.UnloadSpritesRoomTransition();
+            DC.EmptyEnemyKillQueue();
             Link.knockback_timer = 0;
             Link.iframes_timer = 0;
             Link.facing_direction = Direction.UP;
@@ -310,11 +375,14 @@ namespace The_Legend_of_Zelda.Gameplay
             Menu.InitHUD();
             // set number in hud "LEVEL-X"
             Textures.ppu[0x48] = (byte)(dungeon + 1);
-            // THE COMPASS DOT DOES NOT SHOW UP UNLESS IT'S MODIFIED AFTER CONSTRUCTION???? WHY
-            //compass_dot = new FlickeringSprite(0x3e, 5, 0, 0, 16, 0x3e, second_palette_index: 6);
             compass_dot.UpdateTexture(true);
             compass_dot.x = 10 + compass_coords[dungeon].x * 8;
             compass_dot.y = 24 + compass_coords[dungeon].y * 4;
+            // dot does not flicker if triforce gotten
+            if (SaveLoad.GetTriforceFlag(current_dungeon))
+                compass_dot.second_palette_index = (byte)PaletteID.SP_1;
+            else
+                compass_dot.second_palette_index = (byte)PaletteID.SP_2;
             Menu.map_dot.shown = false;
 
             current_dungeon = dungeon;
@@ -332,6 +400,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 Palettes.LoadPalette(PaletteID.SP_0, 1, Color._16_RED_ORANGE);
             else if (SaveLoad.blue_ring)
                 Palettes.LoadPalette(PaletteID.SP_0, 1, Color._32_LIGHTER_INDIGO);
+
             // ¯\_(ツ)_/¯
             if (current_dungeon == 2)
                 Palettes.LoadPalette(PaletteID.SP_0, 2, Color._37_BEIGE);
@@ -369,20 +438,29 @@ namespace The_Legend_of_Zelda.Gameplay
             if (link_walk_animation_timer > 0)
                 LinkWalkAnimation();
 
+            SnapLinkToDoors();
+
             if (ScrollingDone() && link_walk_animation_timer == 0)
                 DoorCode();
 
             CheckForWarp();
 
-            if (!Menu.menu_open)
+            if (Menu.menu_open)
+                return;
+
+            if (dark_room_animation_timer == 0 && link_walk_animation_timer == 0)
             {
-                if (dark_room_animation_timer == 0 && link_walk_animation_timer == 0)
-                    Scroll(false);
-                else
-                    DarkeningAnimation();
+                if (npc_active)
+                    WarpCode.Tick();
+                Scroll(false);
+            }
+            else
+            {
+                DarkeningAnimation();
             }
         }
 
+        // loads the correct palette for the current dungeon
         public void LoadPalette(bool underground_room = false)
         {
             // the side-view rooms are gray, no matter the dungeon palette
@@ -436,6 +514,7 @@ namespace The_Legend_of_Zelda.Gameplay
         {
             if (scroll_finished)
             {
+                SaveLoad.SetDungeonVisitedRoomFlag(current_screen, true);
                 LinkWalkAnimation();
                 nb_enemies_alive = 0;
                 // static variables that need to be reset upon unload
@@ -460,10 +539,12 @@ namespace The_Legend_of_Zelda.Gameplay
                 OC.Init();
                 OC.black_square_stairs_return_flag = true;
                 OC.current_screen = OC.return_screen;
+                OC.EmptyEnemyKillQueue();
                 return false;
             }
 
             block_push_flag = false;
+            npc_active = false;
             LinkWalkAnimation();
             if (GetRoomDarkness(scroll_destination) && !is_dark)
             {
@@ -670,8 +751,8 @@ namespace The_Legend_of_Zelda.Gameplay
                             new Keese(false);
                             break;
                         case DungeonEnemies.NPC:
-                            //TODO
-                            new CaveNPC(WarpCode.NPC.OLD_MAN);
+                            npc_active = true;
+                            WarpCode.Init();
                             new UndergroundFireSprite(72, 128);
                             new UndergroundFireSprite(168, 128);
                             nb_enemies_alive--;
@@ -765,16 +846,90 @@ namespace The_Legend_of_Zelda.Gameplay
 
         void SpawnItems()
         {
+            (byte x, byte y)[] gift_positions = {
+                (132, 144),
+                (132, 144),//
+                (132, 144),//
+                (132, 144),//
+                (132, 144),//
+                (132, 128),
+                (132, 112),
+                (148, 144),
+                (196, 144),
+                (132, 160),
+
+                (132, 144),
+                (132, 144),
+                (132, 144),
+                (132, 144),
+            };
+
             if (room_list[current_screen] == 11 && ScrollingDone() && !SaveLoad.GetTriforceFlag(current_dungeon))
             {
                 new TriforcePieceSprite();
+                return;
             }
+
             if (current_screen is 25 or 128 or 165 && !SaveLoad.GetDungeonVisitedRoomFlag(current_screen))
             {
                 byte[] rupee_pile_x_positions = { 124, 116, 132, 100, 116, 132, 148, 116, 132, 124 };
                 byte[] rupee_pile_y_positions = { 112, 128, 128, 144, 144, 144, 144, 160, 160, 176 };
                 for (int i = 0; i < rupee_pile_x_positions.Length; i++)
                     new RupySprite(rupee_pile_x_positions[i], rupee_pile_y_positions[i], false, false);
+
+                return;
+            }
+
+            byte item_info = gift_data[current_screen];
+
+            if (item_info == 0xFF)
+                return;
+
+            int index = item_info >> 4;
+            (byte x, byte y) position = index < gift_positions.Length ? gift_positions[index] : ((byte)0, (byte)0);
+            bool spawns_on_room_clear = Convert.ToBoolean((item_info >> 3) & 1);
+            int item_type = item_info & 0b111;
+            ItemDropSprite? item = null;
+
+            if (index == 0xF)
+            {
+                item_type = item_info & 0b1111;
+                spawns_on_room_clear = false;
+
+                return;
+            }
+
+            switch (item_type)
+            {
+                case 0:
+                    item = new RupySprite(position.x, position.y, true, false);
+                    break;
+                case 1:
+                    item = new MapSprite(position.x, position.y);
+                    break;
+                case 2:
+                    item = new CompassSprite(position.x, position.y);
+                    break;
+                case 3:
+                    item = new HeartContainerSprite(position.x, position.y, current_dungeon);
+                    break;
+                case 4:
+                    item = new BombItemSprite(position.x, position.y);
+                    break;
+                case 5:
+                    item = new KeySprite(position.x, position.y);
+                    break;
+                case 6:
+                    //item = new BoomerangItemSprite(position.x, position.y);
+                    break;
+                case 7:
+                    //item = new MagicalBoomerangItemSprite(position.x, position.y);
+                    break;
+            }
+
+            if (spawns_on_room_clear)
+            {
+                new DungeonGiftSprite(item);
             }
         }
 
@@ -813,7 +968,6 @@ namespace The_Legend_of_Zelda.Gameplay
                 Menu.can_open_menu = ScrollingDone();
                 SpawnEnemies();
                 SpawnItems();
-                SaveLoad.SetDungeonVisitedRoomFlag(current_screen, true);
                 link_walk_animation_timer = 0;
                 frames_since_link_can_walk = 0;
                 // when link exits through a closed door type, it initializes as open, but then closes the moment link can move.
@@ -849,6 +1003,25 @@ namespace The_Legend_of_Zelda.Gameplay
             Link.SetPos(Link.x + x_add, Link.y + y_add);
 
             link_walk_animation_timer--;
+        }
+
+        // makes entering doors way easier. If link is walking towards a door but isn't quite lined up, this will line him up.
+        void SnapLinkToDoors()
+        {
+            if (Math.Abs(Link.y - 144) <= 4)
+            {
+                if ((Link.x == 32 && Link.facing_direction == Direction.LEFT) || (Link.x == 208 && Link.facing_direction == Direction.RIGHT))
+                {
+                    Link.SetPos(new_y: 144);
+                }
+            }
+            else if (Math.Abs(Link.x - 120) <= 4)
+            {
+                if ((Link.y == 96 && Link.facing_direction == Direction.UP) || (Link.y == 192 && Link.facing_direction == Direction.DOWN))
+                {
+                    Link.SetPos(new_x: 120);
+                }
+            }
         }
 
 
@@ -1050,7 +1223,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 Screen.meta_tiles[i].tile_index_D = DungeonMetatile.WALL;
 
             if (screen_index == 1)
-                screen_index_offset -= 256;
+                screen_index_offset -= Textures.HUD_TILE_COUNT;
 
             Array.Clear(doors);
 

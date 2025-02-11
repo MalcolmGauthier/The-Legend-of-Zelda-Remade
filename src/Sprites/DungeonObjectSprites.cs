@@ -32,7 +32,7 @@ namespace The_Legend_of_Zelda.Sprites
             Screen.sprites.Add(counterpart);
         }
 
-        public override void ItemSpecificActions()
+        protected override void ItemSpecificActions()
         {
             if (gTimer % 12 == 0)
             {
@@ -158,7 +158,7 @@ namespace The_Legend_of_Zelda.Sprites
             tile_index = (byte)SpriteID.MAP;
             palette_index = 6;
         }
-        public override void ItemSpecificActions()
+        protected override void ItemSpecificActions()
         {
             if (collected)
             {
@@ -176,12 +176,29 @@ namespace The_Legend_of_Zelda.Sprites
             tile_index = (byte)SpriteID.COMPASS;
             palette_index = 6;
         }
-        public override void ItemSpecificActions()
+        protected override void ItemSpecificActions()
         {
             if (collected)
             {
                 SaveLoad.SetCompassFlag(DC.current_dungeon, true);
                 DC.compass_dot.shown = true;
+                Screen.sprites.Remove(this);
+            }
+        }
+    }
+
+    internal class KeySprite : ItemDropSprite
+    {
+        public KeySprite(int x, int y) : base(x, y, false)
+        {
+            tile_index = (byte)SpriteID.KEY;
+            palette_index = (byte)PaletteID.SP_2;
+        }
+        protected override void ItemSpecificActions()
+        {
+            if (collected)
+            {
+                SaveLoad.key_count++;
                 Screen.sprites.Remove(this);
             }
         }

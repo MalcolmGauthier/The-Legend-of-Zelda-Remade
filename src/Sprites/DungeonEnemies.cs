@@ -348,7 +348,8 @@ namespace The_Legend_of_Zelda.Sprites
     {
         int when_to_shoot;
         public bool boomerang_out { get; set; }
-        public Direction boomerang_throw_dir { get => facing_direction; set => facing_direction = value; }
+        public EightDirection boomerang_throw_dir { get => (EightDirection)facing_direction; set => facing_direction = (Direction)value; }
+        public (int x, int y) return_pos { get => (x, y); set => _ = value; }
 
         public Goriya(bool stronger) : base(AnimationMode.TWOFRAMES_DURR, 0xb0, 0xb8, stronger, true, 6, 0.5f, 2)
         {
@@ -398,6 +399,7 @@ namespace The_Legend_of_Zelda.Sprites
             local_timer = 0;
             when_to_shoot = Program.RNG.Next(180, 600);
         }
+        public void BoomerangThrow() { return; }
     }
 
     internal class Wallmaster : Enemy

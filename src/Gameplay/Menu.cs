@@ -21,9 +21,9 @@ namespace The_Legend_of_Zelda.Gameplay
         static byte rupie_count_display = 0;
         static byte menu_animation_timer = 250;
 
-        public static StaticSprite map_dot = new StaticSprite(0x3e, 4, 45, 52);
-        public static StaticSprite hud_sword = new StaticSprite(0x20, 4, 152, 32);
-        public static StaticSprite hud_B_item = new StaticSprite(0x34, 5, 128, 32);
+        public static StaticSprite map_dot = new StaticSprite(SpriteID.DOT, PaletteID.SP_0, 45, 52);
+        public static StaticSprite hud_sword = new StaticSprite(SpriteID.SWORD, PaletteID.SP_0, 152, 32);
+        public static StaticSprite hud_B_item = new StaticSprite(SpriteID.BOMB, PaletteID.SP_1, 128, 32);
         public static FlickeringSprite menu_selection_left = new FlickeringSprite(0x1e, 5, 128, 359, 8, 0x1e, second_palette_index: 6);
         public static FlickeringSprite menu_selection_right = new FlickeringSprite(0x1e, 5, 136, 359, 8, 0x1e, second_palette_index: 6, xflip: true);
         static StaticSprite[] menu_sprites = new StaticSprite[17];
@@ -354,77 +354,77 @@ namespace The_Legend_of_Zelda.Gameplay
 
             if (raft)
             {
-                menu_sprites[0] = new StaticSprite((byte)SpriteID.RAFT, (byte)PaletteID.SP_0, 128, 31);
-                menu_sprites[1] = new StaticSprite((byte)SpriteID.RAFT, (byte)PaletteID.SP_0, 136, 31, xflip: true);
+                menu_sprites[0] = new StaticSprite(SpriteID.RAFT, PaletteID.SP_0, 128, 31);
+                menu_sprites[1] = new StaticSprite(SpriteID.RAFT, PaletteID.SP_0, 136, 31, xflip: true);
             }
 
             if (book_of_magic)
             {
-                menu_sprites[2] = new StaticSprite((byte)SpriteID.BOOK_OF_MAGIC, (byte)PaletteID.SP_2, 152, 31);
+                menu_sprites[2] = new StaticSprite(SpriteID.BOOK_OF_MAGIC, PaletteID.SP_2, 152, 31);
             }
 
             if (blue_ring || red_ring)
             {
                 PaletteID make_ring_red = red_ring ? PaletteID.SP_2 : PaletteID.SP_1;
 
-                menu_sprites[3] = new StaticSprite((byte)SpriteID.RING, (byte)make_ring_red, 164, 31);
+                menu_sprites[3] = new StaticSprite(SpriteID.RING, make_ring_red, 164, 31);
             }
 
             if (ladder)
             {
-                menu_sprites[4] = new StaticSprite((byte)SpriteID.LADDER, (byte)PaletteID.SP_0, 176, 31);
-                menu_sprites[5] = new StaticSprite((byte)SpriteID.LADDER, (byte)PaletteID.SP_0, 184, 31, xflip: true);
+                menu_sprites[4] = new StaticSprite(SpriteID.LADDER, PaletteID.SP_0, 176, 31);
+                menu_sprites[5] = new StaticSprite(SpriteID.LADDER, PaletteID.SP_0, 184, 31, xflip: true);
             }
 
             if (magical_key)
             {
-                menu_sprites[6] = new StaticSprite((byte)SpriteID.MAGICAL_KEY, (byte)PaletteID.SP_2, 196, 31);
+                menu_sprites[6] = new StaticSprite(SpriteID.MAGICAL_KEY, PaletteID.SP_2, 196, 31);
             }
 
             if (power_bracelet)
             {
-                menu_sprites[7] = new StaticSprite((byte)SpriteID.POWER_BRACELET, (byte)PaletteID.SP_2, 208, 31);
+                menu_sprites[7] = new StaticSprite(SpriteID.POWER_BRACELET, PaletteID.SP_2, 208, 31);
             }
 
             if (boomerang || magical_boomerang)
             {
                 PaletteID make_boom_blue = magical_boomerang ? PaletteID.SP_1 : PaletteID.SP_0;
 
-                menu_sprites[8] = new StaticSprite((byte)SpriteID.BOOMERANG, (byte)make_boom_blue, 132, 55);
+                menu_sprites[8] = new StaticSprite(SpriteID.BOOMERANG, make_boom_blue, 132, 55);
             }
 
             if (bomb_count > 0)
             {
-                menu_sprites[9] = new StaticSprite((byte)SpriteID.BOMB, (byte)PaletteID.SP_1, 156, 55);
+                menu_sprites[9] = new StaticSprite(SpriteID.BOMB, PaletteID.SP_1, 156, 55);
             }
 
             if (arrow || silver_arrow)
             {
                 PaletteID make_arrow_silver = silver_arrow ? PaletteID.SP_1 : PaletteID.SP_0;
 
-                menu_sprites[10] = new StaticSprite((byte)SpriteID.ARROW, (byte)make_arrow_silver, 176, 55);
+                menu_sprites[10] = new StaticSprite(SpriteID.ARROW, make_arrow_silver, 176, 55);
             }
 
             if (bow)
             {
-                menu_sprites[11] = new StaticSprite((byte)SpriteID.BOW, (byte)PaletteID.SP_0, 184, 55);
+                menu_sprites[11] = new StaticSprite(SpriteID.BOW, PaletteID.SP_0, 184, 55);
             }
 
             if (red_candle || blue_candle)
             {
                 PaletteID make_candle_red = red_candle ? PaletteID.SP_2 : PaletteID.SP_1;
 
-                menu_sprites[12] = new StaticSprite((byte)SpriteID.CANDLE, (byte)make_candle_red, 204, 55);
+                menu_sprites[12] = new StaticSprite(SpriteID.CANDLE, make_candle_red, 204, 55);
             }
 
             if (recorder)
             {
-                menu_sprites[13] = new StaticSprite((byte)SpriteID.RECORDER, (byte)PaletteID.SP_2, 132, 71);
+                menu_sprites[13] = new StaticSprite(SpriteID.RECORDER, PaletteID.SP_2, 132, 71);
             }
 
             if (bait)
             {
-                menu_sprites[14] = new StaticSprite((byte)SpriteID.BAIT, (byte)PaletteID.SP_2, 156, 71);
+                menu_sprites[14] = new StaticSprite(SpriteID.BAIT, PaletteID.SP_2, 156, 71);
             }
 
             if (red_potion || blue_potion || letter)
@@ -432,12 +432,12 @@ namespace The_Legend_of_Zelda.Gameplay
                 PaletteID make_red = red_potion ? PaletteID.SP_2 : PaletteID.SP_1;
                 SpriteID is_potion = red_potion || blue_potion ? SpriteID.POTION : SpriteID.MAP;
 
-                menu_sprites[15] = new StaticSprite((byte)is_potion, (byte)make_red, 180, 71);
+                menu_sprites[15] = new StaticSprite(is_potion, make_red, 180, 71);
             }
 
             if (magical_rod)
             {
-                menu_sprites[16] = new StaticSprite(0x4a, (byte)PaletteID.SP_1, 204, 70);
+                menu_sprites[16] = new StaticSprite(SpriteID.ROD, PaletteID.SP_1, 204, 70);
             }
 
             for (int i = 0; i < menu_sprites.Length; i++)

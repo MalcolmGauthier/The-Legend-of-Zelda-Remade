@@ -321,12 +321,16 @@ namespace The_Legend_of_Zelda.Rendering
 
                             // set palette of entire room
                             byte inner_palette = 2;
+                            // void rooms take palette 0 so that the text appears white
+                            if (DC.room_list[page] == (byte)DungeonCode.RoomType.VOID)
+                                inner_palette = 0;
                             // rooms with water or darkness require palette 3
-                            if (DC.rooms_with_palette_3.Contains(page) || DC.GetRoomDarkness(page))
+                            else if (DC.rooms_with_palette_3.Contains(page) || DC.GetRoomDarkness(page))
                                 inner_palette = 3;
                             // rooms with sand require palette 1
                             else if (DC.rooms_with_palette_1.Contains(page))
                                 inner_palette = 1;
+
                             for (int i = 256 + 128 + screen_1_exception + ppu_start_index; i < 832 + screen_1_exception + ppu_start_index; i++)
                             {
                                 byte palette = 2;

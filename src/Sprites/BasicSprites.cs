@@ -96,7 +96,7 @@ namespace The_Legend_of_Zelda.Sprites
         public int smoke_timer { get; set; } = Program.RNG.Next(0, 120);
         public bool smoke_stage { get; set; } = true;
 
-        StaticSprite counterpart = new StaticSprite(0x70, 5, 0, 0);
+        StaticSprite counterpart = new StaticSprite(SpriteID.SMOKE_1, PaletteID.SP_1, 0, 0);
 
         public UndergroundFireSprite(int x, int y) : base(0x5c, (byte)PaletteID.SP_1)
         {
@@ -106,6 +106,7 @@ namespace The_Legend_of_Zelda.Sprites
             counterpart.unload_during_transition = true;
             counterpart.x = x + 8;
             counterpart.y = y;
+            Screen.sprites.Add(this);
             Screen.sprites.Add(counterpart);
             smoke_timer = 30;
             Action();
@@ -175,22 +176,20 @@ namespace The_Legend_of_Zelda.Sprites
         }
     }
 
-    public class CaveNPC : Sprite, ISmokeSpawn
+    internal class CaveNPC : Enemy//, ISmokeSpawn
     {
-        public int smoke_timer { get; set; } = Program.RNG.Next(0, 120);
-        public bool smoke_stage { get; set; } = true;
+        //public int smoke_timer { get; set; } = Program.RNG.Next(0, 120);
+        //public bool smoke_stage { get; set; } = true;
         public byte flash_timer = 200;
 
-        StaticSprite counterpart = new StaticSprite(0x70, 5, 0, 0);
-        WarpCode.NPC displayed_npc;
+        //WarpCode.NPC displayed_npc;
 
-        public CaveNPC(WarpCode.NPC displayed_npc, byte tile_index = 0x00, byte palette_index = 5) : base(tile_index, palette_index)
+        public CaveNPC(WarpCode.NPC displayed_npc) : base(AnimationMode.ONEFRAME_M, 0x70, 0, false, true, 0, 0, 0, true)
         {
-            this.tile_index = tile_index;
-            this.palette_index = palette_index;
+            palette_index = (byte)PaletteID.SP_2;
             x = 120;
             y = 128;
-            this.displayed_npc = displayed_npc;
+            //this.displayed_npc = displayed_npc;
             if (displayed_npc == WarpCode.NPC.NONE)
             {
                 shown = false;
@@ -200,80 +199,120 @@ namespace The_Legend_of_Zelda.Sprites
             counterpart.unload_during_transition = true;
             counterpart.x = x + 8;
             counterpart.y = y;
-            Screen.sprites.Add(counterpart);
-            smoke_timer = 30;
-            Action();
+            smoke_random_appearance = (byte)Program.RNG.Next(0, 120);
+            can_always_act = true;
+            can_damage_link = false;
+            HP = float.PositiveInfinity;
+            if (Program.gamemode == Gamemode.OVERWORLD)
+                invincible = true;
+
+            switch (displayed_npc)
+            {
+                case WarpCode.NPC.OLD_MAN:
+                    tile_location_1 = 0x98;
+                    break;
+                case WarpCode.NPC.OLD_WOMAN:
+                    tile_location_1 = 0x9a;
+                    break;
+                case WarpCode.NPC.SHOPKEEPER:
+                    tile_location_1 = 0x9c;
+                    break;
+                case WarpCode.NPC.GOBLIN:
+                    animation_mode = AnimationMode.ONEFRAME;
+                    tile_location_1 = 0xf8;
+                    tile_location_2 = 0xfa;
+                    break;
+                case WarpCode.NPC.GORYIA:
+                    animation_mode = AnimationMode.ONEFRAME;
+                    tile_location_1 = 0xb0;
+                    tile_location_2 = 0xb2;
+                    break;
+            }
+
+            if (displayed_npc == WarpCode.NPC.SHOPKEEPER)
+            {
+                palette_index = (byte)PaletteID.SP_0;
+                counterpart.palette_index = (byte)PaletteID.SP_0;
+            }
+            else
+            {
+                palette_index = (byte)PaletteID.SP_2;
+                counterpart.palette_index = (byte)PaletteID.SP_2;
+            }
+
+            Animation();
         }
 
-        public override void Action()
+        protected override void EnemySpecificActions()
         {
-            smoke_timer++;
-            if (smoke_stage)
-            {
-                SetSmokeGraphic();
-            }
+            HP = float.PositiveInfinity;
+            //smoke_timer++;
+            //if (smoke_stage)
+            //{
+            //    SetSmokeGraphic();
+            //}
             if (flash_timer < 100)
             {
                 FlashDissapear();
             }
         }
 
-        public void SetSmokeGraphic()
-        {
-            if (smoke_timer < 70)
-            {
-                tile_index = 0x70;
-                counterpart.tile_index = 0x70;
-                counterpart.xflip = true;
-            }
-            else if (smoke_timer == 70)
-            {
-                tile_index = 0x72;
-                counterpart.tile_index = 0x72;
-            }
-            else if (smoke_timer == 76)
-            {
-                tile_index = 0x74;
-                counterpart.tile_index = 0x74;
-            }
-            else if (smoke_timer == 82)
-            {
-                switch (displayed_npc)
-                {
-                    case WarpCode.NPC.OLD_MAN:
-                        tile_index = 0x98;
-                        counterpart.tile_index = 0x98;
-                        break;
-                    case WarpCode.NPC.OLD_WOMAN:
-                        tile_index = 0x9a;
-                        counterpart.tile_index = 0x9a;
-                        break;
-                    case WarpCode.NPC.SHOPKEEPER:
-                        tile_index = 0x9c;
-                        counterpart.tile_index = 0x9c;
-                        break;
-                    case WarpCode.NPC.GOBLIN:
-                        tile_index = 0xf8;
-                        counterpart.tile_index = 0xfa;
-                        break;
-                }
-                if (displayed_npc != WarpCode.NPC.SHOPKEEPER)
-                {
-                    palette_index = 6;
-                    counterpart.palette_index = 6;
-                }
-                else
-                {
-                    palette_index = 4;
-                    counterpart.palette_index = 4;
-                }
-                if (displayed_npc != WarpCode.NPC.GOBLIN)
-                    counterpart.xflip = true;
-                else
-                    counterpart.xflip = false;
-                smoke_stage = false;
-            }
-        }
+        //public void SetSmokeGraphic()
+        //{
+        //    if (smoke_timer < 70)
+        //    {
+        //        tile_index = 0x70;
+        //        counterpart.tile_index = 0x70;
+        //        counterpart.xflip = true;
+        //    }
+        //    else if (smoke_timer == 70)
+        //    {
+        //        tile_index = 0x72;
+        //        counterpart.tile_index = 0x72;
+        //    }
+        //    else if (smoke_timer == 76)
+        //    {
+        //        tile_index = 0x74;
+        //        counterpart.tile_index = 0x74;
+        //    }
+        //    else if (smoke_timer == 82)
+        //    {
+        //        switch (displayed_npc)
+        //        {
+        //            case WarpCode.NPC.OLD_MAN:
+        //                tile_index = 0x98;
+        //                counterpart.tile_index = 0x98;
+        //                break;
+        //            case WarpCode.NPC.OLD_WOMAN:
+        //                tile_index = 0x9a;
+        //                counterpart.tile_index = 0x9a;
+        //                break;
+        //            case WarpCode.NPC.SHOPKEEPER:
+        //                tile_index = 0x9c;
+        //                counterpart.tile_index = 0x9c;
+        //                break;
+        //            case WarpCode.NPC.GOBLIN:
+        //                tile_index = 0xf8;
+        //                counterpart.tile_index = 0xfa;
+        //                break;
+        //        }
+        //        if (displayed_npc != WarpCode.NPC.SHOPKEEPER)
+        //        {
+        //            palette_index = 6;
+        //            counterpart.palette_index = 6;
+        //        }
+        //        else
+        //        {
+        //            palette_index = 4;
+        //            counterpart.palette_index = 4;
+        //        }
+        //        if (displayed_npc != WarpCode.NPC.GOBLIN)
+        //            counterpart.xflip = true;
+        //        else
+        //            counterpart.xflip = false;
+        //        smoke_stage = false;
+        //    }
+        //}
 
         public void FlashDissapear()
         {
@@ -288,19 +327,19 @@ namespace The_Legend_of_Zelda.Sprites
                 shown = false;
                 counterpart.shown = false;
             }
-        }
-    }
 
-    public class StaticFairySprite : FairySprite
-    {
-        public StaticFairySprite(int x, int y) : base(x, y)
-        {
-            return;
+            if (flash_timer == 100)
+            {
+                WarpCode.npc_gone = true;
+                Program.DC.npc_active = false;
+                Screen.sprites.Remove(counterpart);
+                Screen.sprites.Remove(this);
+            }
         }
 
-        public override void Action()
+        protected override void OnDamaged()
         {
-            return;
+            base.OnDamaged();
         }
     }
 

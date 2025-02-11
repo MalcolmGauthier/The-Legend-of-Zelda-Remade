@@ -1,5 +1,6 @@
 ﻿using static The_Legend_of_Zelda.Gameplay.Program;
 using The_Legend_of_Zelda.Rendering;
+using System.Reflection.Metadata.Ecma335;
 
 namespace The_Legend_of_Zelda.Sprites
 {
@@ -61,11 +62,12 @@ namespace The_Legend_of_Zelda.Sprites
         protected bool stunnable = true;
         protected bool die_when_stunned = false;
         protected bool no_random_turn_flag = false;
+        protected bool can_always_act = false;
         public bool invincible = false;
         public bool bomb_death = false;
         bool target_antilink = false;
 
-        protected byte smoke_random_appearance = 1;
+        protected byte smoke_random_appearance = 0;
         protected byte iframes_timer = 0;
         protected byte knockback_timer = 0;
         protected byte drop_category = 0;
@@ -80,9 +82,9 @@ namespace The_Legend_of_Zelda.Sprites
 
         protected Direction facing_direction;
         protected Direction knockback_direction;
+        protected AnimationMode animation_mode;
         public ActionState current_action = ActionState.DEFAULT;
         public ActionState unstunned_action = ActionState.DEFAULT;
-        AnimationMode animation_mode;
 
         protected StaticSprite counterpart = new StaticSprite(SpriteID.BLANK, 0, 0, 0);
         public Type hit_cause = typeof(Sprite);
@@ -131,8 +133,8 @@ namespace The_Legend_of_Zelda.Sprites
 
         public override void Action()
         {
-            // only do stuff if link can move!!! (and he's not on a raft)
-            if (!Link.can_move && !OC.raft_flag)
+            // only do stuff if link can move!!! (and he's not on a raft) (unless special flag activated)
+            if (!Link.can_move && !OC.raft_flag && !can_always_act)
                 return;
 
             // not being appeared either means you're smoking or dying
@@ -234,7 +236,8 @@ namespace The_Legend_of_Zelda.Sprites
                     shown = false;
                     counterpart.shown = false;
                 }
-                smoke_random_appearance = (byte)RNG.Next(10, 90);
+                if (smoke_random_appearance == 0)
+                    smoke_random_appearance = (byte)RNG.Next(10, 90);
                 palette_index = 5;
                 counterpart.palette_index = 5;
                 tile_index = 0x70;
@@ -330,17 +333,27 @@ namespace The_Legend_of_Zelda.Sprites
                     break;
 
                 case AnimationMode.ONEFRAME_DU:
-                    flip = facing_direction != Direction.UP;
-                    if (flip)
+                    xflip = false;
+                    if (facing_direction != Direction.UP)
                     {
-                        tile_index = tile_location_1;
-                        counterpart.tile_index = (byte)(tile_location_1 + next_tile);
+                        if (facing_direction == Direction.RIGHT)
+                        {
+                            tile_index = (byte)(tile_location_1 + next_tile);
+                            counterpart.tile_index = (byte)(tile_location_1);
+                            xflip = true;
+                        }
+                        else
+                        {
+                            tile_index = tile_location_1;
+                            counterpart.tile_index = (byte)(tile_location_1 + next_tile);
+                        }
                     }
                     else
                     {
                         tile_index = tile_location_2;
                         counterpart.tile_index = (byte)(tile_location_2 + next_tile);
                     }
+                    counterpart.xflip = xflip;
                     break;
 
                 case AnimationMode.ONEFRAME_DMUM:
@@ -873,7 +886,7 @@ namespace The_Legend_of_Zelda.Sprites
             if (iframes_timer == 1)
                 new_palette = og_palette;
             else
-                new_palette = (byte)((gTimer >> 1) % 4 + 4);
+                new_palette = (byte)((gTimer / 2) % 4 + 4);
 
             palette_index = new_palette;
             counterpart.palette_index = new_palette;
@@ -938,7 +951,7 @@ namespace The_Legend_of_Zelda.Sprites
             }
 
             HP -= damage_taken;
-            if (damage != 0)
+            if (damage_taken != 0)
             {
                 iframes_timer = 48;
                 // if aligned on grid

@@ -732,6 +732,10 @@ namespace The_Legend_of_Zelda.Sprites
                     }
                     if (local_timer <= 48)
                     {
+                        // prevent div/0
+                        if (frames_between_anim == 0)
+                            break;
+
                         if (local_timer % frames_between_anim == 0)
                         {
                             Move8D();

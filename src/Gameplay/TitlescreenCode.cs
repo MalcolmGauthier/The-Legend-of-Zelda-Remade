@@ -296,80 +296,80 @@ namespace The_Legend_of_Zelda.Gameplay
                     break;
                 case 1780:
                     sprites.Add(new StaticHeartSprite(72, 834));
-                    sprites.Add(new StaticSprite(0x68, 6, 172, 830));
-                    sprites.Add(new StaticSprite(0x68, 6, 180, 830, xflip: true));
+                    sprites.Add(new StaticSprite(SpriteID.HEART_CONTAINER, PaletteID.SP_2, 172, 830));
+                    sprites.Add(new StaticSprite(SpriteID.HEART_CONTAINER, PaletteID.SP_2, 180, 830, xflip: true));
                     break;
                 case 1908:
-                    sprites.Add(new FlickeringSprite(0x50, 6, 72, 894, 4, 0x52));
-                    sprites.Add(new StaticSprite(0x66, 6, 172, 894));
-                    sprites.Add(new StaticSprite(0x66, 6, 180, 894, xflip: true));
+                    sprites.Add(new FlickeringSprite((byte)SpriteID.FAIRY_1, (byte)PaletteID.SP_2, 72, 894, 4, (byte)SpriteID.FAIRY_2));
+                    sprites.Add(new StaticSprite(SpriteID.CLOCK, PaletteID.SP_2, 172, 894));
+                    sprites.Add(new StaticSprite(SpriteID.CLOCK, PaletteID.SP_2, 180, 894, xflip: true));
                     break;
                 case 2036:
-                    sprites.Add(new StaticSprite(0x32, 5, 72, 958));
-                    sprites.Add(new FlickeringSprite(0x32, 5, 176, 958, 8, 0x32, second_palette_index: 6));
+                    sprites.Add(new StaticSprite(SpriteID.RUPEE, PaletteID.SP_1, 72, 958));
+                    sprites.Add(new FlickeringSprite((byte)SpriteID.RUPEE, (byte)PaletteID.SP_1, 176, 958, 8, (byte)SpriteID.RUPEE, second_palette_index: (byte)PaletteID.SP_2));
                     break;
                 case 2164:
-                    sprites.Add(new StaticSprite(0x40, 5, 72, 1022));
-                    sprites.Add(new StaticSprite(0x40, 6, 176, 1022));
+                    sprites.Add(new StaticSprite(SpriteID.POTION, PaletteID.SP_1, 72, 1022));
+                    sprites.Add(new StaticSprite(SpriteID.POTION, PaletteID.SP_2, 176, 1022));
                     break;
                 case 2292:
-                    sprites.Add(new StaticSprite(0x4c, 5, 72, 1086));
-                    sprites.Add(new StaticSprite(0x22, 6, 176, 1086));
+                    sprites.Add(new StaticSprite(SpriteID.MAP, PaletteID.SP_1, 72, 1086));
+                    sprites.Add(new StaticSprite(SpriteID.BAIT, PaletteID.SP_2, 176, 1086));
                     break;
                 case 2420:
-                    sprites.Add(new StaticSprite(0x20, 4, 72, 1150));
-                    sprites.Add(new StaticSprite(0x20, 5, 176, 1150));
+                    sprites.Add(new StaticSprite(SpriteID.SWORD, PaletteID.SP_0, 72, 1150));
+                    sprites.Add(new StaticSprite(SpriteID.SWORD, PaletteID.SP_1, 176, 1150));
                     break;
                 case 2548:
-                    sprites.Add(new StaticSprite(0x48, 6, 72, 1214));
-                    sprites.Add(new StaticSprite(0x56, 4, 176, 1214));
+                    sprites.Add(new StaticSprite(SpriteID.MAGIC_SWORD, PaletteID.SP_2, 72, 1214));
+                    sprites.Add(new StaticSprite(SpriteID.MAGICAL_SHIELD, PaletteID.SP_0, 176, 1214));
                     break;
                 case 2676:
-                    sprites.Add(new StaticSprite(0x36, 4, 72, 1278));
-                    sprites.Add(new StaticSprite(0x36, 5, 176, 1278));
+                    sprites.Add(new StaticSprite(SpriteID.BOOMERANG, PaletteID.SP_0, 72, 1278));
+                    sprites.Add(new StaticSprite(SpriteID.BOOMERANG, PaletteID.SP_1, 176, 1278));
                     break;
                 case 2804:
-                    sprites.Add(new StaticSprite(0x34, 5, 72, 1342));
-                    sprites.Add(new StaticSprite(0x2a, 4, 176, 1342));
+                    sprites.Add(new StaticSprite(SpriteID.BOMB, PaletteID.SP_1, 72, 1342));
+                    sprites.Add(new StaticSprite(SpriteID.BOW, PaletteID.SP_0, 176, 1342));
                     break;
                 case 2932:
-                    sprites.Add(new StaticSprite(0x28, 4, 72, 1406));
-                    sprites.Add(new StaticSprite(0x28, 5, 176, 1406));
+                    sprites.Add(new StaticSprite(SpriteID.ARROW, PaletteID.SP_0, 72, 1406));
+                    sprites.Add(new StaticSprite(SpriteID.ARROW, PaletteID.SP_1, 176, 1406));
                     break;
                 case 3060:
-                    sprites.Add(new StaticSprite(0x26, 5, 72, 1470));
-                    sprites.Add(new StaticSprite(0x26, 6, 176, 1470));
+                    sprites.Add(new StaticSprite(SpriteID.CANDLE, PaletteID.SP_1, 72, 1470));
+                    sprites.Add(new StaticSprite(SpriteID.CANDLE, PaletteID.SP_2, 176, 1470));
                     break;
                 case 3188:
-                    sprites.Add(new StaticSprite(0x46, 5, 72, 1534));
-                    sprites.Add(new StaticSprite(0x46, 6, 176, 1534));
+                    sprites.Add(new StaticSprite(SpriteID.RING, PaletteID.SP_1, 72, 1534));
+                    sprites.Add(new StaticSprite(SpriteID.RING, PaletteID.SP_2, 176, 1534));
                     break;
                 case 3316:
-                    sprites.Add(new StaticSprite(0x4e, 6, 72, 1598));
-                    sprites.Add(new StaticSprite(0x24, 6, 176, 1598));
+                    sprites.Add(new StaticSprite(SpriteID.POWER_BRACELET, PaletteID.SP_2, 72, 1598));
+                    sprites.Add(new StaticSprite(SpriteID.RECORDER, PaletteID.SP_2, 176, 1598));
                     break;
                 case 3444:
-                    sprites.Add(new StaticSprite(0x6c, 4, 68, 1662));
-                    sprites.Add(new StaticSprite(0x6c, 4, 76, 1662, xflip: true));
-                    sprites.Add(new StaticSprite(0x76, 4, 172, 1662));
-                    sprites.Add(new StaticSprite(0x76, 4, 180, 1662, xflip: true));
+                    sprites.Add(new StaticSprite(SpriteID.RAFT, PaletteID.SP_0, 68, 1662));
+                    sprites.Add(new StaticSprite(SpriteID.RAFT, PaletteID.SP_0, 76, 1662, xflip: true));
+                    sprites.Add(new StaticSprite(SpriteID.LADDER, PaletteID.SP_0, 172, 1662));
+                    sprites.Add(new StaticSprite(SpriteID.LADDER, PaletteID.SP_0, 180, 1662, xflip: true));
                     break;
                 case 3572:
-                    sprites.Add(new StaticSprite(0x4a, 5, 72, 1726));
-                    sprites.Add(new StaticSprite(0x42, 6, 176, 1726));
+                    sprites.Add(new StaticSprite(SpriteID.ROD, PaletteID.SP_1, 72, 1726));
+                    sprites.Add(new StaticSprite(SpriteID.BOOK_OF_MAGIC, PaletteID.SP_2, 176, 1726));
                     break;
                 case 3700:
-                    sprites.Add(new StaticSprite(0x2e, 6, 72, 1790));
-                    sprites.Add(new StaticSprite(0x2c, 6, 176, 1790));
+                    sprites.Add(new StaticSprite(SpriteID.KEY, PaletteID.SP_2, 72, 1790));
+                    sprites.Add(new StaticSprite(SpriteID.MAGICAL_KEY, PaletteID.SP_2, 176, 1790));
                     break;
                 case 3828:
-                    sprites.Add(new StaticSprite(0x4c, 6, 72, 1854));
-                    sprites.Add(new StaticSprite(0x6a, 6, 172, 1854));
-                    sprites.Add(new StaticSprite(0x6a, 6, 180, 1854, xflip: true));
+                    sprites.Add(new StaticSprite(SpriteID.MAP, PaletteID.SP_2, 72, 1854));
+                    sprites.Add(new StaticSprite(SpriteID.COMPASS, PaletteID.SP_2, 172, 1854));
+                    sprites.Add(new StaticSprite(SpriteID.COMPASS, PaletteID.SP_2, 180, 1854, xflip: true));
                     break;
                 case 3956:
-                    sprites.Add(new FlickeringSprite(0x6e, 5, 120, 1918, 8, 0x6e, second_palette_index: 6));
-                    sprites.Add(new FlickeringSprite(0x6e, 5, 128, 1918, 8, 0x6e, true, second_palette_index: 6));
+                    sprites.Add(new FlickeringSprite((byte)SpriteID.TRIFORCE, (byte)PaletteID.SP_1, 120, 1918, 8, (byte)SpriteID.TRIFORCE, second_palette_index: (byte)PaletteID.SP_2));
+                    sprites.Add(new FlickeringSprite((byte)SpriteID.TRIFORCE, (byte)PaletteID.SP_1, 128, 1918, 8, (byte)SpriteID.TRIFORCE, true, second_palette_index: (byte)PaletteID.SP_2));
                     break;
                 case 4084:
                     sprites.Add(new StaticSprite(0xe0, 4, 104, 2014));
@@ -393,8 +393,8 @@ namespace The_Legend_of_Zelda.Gameplay
                     sprites.Add(new StaticSprite(0xdc, 4, 136, 2046));
                     sprites.Add(new StaticSprite(0xde, 4, 144, 2046));
 
-                    sprites.Add(new StaticSprite(0x78, 4, 120, 2062));
-                    sprites.Add(new StaticSprite(0x78, 4, 128, 2062, xflip: true));
+                    sprites.Add(new StaticSprite(SpriteID.LINK_ITEM_GET, PaletteID.SP_0, 120, 2062));
+                    sprites.Add(new StaticSprite(SpriteID.LINK_ITEM_GET, PaletteID.SP_0, 128, 2062, xflip: true));
                     break;
             }
 

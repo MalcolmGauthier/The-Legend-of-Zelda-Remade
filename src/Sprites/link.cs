@@ -46,26 +46,27 @@ namespace The_Legend_of_Zelda.Sprites
 
         public float hp = 3;
 
+        public int dungeon_wall_push_timer { get; private set; } = 0;
         public byte nb_of_ens_killed = 0;
         public byte nb_of_ens_killed_damageless = 0;
         public byte iframes_timer;
         public byte knockback_timer;
         byte longer_attack_anim = 0;
-        public int dungeon_wall_push_timer { get; private set; } = 0;
 
+        public bool sword_out { get; private set; } = false;
+        public bool wand_out { get; private set; } = false;
+        public bool shown { get; private set; }
         public bool ladder_used = false;
         public bool can_move = false;
         public bool has_moved_after_warp_flag = true;
-        public bool sword_out { get; private set; } = false;
-        public bool wand_out { get; private set; } = false;
         public bool using_item = false;
         public bool full_heal_flag = false;
         public bool clock_flash = false;
         public bool can_use_sword = true;
-        public bool shown { get; private set; }
-        public bool boomerang_out { get => Menu.boomerang_out; set => Menu.boomerang_out = value; }
-        public Direction boomerang_throw_dir { get => facing_direction; set => facing_direction = value; }
         bool stair_speed = false;
+        public bool boomerang_out { get => Menu.boomerang_out; set => Menu.boomerang_out = value; }
+        public EightDirection boomerang_throw_dir { get => BoomerangSprite.FindLinkBoomerangDirection(); set => _ = value; }
+        public (int x, int y) return_pos { get => (x, y); set => _ = value; }
 
         public Direction facing_direction;
         public Direction knockback_direction;
@@ -73,8 +74,8 @@ namespace The_Legend_of_Zelda.Sprites
 
         public StaticSprite self = new StaticSprite(0x00, 4, 0, 0);
         public StaticSprite counterpart = new StaticSprite(0x00, 4, 8, 0);
-        StaticSprite sword_1 = new StaticSprite(0x20, 4, 0, 0);
-        StaticSprite sword_2 = new StaticSprite(0x20, 4, 0, 0);
+        public StaticSprite sword_1 { get; private set; } = new StaticSprite(0x20, 4, 0, 0);
+        public StaticSprite sword_2 { get; private set; } = new StaticSprite(0x20, 4, 0, 0);
 
         public void Init()
         {
@@ -1404,5 +1405,6 @@ namespace The_Legend_of_Zelda.Sprites
                 Link.current_action = LinkAction.ATTACK_RIGHT;
             Link.using_item = true;
         }
+        public void BoomerangThrow() => animation_timer = 0;
     }
 }

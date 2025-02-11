@@ -4,15 +4,16 @@ using static The_Legend_of_Zelda.Gameplay.Program;
 
 namespace The_Legend_of_Zelda.Sprites
 {
-    internal class OverworldFairySprite : FairySprite
+    internal class OverworldFairySprite : FlickeringSprite
     {
         bool used = false;
         short animation_timer = 0;
         FairyHeartSprite[] hearts = new FairyHeartSprite[8];
 
-        public OverworldFairySprite() : base(124, 126)
+        public OverworldFairySprite() : base(0x50, 6, 124, 126, 4, 0x52)
         {
-            Sound.PlaySFX(Sound.SoundEffects.HEART); // TODO: replace with fairy sound
+            // TODO: replace with fairy sound
+            Sound.PlaySFX(Sound.SoundEffects.HEART);
             unload_during_transition = true;
             Screen.sprites.Add(this);
         }
@@ -314,7 +315,7 @@ namespace The_Legend_of_Zelda.Sprites
             return;
         }
 
-        public override void ItemSpecificActions()
+        protected override void ItemSpecificActions()
         {
             if (collected)
             {
