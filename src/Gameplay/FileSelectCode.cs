@@ -31,7 +31,10 @@ namespace The_Legend_of_Zelda.Gameplay
         static Selection selected_option = 0;
         static int selected_character = 0;
         static byte selected_name_letter = 0;
-        static StaticSprite cursor = new(SpriteID.BLANK, PaletteID.SP_3, 40, 92);
+
+        static StaticSprite file_cursor = new(SpriteID.BLANK, PaletteID.SP_3, 40, 92);
+        static StaticSprite name_cursor = new(0x25, 7, 0, 0);
+        static StaticSprite letter_cursor = new(SpriteID.BLANK, PaletteID.SP_3, 0, 0);
         static StaticSprite[] link_icons = new StaticSprite[6];
         static StaticSprite[] quest_2_swords = new StaticSprite[3];
 
@@ -65,6 +68,8 @@ namespace The_Legend_of_Zelda.Gameplay
             Palettes.LoadPaletteGroup(PaletteID.SP_1, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
             Palettes.LoadPaletteGroup(PaletteID.SP_2, Palettes.PaletteGroups.GREEN_LINK_HUDSPR1);
             Palettes.LoadPalette(PaletteID.SP_3, 1, Color._15_ROSE);
+            Palettes.LoadPalette(PaletteID.SP_3, 2, Color._27_GOLD);
+            Palettes.LoadPalette(PaletteID.SP_3, 3, Color._30_WHITE);
             Palettes.LoadPalette(PaletteID.BG_2, 0, Color._15_ROSE);
             Palettes.LoadPalette(PaletteID.BG_2, 1, Color._30_WHITE);
             Palettes.LoadPalette(PaletteID.BG_3, 0, Color._0F_BLACK);
@@ -79,14 +84,25 @@ namespace The_Legend_of_Zelda.Gameplay
                 DrawFileInfo(i);
                 if (SaveLoad.second_quest[i])
                 {
-                    sprites.Add(quest_2_swords[i] = new StaticSprite(SpriteID.SWORD, PaletteID.BG_3, 60, 86 + i * 24));
+                    sprites.Add(quest_2_swords[i] = new StaticSprite(SpriteID.SWORD, PaletteID.SP_3, 60, 86 + i * 24));
                     // in the real game, the swords aren't on background layer but are instead just lower priority than link icons,
                     // but i don't want two loops in this already ugly function, so this does the same thing. + there's no background to worry about
                     quest_2_swords[i].background = true;
                 }
             }
 
-            sprites.Add(cursor = new StaticSprite(SpriteID.BLANK, PaletteID.SP_3, 40, 92));
+            sprites.Add(file_cursor = new StaticSprite(SpriteID.BLANK, PaletteID.SP_3, 40, 92));
+            sprites.Add(name_cursor);
+            sprites.Add(letter_cursor);
+            name_cursor.use_chr_rom = true;
+            letter_cursor.use_chr_rom = true;
+            name_cursor.background = true;
+            letter_cursor.background = true;
+            name_cursor.tile_index = 0x24;
+            letter_cursor.tile_index = 0x24;
+            name_cursor.shown = false;
+            letter_cursor.shown = false;
+
 
             for (int i = 0; i < link_icons.Length; i++)
             {
@@ -138,8 +154,10 @@ namespace The_Legend_of_Zelda.Gameplay
                 }
             }
 
-            cursor.x = 67;
-            cursor.y = 48;
+            file_cursor.x = 67;
+            file_cursor.y = 48;
+            letter_cursor.x = 48;
+            letter_cursor.y = 128;
             selected_option = Selection.FILE_1;
             selected_character = 0;
             SkipOverFiles(true);
@@ -175,6 +193,10 @@ namespace The_Legend_of_Zelda.Gameplay
                     break;
                 }
             }
+
+            name_cursor.shown = true;
+            name_cursor.x = 112 + selected_name_letter * 8;
+            name_cursor.y = 40 + (int)selected_option * 24;
         }
 
         // draw the info for the files on loading file select mode
@@ -264,8 +286,8 @@ namespace The_Legend_of_Zelda.Gameplay
                     link_icons[i].y = 48 + 24 * (i / 2);
                 }
 
-                cursor.x = 67;
-                cursor.y = 48;
+                file_cursor.x = 67;
+                file_cursor.y = 48;
                 selected_option = Selection.FILE_1;
 
                 // write elimination mode text
@@ -306,7 +328,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
             }
 
-            cursor.y = selection_heart_positions[(byte)selected_option];
+            file_cursor.y = selection_heart_positions[(byte)selected_option];
         }
 
         static void EliminationMode()
@@ -341,7 +363,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
             }
 
-            cursor.y = 48 + (byte)selected_option * 24;
+            file_cursor.y = 48 + (byte)selected_option * 24;
         }
 
         static void RegistrationMode()
@@ -366,8 +388,10 @@ namespace The_Legend_of_Zelda.Gameplay
                 }
 
                 // set blinking areas to black
-                SetRegistrationChrBackground(selected_character, 0);
-                Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = 0;
+                //SetRegistrationChrBackground(selected_character, 0);
+                //Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = 0;
+                letter_cursor.shown = false;
+                name_cursor.shown = false;
                 InitFileSelect();
                 mode = FileSelectMode.FILESELECT;
                 return;
@@ -376,13 +400,14 @@ namespace The_Legend_of_Zelda.Gameplay
             // move cursor
             if (Control.IsPressed(Buttons.SELECT))
             {
-                Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = 0;
+                //Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = 0;
                 selected_option++;
                 if (selected_option > Selection.REGISTER_OR_END)
                     selected_option = Selection.FILE_1;
 
                 SkipOverFiles(true);
                 Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
+                name_cursor.shown = selected_option != Selection.REGISTER_OR_END;
 
                 // code below only applies to making the cursor go onto one of the files
                 if (selected_option == Selection.REGISTER_OR_END)
@@ -404,26 +429,32 @@ namespace The_Legend_of_Zelda.Gameplay
                 selected_name_letter++;
                 selected_name_letter %= NAME_LENGTH;
 
+                name_cursor.x = 112 + selected_name_letter * 8;
+                name_cursor.y = 40 + (int)selected_option * 24;
+
                 return;
             }
 
-            cursor.y = 48 + (byte)selected_option * 24;
+            file_cursor.y = 48 + (byte)selected_option * 24;
 
             if (Program.gTimer % 8 == 0)
             {
-                // cast needed to prevent error. why tf does c# throw an error about implicitly casting 0 or 2 to a byte??
-                byte new_plt = Program.gTimer % 16 == 0 ? (byte)2 : (byte)0;
-
+                letter_cursor.shown = !letter_cursor.shown;
                 if (selected_option != Selection.REGISTER_OR_END)
-                    Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = new_plt;
+                    name_cursor.shown = !name_cursor.shown;
 
-                SetRegistrationChrBackground(selected_character, new_plt);
+                // cast needed to prevent error. why tf does c# throw an error about implicitly casting 0 or 2 to a byte??
+                //byte new_plt = Program.gTimer % 16 == 0 ? (byte)2 : (byte)0;
+
+                //    Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = new_plt;
+
+                //SetRegistrationChrBackground(selected_character, new_plt);
             }
 
             // move character selector
             if (Control.IsPressed(Buttons.UP) || Control.IsPressed(Buttons.DOWN) || Control.IsPressed(Buttons.LEFT) || Control.IsPressed(Buttons.RIGHT))
             {
-                SetRegistrationChrBackground(selected_character, 0);
+                //SetRegistrationChrBackground(selected_character, 0);
                 if (Control.IsPressed(Buttons.UP))
                 {
                     selected_character -= 11;
@@ -448,23 +479,28 @@ namespace The_Legend_of_Zelda.Gameplay
                     if (selected_character > 43)
                         selected_character = 0;
                 }
-                SetRegistrationChrBackground(selected_character, 2);
+                //SetRegistrationChrBackground(selected_character, 2);
+                letter_cursor.x = 48 + (selected_character % 11) * 16;
+                letter_cursor.y = 128 + (selected_character / 11) * 16;
                 Sound.PlaySFX(Sound.SoundEffects.RUPEE, true);
             }
 
             if ((Control.IsPressed(Buttons.A) || Control.IsPressed(Buttons.B)) && selected_option != Selection.REGISTER_OR_END)
             {
-                Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = 0;
+                //Textures.ppu_plt[0xce + (byte)selected_option * 0x60 + selected_name_letter] = 0;
 
                 if (Control.IsPressed(Buttons.A))
                 {
-                    byte selected_letter = SetRegistrationChrBackground(selected_character, -1);
+                    byte selected_letter = Textures.ppu[0x226 + selected_character % 11 * 2 + selected_character / 11 * 0x40];
                     Textures.ppu[0xce + (byte)selected_option * 0x60 + selected_name_letter] = selected_letter;
                     file_new_names[(byte)selected_option, selected_name_letter] = selected_letter;
                 }
 
                 selected_name_letter++;
                 selected_name_letter %= NAME_LENGTH;
+
+                name_cursor.x = 112 + selected_name_letter * 8;
+                name_cursor.y = 40 + (int)selected_option * 24;
             }
         }
 
@@ -511,12 +547,14 @@ namespace The_Legend_of_Zelda.Gameplay
         }
 
         // sets character's background to certain palette. returns character at index, so set palette to invalid value to not change palette.
-        static byte SetRegistrationChrBackground(int selected_character, int palette)
-        {
-            int index = 0x226 + selected_character % 11 * 2 + selected_character / 11 * 0x40;
-            if (palette >= 0 && palette <= 7)
-                Textures.ppu_plt[index] = (byte)palette;
-            return Textures.ppu[index];
-        }
+        //OUTDATED: when palette system was updated to be more accurate, i realized the game uses sprites for the cursors, not palette changes.
+        // which honestly are much easier to deal with.
+        //static byte SetRegistrationChrBackground(int selected_character, int palette)
+        //{
+        //    int index = 0x226 + selected_character % 11 * 2 + selected_character / 11 * 0x40;
+        //    //if (palette >= 0 && palette <= 7)
+        //        //Textures.ppu_plt[index] = (byte)palette;
+        //    return Textures.ppu[index];
+        //}
     }
 }

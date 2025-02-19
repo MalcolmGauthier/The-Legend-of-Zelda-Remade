@@ -307,6 +307,8 @@ namespace The_Legend_of_Zelda.Gameplay
             }
         }
 
+        // the kill queue keeps track of which enemies link has killed lately so that they don't spawn again.
+        // this doesn't keep track of the types, just what room they were in and how many in the room were killed.
         public void AddToKillQueue(byte room_index)
         {
             killed_enemy_queue_index++;

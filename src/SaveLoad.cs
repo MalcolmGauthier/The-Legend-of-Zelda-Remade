@@ -58,7 +58,7 @@
         {
             try
             {
-                using (Stream stream = File.OpenWrite(@"SaveData.bin"))
+                using (Stream stream = File.OpenWrite(@"Data\SaveData.bin"))
                 {
                     BinaryWriter bw = new BinaryWriter(stream);
                     bw.Seek(save_file * 0x200, SeekOrigin.Begin);
@@ -122,7 +122,7 @@
         {
             try
             {
-                using (Stream stream = File.OpenRead(@"SaveData.bin"))
+                using (Stream stream = File.OpenRead(@"Data\SaveData.bin"))
                 {
                     BinaryReader br = new BinaryReader(stream);
                     br.ReadBytes(save_file * 0x200);

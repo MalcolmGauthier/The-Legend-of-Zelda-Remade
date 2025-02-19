@@ -303,6 +303,17 @@ namespace The_Legend_of_Zelda.Sprites
         {
             return index >= MetatileType.WATER && index <= MetatileType.WATER_BL;
         }
+
+        // zoras do not get knockback and cannot be killed with a wooden sword
+        protected override void OnDamaged()
+        {
+            knockback_timer = 0;
+
+            if (!SaveLoad.white_sword && !SaveLoad.magical_sword && !Link.wand_out)
+            {
+                HP = 2;
+            }
+        }
     }
 
     internal class Leever : Enemy

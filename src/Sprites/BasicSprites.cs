@@ -170,7 +170,7 @@ namespace The_Legend_of_Zelda.Sprites
                 counterpart.palette_index = 6;
                 counterpart.xflip = false;
                 smoke_stage = false;
-                WarpCode.fire_appeared = true;
+                NPCCode.fire_appeared = true;
                 Link.can_move = true;
             }
         }
@@ -184,13 +184,13 @@ namespace The_Legend_of_Zelda.Sprites
 
         //WarpCode.NPC displayed_npc;
 
-        public CaveNPC(WarpCode.NPC displayed_npc) : base(AnimationMode.ONEFRAME_M, 0x70, 0, false, true, 0, 0, 0, true)
+        public CaveNPC(NPCCode.NPC displayed_npc) : base(AnimationMode.ONEFRAME_M, 0x70, 0, false, true, 0, 0, 0, true)
         {
             palette_index = (byte)PaletteID.SP_2;
             x = 120;
             y = 128;
             //this.displayed_npc = displayed_npc;
-            if (displayed_npc == WarpCode.NPC.NONE)
+            if (displayed_npc == NPCCode.NPC.NONE)
             {
                 shown = false;
                 counterpart.shown = false;
@@ -208,28 +208,28 @@ namespace The_Legend_of_Zelda.Sprites
 
             switch (displayed_npc)
             {
-                case WarpCode.NPC.OLD_MAN:
+                case NPCCode.NPC.OLD_MAN:
                     tile_location_1 = 0x98;
                     break;
-                case WarpCode.NPC.OLD_WOMAN:
+                case NPCCode.NPC.OLD_WOMAN:
                     tile_location_1 = 0x9a;
                     break;
-                case WarpCode.NPC.SHOPKEEPER:
+                case NPCCode.NPC.SHOPKEEPER:
                     tile_location_1 = 0x9c;
                     break;
-                case WarpCode.NPC.GOBLIN:
+                case NPCCode.NPC.GOBLIN:
                     animation_mode = AnimationMode.ONEFRAME;
                     tile_location_1 = 0xf8;
                     tile_location_2 = 0xfa;
                     break;
-                case WarpCode.NPC.GORYIA:
+                case NPCCode.NPC.GORYIA:
                     animation_mode = AnimationMode.ONEFRAME;
                     tile_location_1 = 0xb0;
                     tile_location_2 = 0xb2;
                     break;
             }
 
-            if (displayed_npc == WarpCode.NPC.SHOPKEEPER)
+            if (displayed_npc == NPCCode.NPC.SHOPKEEPER)
             {
                 palette_index = (byte)PaletteID.SP_0;
                 counterpart.palette_index = (byte)PaletteID.SP_0;
@@ -330,7 +330,7 @@ namespace The_Legend_of_Zelda.Sprites
 
             if (flash_timer == 100)
             {
-                WarpCode.npc_gone = true;
+                NPCCode.npc_gone = true;
                 Program.DC.npc_active = false;
                 Screen.sprites.Remove(counterpart);
                 Screen.sprites.Remove(this);

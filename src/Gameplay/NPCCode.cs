@@ -4,7 +4,7 @@ using static The_Legend_of_Zelda.Gameplay.Program;
 
 namespace The_Legend_of_Zelda.Gameplay
 {
-    public static class WarpCode
+    public static class NPCCode
     {
         public enum NPC
         {
@@ -50,6 +50,7 @@ namespace The_Legend_of_Zelda.Gameplay
         static int starting_byte_1 = 0;
         static int starting_byte_2 = 0;
         static int starting_byte_3 = 0;
+        static int link_walk_timer = 0;
 
         public static bool fire_appeared = false;
         public static bool npc_gone = false;
@@ -84,6 +85,14 @@ namespace The_Legend_of_Zelda.Gameplay
 
         public static void Init()
         {
+            if (gamemode == Gamemode.OVERWORLD)
+            {
+                LoadUndergroundRoom();
+            }
+
+            new UndergroundFireSprite(72, 128);
+            new UndergroundFireSprite(168, 128);
+
             // always create 3 items, because most of the cave types contain collectables
             for (int i = 0; i < items.Length; i++)
             {
@@ -93,10 +102,11 @@ namespace The_Legend_of_Zelda.Gameplay
             }
 
             // initialization
-            text_row_1 = new byte[0];
-            text_row_2 = new byte[0];
-            text_row_3 = new byte[0];
+            text_row_1 = [];
+            text_row_2 = [];
+            text_row_3 = [];
             text_counter = 0;
+            link_walk_timer = 0;
             current_npc = NPC.NONE;
             item_collected = false;
             side_rupee.unload_during_transition = true;
@@ -565,15 +575,84 @@ namespace The_Legend_of_Zelda.Gameplay
                 npc_gone = true;
         }
 
+        static void LoadUndergroundRoom()
+        {
+            OC.UnloadSpritesRoomTransition();
+            Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.OVERWORLD_CAVE);
+            Palettes.LoadPalette(PaletteID.BG_2, 1, Color._30_WHITE);
+            Palettes.LoadPalette(PaletteID.BG_2, 2, Color._0F_BLACK);
+            OC.SetWarpReturnPosition();
+            // if dungeon entrance
+            if (screen_warp_info[OC.current_screen] == 0xe)
+            {
+                Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
+                //OC.return_x = Link.x;
+                //OC.return_y = Link.y;
+                Link.SetPos(120, 223);
+            }
+            else
+            {
+                Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, 128, 0);
+                Link.SetPos(112, 223);
+            }
+            OC.return_screen = OC.current_screen;
+            OC.current_screen = 128;
+            Link.SetBGState(false);
+            OC.black_square_stairs_flag = false;
+            OC.warp_animation_timer = 0;
+            Sound.PauseMusic();
+        }
+
+        static void ExitUnderground()
+        {
+            if (NPCCode.warp_info == NPCCode.WarpType.TAKE_ANY_ROAD)
+                OC.SetWarpReturnPosition();
+            Link.SetPos(OC.return_x, OC.return_y);
+            Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.MOUNTAIN);
+            Palettes.LoadPalette(PaletteID.BG_2, 1, Color._1A_SEMI_LIGHT_GREEN);
+            Palettes.LoadPalette(PaletteID.BG_2, 2, Color._37_BEIGE);
+            Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, OC.return_screen, 0);
+            OC.current_screen = OC.return_screen; // keep this after ppu page load or else bombable/burnable tiles fuck up their display
+            Link.SetBGState(true);
+            OC.UnloadSpritesRoomTransition();
+            NPCCode.fire_appeared = false;
+            Link.can_move = false;
+            OC.warp_animation_timer = 0;
+
+            if (OC.stair_list.Contains(OC.return_screen))
+            {
+                OC.LinkWalkAnimation(false);
+                OC.stair_warp_flag = false;
+                Link.SetBGState(false);
+                Link.can_move = true;
+            }
+            else
+            {
+                OC.black_square_stairs_return_flag = true;
+            }
+        }
+
         public static void Tick()
         {
+            if (link_walk_timer < 8)
+            {
+                Link.SetPos(new_y: Link.y - 1);
+                Link.animation_timer++;
+                link_walk_timer++;
+                return;
+            }
+
             // advance text only when link can't move
             if (!Link.can_move && fire_appeared)
                 TextTick();
 
             // link can only move if the text is done scrolling and the fire has appeared
+            //TODO: dont check every frame
             if (Link.current_action is not (LinkAction.ITEM_GET or LinkAction.ITEM_HELD_UP) && !Menu.menu_open)
+            {
                 Link.can_move = text_counter >= text_row_1.Length + text_row_2.Length && fire_appeared;
+                Menu.can_open_menu = Link.can_move;
+            }
 
             // check for item collection
             LinkItemCollection();
@@ -590,6 +669,9 @@ namespace The_Legend_of_Zelda.Gameplay
             // prevent link from going in top half of room
             if (Link.y < 144 && !(npc_gone && gamemode == Gamemode.DUNGEON))
                 Link.SetPos(new_y: 144);
+
+            if (Link.y >= 224 && gamemode == Gamemode.OVERWORLD)
+                ExitUnderground();
         }
 
         // advances text forward if not finished

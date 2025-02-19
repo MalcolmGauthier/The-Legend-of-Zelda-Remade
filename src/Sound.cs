@@ -40,8 +40,8 @@ namespace The_Legend_of_Zelda
         }
 
         public static IntPtr music = IntPtr.Zero;
-        public static IntPtr[] SFX = new IntPtr[4] { IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero };
-        static byte[] sfx_order = new byte[4] { 0, 0, 0, 0 };
+        public static IntPtr[] SFX = { IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero };
+        static byte[] sfx_order = { 0, 0, 0, 0 };
         static int recorder_sfx_channel = -1;
         public static bool recorder_playing = false;
 
@@ -100,12 +100,17 @@ namespace The_Legend_of_Zelda
             else
                 loops = 1;
 
-            Mix_FreeMusic(music);
-            string? path;
-            music_list.TryGetValue(song, out path);
+            if (music is not 0)
+                Mix_FreeMusic(music);
+
+            music_list.TryGetValue(song, out string? path);
             if (path == null)
                 return;
+
             music = Mix_LoadMUS(path);
+            if (music == 0)
+                return;
+
             Mix_VolumeMusic(_volume);
             Mix_PlayMusic(music, loops);
         }

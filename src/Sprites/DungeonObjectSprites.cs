@@ -1,4 +1,5 @@
-﻿using The_Legend_of_Zelda.Gameplay;
+﻿using System.Runtime.InteropServices;
+using The_Legend_of_Zelda.Gameplay;
 using The_Legend_of_Zelda.Rendering;
 using static The_Legend_of_Zelda.Gameplay.Program;
 
@@ -200,6 +201,62 @@ namespace The_Legend_of_Zelda.Sprites
             {
                 SaveLoad.key_count++;
                 Screen.sprites.Remove(this);
+            }
+        }
+    }
+
+    internal class BoomerangItemSprite : ItemDropSprite
+    {
+        bool magical_boomerang;
+        public BoomerangItemSprite(int x, int y, bool magical) : base(x, y, false)
+        {
+            this.magical_boomerang = magical;
+            tile_index = (byte)SpriteID.BOOMERANG;
+            if (magical)
+                palette_index = (byte)PaletteID.SP_1;
+            else
+                palette_index = (byte)PaletteID.SP_0;
+        }
+
+        protected override void ItemSpecificActions()
+        {
+            if (collected)
+            {
+                if (magical_boomerang)
+                    SaveLoad.magical_boomerang = true;
+                else
+                    SaveLoad.boomerang = true;
+                Screen.sprites.Remove(this);
+            }
+        }
+    }
+
+    internal class ImportantItemSprite : ItemDropSprite
+    {
+        Action collect_item;
+        StaticSprite counterpart = new(1, 0, 0, 0);
+
+        public ImportantItemSprite(Action collect_item, SpriteID sprite, PaletteID palette, bool double_wide) : base(132, 144, false)
+        {
+            this.collect_item = collect_item;
+            tile_index = (byte)sprite;
+            palette_index = (byte)palette;
+
+            if (double_wide)
+            {
+                this.dbl_wide = true;
+                counterpart.tile_index = tile_index;
+                counterpart.palette_index = palette_index;
+                counterpart.xflip = true;
+                Screen.sprites.Add(counterpart);
+            }
+        }
+
+        protected override void ItemSpecificActions()
+        {
+            if (collected)
+            {
+                collect_item();
             }
         }
     }

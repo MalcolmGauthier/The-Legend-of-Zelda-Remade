@@ -59,7 +59,7 @@ namespace The_Legend_of_Zelda.Sprites
             if (!Link.sword_out)
                 return false;
 
-            bool second_sword_spr_col = true;
+            bool second_sword_spr_col = false;
 
             if (Link.facing_direction is (Direction.LEFT or Direction.RIGHT))
             {
@@ -103,31 +103,57 @@ namespace The_Legend_of_Zelda.Sprites
     internal class DungeonGiftSprite : Sprite
     {
         ItemDropSprite child;
-        bool child_active = false;
+        Enemy? parent = null;
+        bool child_active = true;
 
-        public DungeonGiftSprite(ItemDropSprite? child) : base(0, 0)
+        public DungeonGiftSprite(ItemDropSprite child, bool on_room_clear, bool attached_to_enemy) : base(0, 0)
         {
-            if (child is null)
-            {
-                child = new RupySprite(0, 0, true, true);
-            }
-
             shown = false;
             this.child = child;
             unload_during_transition = true;
             Screen.sprites.Add(this);
-            Screen.sprites.Remove(child);
+
+            if (on_room_clear && !attached_to_enemy)
+            {
+                Screen.sprites.Remove(child);
+                child_active = false;
+            }
+
+            if (attached_to_enemy)
+            {
+                foreach (Sprite s in Screen.sprites)
+                {
+                    if (s is not Enemy e)
+                        continue;
+
+                    parent = e;
+                    break;
+                }
+            }
         }
 
         public override void Action()
         {
             if (child_active)
+            {
+                if (child.collected)
+                {
+                    SaveLoad.SetDungeonGiftFlag(Program.DC.current_screen, true);
+                    Screen.sprites.Remove(this);
+                }
+
+                if (parent is not null)
+                {
+                    child.x = parent.x + 4;
+                    child.y = parent.y;
+                }
+
                 return;
+            }
 
             if (Program.DC.nb_enemies_alive == 0)
             {
                 Screen.sprites.Add(child);
-                Screen.sprites.Remove(this);
                 child_active = true;
             }
         }

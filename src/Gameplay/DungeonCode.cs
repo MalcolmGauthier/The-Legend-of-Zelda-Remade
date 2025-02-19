@@ -451,7 +451,7 @@ namespace The_Legend_of_Zelda.Gameplay
             if (dark_room_animation_timer == 0 && link_walk_animation_timer == 0)
             {
                 if (npc_active)
-                    WarpCode.Tick();
+                    NPCCode.Tick();
                 Scroll(false);
             }
             else
@@ -752,9 +752,9 @@ namespace The_Legend_of_Zelda.Gameplay
                             break;
                         case DungeonEnemies.NPC:
                             npc_active = true;
-                            WarpCode.Init();
-                            new UndergroundFireSprite(72, 128);
-                            new UndergroundFireSprite(168, 128);
+                            NPCCode.Init();
+                            //new UndergroundFireSprite(72, 128);
+                            //new UndergroundFireSprite(168, 128);
                             nb_enemies_alive--;
                             break;
                         case DungeonEnemies.BLADE_TRAP:
@@ -846,22 +846,33 @@ namespace The_Legend_of_Zelda.Gameplay
 
         void SpawnItems()
         {
+            ///position:
+            /// 0 - center, slightly right
+            /// 1 - top right
+            /// 2 - top left
+            /// 3 - bottom right
+            /// 4 - bottom left
+            /// 5 - 1 above pos 0
+            /// 6 - 2 above pos 0
+            /// 7 - 1 right of pos 0
+            /// 8 - 4 right of pos 0
+            /// 9 - 1 below pos 0
+            /// a - bottom middle, 2 tiles right
+            /// b - attached to enemy (type ignored, always 0)
+            /// c-e - invalid id
+            /// f - sidescroll room (next 4 bits are all item id, pos is 0):
             (byte x, byte y)[] gift_positions = {
                 (132, 144),
-                (132, 144),//
-                (132, 144),//
-                (132, 144),//
-                (132, 144),//
+                (212, 96),
+                (36, 96),
+                (212, 192),
+                (36, 192),
                 (132, 128),
                 (132, 112),
                 (148, 144),
                 (196, 144),
                 (132, 160),
-
-                (132, 144),
-                (132, 144),
-                (132, 144),
-                (132, 144),
+                (164, 192)
             };
 
             if (room_list[current_screen] == 11 && ScrollingDone() && !SaveLoad.GetTriforceFlag(current_dungeon))
@@ -880,13 +891,16 @@ namespace The_Legend_of_Zelda.Gameplay
                 return;
             }
 
+            if (SaveLoad.GetDungeonGiftFlag(current_screen))
+                return;
+
             byte item_info = gift_data[current_screen];
 
             if (item_info == 0xFF)
                 return;
 
             int index = item_info >> 4;
-            (byte x, byte y) position = index < gift_positions.Length ? gift_positions[index] : ((byte)0, (byte)0);
+            (byte x, byte y) position = index < gift_positions.Length ? gift_positions[index] : gift_positions[0];
             bool spawns_on_room_clear = Convert.ToBoolean((item_info >> 3) & 1);
             int item_type = item_info & 0b111;
             ItemDropSprite? item = null;
@@ -896,10 +910,54 @@ namespace The_Legend_of_Zelda.Gameplay
                 item_type = item_info & 0b1111;
                 spawns_on_room_clear = false;
 
-                return;
+                /// f - sidescroll room (next 4 bits are all item id, pos is 0):
+                ///    0 - bow
+                ///    1 - raft
+                ///    2 - ladder
+                ///    3 - recorder
+                ///    4 - rod
+                ///    5 - red candle
+                ///    6 - magic book
+                ///    7 - magic key
+                ///    8 - red ring
+                ///    9 - silver arrow
+                ///    a-e - invalid id
+                ///   f - nothing
+                switch (item_type)
+                {
+                    case 0:
+                        item = new ImportantItemSprite(() => SaveLoad.bow = true, SpriteID.BOW, PaletteID.SP_0, false);
+                        break;
+                    case 1:
+                        item = new ImportantItemSprite(() => SaveLoad.raft = true, SpriteID.RAFT, PaletteID.SP_0, true);
+                        break;
+                    case 2:
+                        item = new ImportantItemSprite(() => SaveLoad.ladder = true, SpriteID.LADDER, PaletteID.SP_0, true);
+                        break;
+                    case 3:
+                        item = new ImportantItemSprite(() => SaveLoad.recorder = true, SpriteID.RECORDER, PaletteID.SP_2, false);
+                        break;
+                    case 4:
+                        item = new ImportantItemSprite(() => SaveLoad.magical_rod = true, SpriteID.ROD, PaletteID.SP_1, false);
+                        break;
+                    case 5:
+                        item = new ImportantItemSprite(() => SaveLoad.red_candle = true, SpriteID.CANDLE, PaletteID.SP_2, false);
+                        break;
+                    case 6:
+                        item = new ImportantItemSprite(() => SaveLoad.book_of_magic = true, SpriteID.BOOK_OF_MAGIC, PaletteID.SP_2, false);
+                        break;
+                    case 7:
+                        item = new ImportantItemSprite(() => SaveLoad.magical_key = true, SpriteID.MAGICAL_KEY, PaletteID.SP_2, false);
+                        break;
+                    case 8:
+                        item = new ImportantItemSprite(() => SaveLoad.red_ring = true, SpriteID.RING, PaletteID.SP_2, false);
+                        break;
+                    case 9:
+                        item = new ImportantItemSprite(() => SaveLoad.silver_arrow = true, SpriteID.ARROW, PaletteID.SP_1, false);
+                        break;
+                }
             }
-
-            switch (item_type)
+            else switch (item_type)
             {
                 case 0:
                     item = new RupySprite(position.x, position.y, true, false);
@@ -920,17 +978,14 @@ namespace The_Legend_of_Zelda.Gameplay
                     item = new KeySprite(position.x, position.y);
                     break;
                 case 6:
-                    //item = new BoomerangItemSprite(position.x, position.y);
+                    item = new BoomerangItemSprite(position.x, position.y, false);
                     break;
                 case 7:
-                    //item = new MagicalBoomerangItemSprite(position.x, position.y);
+                    item = new BoomerangItemSprite(position.x, position.y, true);
                     break;
             }
 
-            if (spawns_on_room_clear)
-            {
-                new DungeonGiftSprite(item);
-            }
+            new DungeonGiftSprite(item ?? new RupySprite(0, 0, true, true), spawns_on_room_clear, index == 0xb);
         }
 
         // animation of link walking on his own when entering or exiting a room
@@ -966,8 +1021,11 @@ namespace The_Legend_of_Zelda.Gameplay
             {
                 Link.can_move = ScrollingDone();
                 Menu.can_open_menu = ScrollingDone();
-                SpawnEnemies();
-                SpawnItems();
+                if (ScrollingDone())
+                {
+                    SpawnEnemies();
+                    SpawnItems();
+                }
                 link_walk_animation_timer = 0;
                 frames_since_link_can_walk = 0;
                 // when link exits through a closed door type, it initializes as open, but then closes the moment link can move.

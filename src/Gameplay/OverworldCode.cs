@@ -29,7 +29,7 @@ namespace The_Legend_of_Zelda.Gameplay
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 69;
+        public const byte DEFAULT_SPAWN_ROOM = 102;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;
@@ -49,7 +49,7 @@ namespace The_Legend_of_Zelda.Gameplay
         public int recorder_destination = 0;
 
         // list of rooms with stairs in them
-        readonly byte[] stair_list = {
+        public readonly byte[] stair_list = {
             11, 34, 26, 98, 28, 73, 29, 33, 35, 40, 52, 61, 66, 109, 70, 71, 72, 75, 77, 78, 81, 86, 91, 99, 104, 106, 107, 120, 121
         };
         // list of rooms with black squares in them
@@ -138,7 +138,8 @@ namespace The_Legend_of_Zelda.Gameplay
             {
                 if (current_screen == 128)
                 {
-                    Room128Code();
+                    // code that executes when link is in an underground room (room 128)
+                    NPCCode.Tick();
                 }
                 else
                 {
@@ -335,106 +336,75 @@ namespace The_Legend_of_Zelda.Gameplay
         {
             if (black_square_stairs_return_flag)
             {
-                BlackSquareLinkAnimation(false);
+                LinkWalkAnimation(false);
                 return;
             }
 
             if (black_square_stairs_flag)
             {
-                BlackSquareLinkAnimation(true);
+                LinkWalkAnimation(true);
                 return;
             }
 
-            if (!stair_warp_flag)
-                return;
-
-            if (current_screen != 128)
+            if (stair_warp_flag)
             {
-                warp_animation_timer = 65;
-                BlackSquareLinkAnimation(true);
-                Link.current_action = LinkAction.WALKING_UP;
-                Sound.PauseMusic();
-            }
-
-            if (Link.y < 200)
-            {
-                switch (return_screen)
+                if (current_screen != 128)
                 {
-                    case 29:
-                        if (Link.x < 100)
-                            return_screen = 35;
-                        else if (Link.x > 150)
-                            return_screen = 121;
-                        else
-                            return_screen = 73;
-                        break;
-                    case 35:
-                        if (Link.x < 100)
-                            return_screen = 73;
-                        else if (Link.x > 150)
-                            return_screen = 29;
-                        else
-                            return_screen = 121;
-                        break;
-                    case 73:
-                        if (Link.x < 100)
-                            return_screen = 121;
-                        else if (Link.x > 150)
-                            return_screen = 35;
-                        else
-                            return_screen = 29;
-                        break;
-                    case 121:
-                        if (Link.x < 100)
-                            return_screen = 29;
-                        else if (Link.x > 150)
-                            return_screen = 73;
-                        else
-                            return_screen = 35;
-                        break;
+                    warp_animation_timer = 65;
+                    LinkWalkAnimation(true);
+                    Link.current_action = LinkAction.WALKING_UP;
+                    Sound.PauseMusic();
+                    return;
                 }
-            }
-            BlackSquareLinkAnimation(false, true);
-            warp_animation_timer = 0;
-            stair_warp_flag = false;
-            Link.SetBGState(false);
-            Link.can_move = true;
-        }
 
-        // code that executes when link is in an underground room (room 128)
-        void Room128Code()
-        {
-            //TODO: make this only happen once on load
-            if (Sound.IsMusicPlaying())
-                Sound.PauseMusic();
-
-            // most logic for this room is found in seperate class, because there's alot
-            WarpCode.Tick();
-
-            // check if link is leaving
-            if (Link.y >= 224)
-            {
-                if (stair_list.Contains(return_screen))
+                if (Link.y < 200)
                 {
-                    BlackSquareLinkAnimation(false, true);
-                    warp_animation_timer = 0;
-                    stair_warp_flag = false;
-                    Link.SetBGState(false);
-                    Link.can_move = true;
+                    switch (return_screen)
+                    {
+                        case 29:
+                            if (Link.x < 100)
+                                return_screen = 35;
+                            else if (Link.x > 150)
+                                return_screen = 121;
+                            else
+                                return_screen = 73;
+                            break;
+                        case 35:
+                            if (Link.x < 100)
+                                return_screen = 73;
+                            else if (Link.x > 150)
+                                return_screen = 29;
+                            else
+                                return_screen = 121;
+                            break;
+                        case 73:
+                            if (Link.x < 100)
+                                return_screen = 121;
+                            else if (Link.x > 150)
+                                return_screen = 35;
+                            else
+                                return_screen = 29;
+                            break;
+                        case 121:
+                            if (Link.x < 100)
+                                return_screen = 29;
+                            else if (Link.x > 150)
+                                return_screen = 73;
+                            else
+                                return_screen = 35;
+                            break;
+                    }
                 }
-                else
-                {
-                    black_square_stairs_return_flag = true;
-                }
+                LinkWalkAnimation(false);
+                warp_animation_timer = 0;
+                stair_warp_flag = false;
+                Link.SetBGState(false);
+                Link.can_move = true;
             }
-
-            if (!Menu.menu_open)
-                Menu.can_open_menu = Link.can_move;
         }
 
         // code for animation that plays with warps on overworld
-        // THIS IS THE WORST CODE IN THE ENTIRE CODEBASE. YOU HAVE BEEN WARNED.
-        void BlackSquareLinkAnimation(bool entering, bool immediate_exit = false)
+        public void LinkWalkAnimation(bool entering)
         {
             if (warp_animation_timer == 0)
             {
@@ -443,69 +413,37 @@ namespace The_Legend_of_Zelda.Gameplay
                 Link.can_move = false;
                 Program.can_pause = false;
                 Link.SetBGState(true);
-                if (entering)
+                Link.current_action = entering ? LinkAction.WALKING_UP : LinkAction.WALKING_DOWN;
+                UnloadSpritesRoomTransition();
+                Sound.PauseMusic();
+                //Sound.EndAllSFX();
+                if (!entering && stair_list.Contains(return_screen))
                 {
-                    Link.current_action = LinkAction.WALKING_UP;
-                    UnloadSpritesRoomTransition();
-                    Sound.PauseMusic();
-                    Sound.PlaySFX(Sound.SoundEffects.STAIRS, true);
+                    warp_animation_timer = 64;
+                    SpawnEnemies();
+                    Program.can_pause = true;
+                    Sound.PlaySong(Sound.Songs.OVERWORLD, false);
                 }
                 else
                 {
-                    Link.current_action = LinkAction.WALKING_DOWN;
-                    if (WarpCode.warp_info == WarpCode.WarpType.TAKE_ANY_ROAD)
-                        SetWarpReturnPosition();
-                    Link.SetPos(return_x, return_y);
-                    Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.MOUNTAIN);
-                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._1A_SEMI_LIGHT_GREEN);
-                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._37_BEIGE);
-                    Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, return_screen, 0);
-                    current_screen = return_screen; // keep this after ppu page load or else bombable/burnable tiles fuck up their display
-                    Link.SetBGState(true);
-                    UnloadSpritesRoomTransition();
-                    WarpCode.fire_appeared = false;
-
-                    // if link exits the underground immediately, skip leaving animation, go directly to anim_timer = 72 next frame
-                    if (immediate_exit)
-                    {
-                        warp_animation_timer = 71;
-                        SpawnEnemies();
-                        Program.can_pause = true;
-                        Sound.PlaySong(Sound.Songs.OVERWORLD, false);
-                    }
-                    else
-                    {
-                        Sound.PlaySFX(Sound.SoundEffects.STAIRS, true);
-                    }
+                    Sound.PlaySFX(Sound.SoundEffects.STAIRS, true);
                 }
+            }
+            else if (warp_animation_timer <= 64)
+            {
+                if (Program.gTimer % 4 == 0)
+                {
+                    Link.SetPos(new_y: Link.y + (entering ? 1 : -1));
+                }
+                Link.animation_timer++;
             }
             else if (warp_animation_timer == 65)
             {
+                //Link.SetPos(new_y: Link.y - 1 - Program.gTimer % 2);
+
                 if (entering)
                 {
-                    UnloadSpritesRoomTransition();
-                    Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.OVERWORLD_CAVE);
-                    Palettes.LoadPalette(PaletteID.BG_2, 1, Color._30_WHITE);
-                    Palettes.LoadPalette(PaletteID.BG_2, 2, Color._0F_BLACK);
-                    SetWarpReturnPosition();
-                    if (WarpCode.screen_warp_info[current_screen] != 0xe)
-                    {
-                        Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, 128, 0);
-                        new UndergroundFireSprite(72, 128);
-                        new UndergroundFireSprite(168, 128);
-                        Link.SetPos(112, 223);
-                    }
-                    else
-                    {
-                        Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
-                        return_x = Link.x;
-                        return_y = Link.y;
-                        Link.SetPos(120, 223);
-                    }
-                    return_screen = current_screen;
-                    current_screen = 128;
-                    Link.SetBGState(false);
-                    WarpCode.Init();
+                    NPCCode.Init();
                 }
                 else
                 {
@@ -526,22 +464,7 @@ namespace The_Legend_of_Zelda.Gameplay
                     return;
                 }
             }
-            else if (warp_animation_timer == 72)
-            {
-                black_square_stairs_flag = false;
-                warp_animation_timer = 0;
-                Link.can_move = false;
-                Program.can_pause = true;
-                return;
-            }
 
-            if (Program.gTimer % 4 == 0 && warp_animation_timer <= 64)
-                Link.SetPos(new_y: Link.y + (entering ? 1 : -1));
-
-            if (warp_animation_timer > 64)
-                Link.SetPos(new_y: Link.y - 1 - Program.gTimer % 2);
-
-            Link.animation_timer++;
             warp_animation_timer++;
         }
 
