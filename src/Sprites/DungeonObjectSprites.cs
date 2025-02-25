@@ -260,4 +260,35 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
     }
+
+    internal class DamageableFireSprite : Enemy
+    {
+        public DamageableFireSprite() : base(AnimationMode.TWOFRAMES, (byte)SpriteID.FIRE_L, (byte)SpriteID.FIRE_L, false, false, 6, 0, 0, true)
+        {
+            HP = 1;
+        }
+
+        protected override void EnemySpecificActions()
+        {
+            return;
+        }
+
+        protected override void Animation()
+        {
+            if (Program.gTimer % 12 == 0)
+            {
+                tile_index = (byte)SpriteID.FIRE_R;
+                xflip = true;
+                counterpart.tile_index = (byte)SpriteID.FIRE_L;
+                counterpart.xflip = true;
+            }
+            else if (Program.gTimer % 12 == 6)
+            {
+                tile_index = (byte)SpriteID.FIRE_L;
+                xflip = false;
+                counterpart.tile_index = (byte)SpriteID.FIRE_R;
+                counterpart.xflip = false;
+            }
+        }
+    }
 }

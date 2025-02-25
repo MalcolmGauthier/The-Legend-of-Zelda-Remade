@@ -151,10 +151,7 @@ namespace The_Legend_of_Zelda.Sprites
             }
             else
             {
-                if (animation_mode is not (AnimationMode.ONEFRAME or AnimationMode.ONEFRAME_M))
-                {
-                    Animation();
-                }
+                Animation();
 
                 if (IsWithinLink() && !Link.clock_flash && can_damage_link)
                 {
@@ -237,7 +234,9 @@ namespace The_Legend_of_Zelda.Sprites
                     counterpart.shown = false;
                 }
                 if (smoke_random_appearance == 0)
+                {
                     smoke_random_appearance = (byte)RNG.Next(10, 90);
+                }
                 palette_index = 5;
                 counterpart.palette_index = 5;
                 tile_index = 0x70;

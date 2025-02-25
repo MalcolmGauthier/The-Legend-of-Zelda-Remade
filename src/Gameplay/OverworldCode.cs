@@ -29,7 +29,7 @@ namespace The_Legend_of_Zelda.Gameplay
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 102;
+        public const byte DEFAULT_SPAWN_ROOM = 100;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;
@@ -57,7 +57,7 @@ namespace The_Legend_of_Zelda.Gameplay
             1, 3, 5, 7, 13, 16, 18, 19, 20, 22, 29, 30, 35, 39, 40, 44, 45, 51, 70, 71, 72, 73, 75, 77, 81, 86, 91, 98, 99, 103, 104,
             106, 107, 109, 113, 118, 120, 121, 123, 124, 125
         };
-        // (room, y); x is always 128
+        // (room, y); x is always 128. this is for recorder
         public readonly byte[] dungeon_location_list = {
             55, 144, //1
             60, 176, //2
@@ -84,13 +84,17 @@ namespace The_Legend_of_Zelda.Gameplay
         public readonly byte[] overworld_screens_side_entrance = {
             75, 77, 78, 82, 87, 88, 91, 92, 93, 97, 98, 104, 107, 108, 109, 110, 113, 114, 115, 120
         };
-        // screens with water
+        // screens with zora (not all with water)
         readonly byte[] screens_with_zora =
         {
             10, 23, 24, 25, 26, 30, 38, 39, 40, 45, 46, 53, 54, 56, 62, 63, 68, 70, 71, 72, 79,
             84, 85, 86, 89, 90, 95, 101, 105, 106, 111, 117, 123, 124, 125, 126, 127
         };
+        // screens with sea noise (not all with water)
         readonly byte[] screens_with_sea = { };
+        // screens with ladder perms (not all with water)
+        public readonly byte[] screens_with_ladder_permissions = {
+            23, 24, 25, 39, 79, 95};
 
         public void Init()
         {
@@ -439,8 +443,6 @@ namespace The_Legend_of_Zelda.Gameplay
             }
             else if (warp_animation_timer == 65)
             {
-                //Link.SetPos(new_y: Link.y - 1 - Program.gTimer % 2);
-
                 if (entering)
                 {
                     NPCCode.Init();

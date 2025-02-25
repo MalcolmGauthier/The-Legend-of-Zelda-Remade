@@ -529,15 +529,16 @@ namespace The_Legend_of_Zelda.Gameplay
             }
 
             // check if dungeon entrance. load overworld and return if going down
-            if (room_list[current_screen] == 1 && scroll_direction == Direction.DOWN)
+            if ((RoomType)room_list[current_screen] == RoomType.ENTRANCE && scroll_direction == Direction.DOWN)
             {
                 Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
                 gamemode = Gamemode.OVERWORLD;
-                Link.Show(false);
-                Link.SetPos(-16, -16);
+                Link.SetBGState(true);
+                Link.SetPos(OC.return_x, OC.return_y);
                 sprites.Remove(compass_dot);
                 OC.Init();
                 OC.black_square_stairs_return_flag = true;
+                OC.warp_animation_timer = 0;
                 OC.current_screen = OC.return_screen;
                 OC.EmptyEnemyKillQueue();
                 return false;

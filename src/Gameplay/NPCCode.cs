@@ -52,12 +52,14 @@ namespace The_Legend_of_Zelda.Gameplay
         static int starting_byte_3 = 0;
         static int link_walk_timer = 0;
 
-        public static bool fire_appeared = false;
+        public static bool link_can_move = false;
         public static bool npc_gone = false;
+        public static bool npc_appeared = false;
         static bool item_collected = false;
+        static bool text_at_end = false;
 
         public static Sprite[] items = new Sprite[3];
-        static CaveNPC cave_npc = new CaveNPC(NPC.NONE);
+        static CaveNPC cave_npc = new(0);
         static FlickeringSprite side_rupee = new FlickeringSprite(0x32, 5, 52, 172, 8, 0x32, second_palette_index: 6);
 
         static NPC current_npc;
@@ -83,15 +85,18 @@ namespace The_Legend_of_Zelda.Gameplay
             55, 60, 116, 69, 11, 34, 66, 109, 5
         };
 
-        public static void Init()
+        public static void Init(bool refresh = false)
         {
-            if (gamemode == Gamemode.OVERWORLD)
+            if (gamemode == Gamemode.OVERWORLD && OC.current_screen != 128)
             {
                 LoadUndergroundRoom();
             }
 
-            new UndergroundFireSprite(72, 128);
-            new UndergroundFireSprite(168, 128);
+            if (!refresh)
+            {
+                new UndergroundFireSprite(72, 128);
+                new UndergroundFireSprite(168, 128);
+            }
 
             // always create 3 items, because most of the cave types contain collectables
             for (int i = 0; i < items.Length; i++)
@@ -106,12 +111,16 @@ namespace The_Legend_of_Zelda.Gameplay
             text_row_2 = [];
             text_row_3 = [];
             text_counter = 0;
-            link_walk_timer = 0;
             current_npc = NPC.NONE;
             item_collected = false;
             side_rupee.unload_during_transition = true;
             side_rupee.shown = true;
-            fire_appeared = false;
+            link_can_move = false;
+            text_at_end = false;
+            if (!refresh)
+            {
+                npc_appeared = false;
+            }
 
             if (gamemode == Gamemode.OVERWORLD)
             {
@@ -122,6 +131,10 @@ namespace The_Legend_of_Zelda.Gameplay
                 if (DC.current_screen == 160)
                 {
                     warp_info = WarpType.GRUMBLE_GRUMBLE;
+                }
+                else if (DC.current_screen == 238)
+                {
+                    warp_info = WarpType.TRIFORCE_CHECK;
                 }
                 else if (DC.current_screen is (192 or 31))
                 {
@@ -391,6 +404,7 @@ namespace The_Legend_of_Zelda.Gameplay
                     for (int i = 0; i < items.Length; i++)
                     {
                         items[i] = new FlickeringSprite(0x32, 6, 92 + i * 32, 152, 8, 0x32, second_palette_index: 5);
+                        items[i].unload_during_transition = true;
                         Screen.sprites.Add(items[i]);
                     }
 
@@ -480,7 +494,7 @@ namespace The_Legend_of_Zelda.Gameplay
 
                     if (gamemode == Gamemode.OVERWORLD)
                     {
-                        if (!overworld_advice.TryGetValue(OC.current_screen, out data))
+                        if (!overworld_advice.TryGetValue(OC.return_screen, out data))
                             break;
                     }
                     else
@@ -567,12 +581,17 @@ namespace The_Legend_of_Zelda.Gameplay
             starting_byte_3 = 0x1f0 - text_row_3.Length / 2;
 
             // removal needed for when re-initializating cave after activating potion shop (and also reality check)
-            Screen.sprites.Remove(cave_npc);
-            cave_npc = new CaveNPC(current_npc);
-            Screen.sprites.Add(cave_npc);
+            if (!refresh)
+            {
+                Screen.sprites.Remove(cave_npc);
+                cave_npc = new CaveNPC(current_npc);
+            }
 
             if (current_npc == NPC.NONE)
+            {
                 npc_gone = true;
+                npc_appeared = true;
+            }
         }
 
         static void LoadUndergroundRoom()
@@ -600,12 +619,13 @@ namespace The_Legend_of_Zelda.Gameplay
             Link.SetBGState(false);
             OC.black_square_stairs_flag = false;
             OC.warp_animation_timer = 0;
+            link_walk_timer = 0;
             Sound.PauseMusic();
         }
 
         static void ExitUnderground()
         {
-            if (NPCCode.warp_info == NPCCode.WarpType.TAKE_ANY_ROAD)
+            if (warp_info == WarpType.TAKE_ANY_ROAD)
                 OC.SetWarpReturnPosition();
             Link.SetPos(OC.return_x, OC.return_y);
             Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.MOUNTAIN);
@@ -615,7 +635,8 @@ namespace The_Legend_of_Zelda.Gameplay
             OC.current_screen = OC.return_screen; // keep this after ppu page load or else bombable/burnable tiles fuck up their display
             Link.SetBGState(true);
             OC.UnloadSpritesRoomTransition();
-            NPCCode.fire_appeared = false;
+            link_can_move = false;
+            npc_appeared = false;
             Link.can_move = false;
             OC.warp_animation_timer = 0;
 
@@ -634,6 +655,7 @@ namespace The_Legend_of_Zelda.Gameplay
 
         public static void Tick()
         {
+            // before anything, link walks forward a bit
             if (link_walk_timer < 8)
             {
                 Link.SetPos(new_y: Link.y - 1);
@@ -642,17 +664,19 @@ namespace The_Legend_of_Zelda.Gameplay
                 return;
             }
 
-            // advance text only when link can't move
-            if (!Link.can_move && fire_appeared)
+            // advance text
+            if (npc_appeared)
+            {
                 TextTick();
+            }
 
             // link can only move if the text is done scrolling and the fire has appeared
             //TODO: dont check every frame
-            if (Link.current_action is not (LinkAction.ITEM_GET or LinkAction.ITEM_HELD_UP) && !Menu.menu_open)
-            {
-                Link.can_move = text_counter >= text_row_1.Length + text_row_2.Length && fire_appeared;
-                Menu.can_open_menu = Link.can_move;
-            }
+            //if (Link.current_action is not (LinkAction.ITEM_GET or LinkAction.ITEM_HELD_UP) && !Menu.menu_open)
+            //{
+            //    Link.can_move = text_counter >= text_row_1.Length + text_row_2.Length && fire_appeared;
+            //    Menu.can_open_menu = Link.can_move;
+            //}
 
             // check for item collection
             LinkItemCollection();
@@ -661,9 +685,10 @@ namespace The_Legend_of_Zelda.Gameplay
             if (warp_info == WarpType.MEDICINE && !SaveLoad.potion_shop_activated && Control.IsPressed(Buttons.B) && Menu.current_B_item == SpriteID.MAP)
             {
                 SaveLoad.potion_shop_activated = true;
-                Link.can_move = false;
+                //OC.UnloadSpritesRoomTransition();
+                Link.using_item = false;
                 // re-initialize the cave, but now with the potion shop activated
-                Init();
+                Init(true);
             }
 
             // prevent link from going in top half of room
@@ -677,8 +702,30 @@ namespace The_Legend_of_Zelda.Gameplay
         // advances text forward if not finished
         static void TextTick()
         {
+            if (text_at_end)
+                return;
+
             if (gTimer % 6 != 0)
                 return;
+
+            // if text at end and not flag set that indicates this
+            if (text_counter >= text_row_1.Length + text_row_2.Length + text_row_3.Length)
+            {
+                // make sure that link can't escape the fine
+                if (warp_info == WarpType.DOOR_REPAIR_CHARGE)
+                {
+                    Link.AddRupees(-20);
+                }
+
+                // don't let link move until npc appears.
+                if (npc_appeared)
+                {
+                    text_at_end = true;
+                    Link.can_move = true;
+                    Menu.can_open_menu = true;
+                }
+                return;
+            }
 
             Sound.PlaySFX(Sound.SoundEffects.TEXT, true);
             if (text_counter < text_row_1.Length)
@@ -693,11 +740,8 @@ namespace The_Legend_of_Zelda.Gameplay
             {
                 Textures.ppu[starting_byte_3 + text_counter - text_row_1.Length - text_row_2.Length] = text_row_2[text_counter - text_row_1.Length - text_row_2.Length];
             }
-            text_counter++;
 
-            // make sure that link can't escape the fine
-            if (text_counter == text_row_1.Length + text_row_2.Length + text_row_3.Length && warp_info == WarpType.DOOR_REPAIR_CHARGE)
-                Link.AddRupees(-20);
+            text_counter++;
         }
 
         // checks if link is touching an item, then runs logic for item collection (which is also found in GiveItem)
@@ -937,6 +981,7 @@ namespace The_Legend_of_Zelda.Gameplay
                     {
                         Link.AddRupees(-data.cost);
                         text_counter = 0;
+                        text_at_end = false;
                         EraseText();
                         text_row_1 = data.row1;
                         text_row_2 = data.row2;

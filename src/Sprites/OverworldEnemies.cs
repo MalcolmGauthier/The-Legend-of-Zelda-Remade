@@ -363,7 +363,9 @@ namespace The_Legend_of_Zelda.Sprites
                             current_action = ActionState.BURROWING;
                         }
                         else
+                        {
                             Walk();
+                        }
                     }
                     break;
                 case ActionState.BURROWING:
@@ -430,80 +432,77 @@ namespace The_Legend_of_Zelda.Sprites
             int new_x, new_y;
             if (stronger)
             {
+                int inf_loop_failsafe = 0;
                 while (true)
                 {
                     new_x = RNG.Next(1, 15) * 16;
                     new_y = RNG.Next(5, 14) * 16;
                     if (IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(new_x, new_y)))
                         break;
-                }
-                CheckIfTurn();
-            }
-            else
-            {
-                new_x = 0;
-                new_y = 0;
-
-                if (Link.facing_direction == Direction.UP)
-                    new_y = 48;
-                else if (Link.facing_direction == Direction.DOWN)
-                    new_y = -48;
-                else if (Link.facing_direction == Direction.LEFT)
-                    new_x = 48;
-                else if (Link.facing_direction == Direction.RIGHT)
-                    new_x = -48;
-
-                if (!(Control.IsHeld(Buttons.UP) || Control.IsHeld(Buttons.DOWN) ||
-                    Control.IsHeld(Buttons.LEFT) || Control.IsHeld(Buttons.RIGHT)))
-                {
-                    new_x = -new_x;
-                    new_y = -new_y;
-                }
-
-                if (!IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
-                {
-                    new_x = -new_x;
-                    new_y = -new_y;
-                    if (!IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
+                    if (inf_loop_failsafe++ >= 500)
                     {
-                        if (new_x == 0)
-                        {
-                            new_x = 48;
-                            new_y = 0;
-                        }
-                        else
-                        {
-                            new_x = 0;
-                            new_y = 48;
-                        }
-                        if (!IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(new_x + Link.x, new_y + Link.y)) || IsOOB(new_x + Link.x, new_y + Link.y))
-                        {
-                            new_x = -new_x;
-                            new_y = -new_y;
-                        }
+                        HP = 0;
+                        appeared = false;
+                        return;
                     }
                 }
-
-                if (MathF.Abs(new_x) > MathF.Abs(new_y))
-                {
-                    if (new_x < 0)
-                        facing_direction = Direction.RIGHT;
-                    else
-                        facing_direction = Direction.LEFT;
-                }
-                else
-                {
-                    if (new_y < 0)
-                        facing_direction = Direction.DOWN;
-                    else
-                        facing_direction = Direction.UP;
-                }
-                walking_dir = facing_direction;
-                new_x += Link.x;
-                new_y += Link.y;
+                CheckIfTurn();
+                return;
             }
-            x = new_x & 0xFFF0;
-            y = new_y & 0xFFF0;
+
+            int link_x_rounded = Link.x & (~0xF);
+            int link_y_rounded = Link.y & (~0xF);
+            (int x, int y)[] possible_pos =
+            {
+                (link_x_rounded, link_y_rounded - 48),
+                (link_x_rounded, link_y_rounded + 48),
+                (link_x_rounded - 48, link_y_rounded),
+                (link_x_rounded + 48, link_y_rounded)
+            };
+            // check forwards, backwards, sideways, the other sideways in that order.
+            int[] xor_values = { 1, 2, 1, 0 };
+
+            int possible_pos_i = (int)Link.facing_direction;
+
+            // if not holding any direction, leever attack from behind instead of from forwards
+            if (!(Control.IsHeld(Buttons.UP) || Control.IsHeld(Buttons.DOWN) ||
+                Control.IsHeld(Buttons.LEFT) || Control.IsHeld(Buttons.RIGHT)))
+            {
+                possible_pos_i ^= 1;
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(possible_pos[possible_pos_i].x, possible_pos[possible_pos_i].y))
+                    && !IsOOB(possible_pos[possible_pos_i].x, possible_pos[possible_pos_i].y))
+                {
+                    x = possible_pos[possible_pos_i].x;
+                    y = possible_pos[possible_pos_i].y;
+                    walking_dir = ((Direction)possible_pos_i).Opposite();
+                    facing_direction = walking_dir;
+                    return;
+                }
+
+                possible_pos_i ^= xor_values[i];
+            }
+
+            // backup if above algorithm fails to find suitable location around link
+            int loop_failsafe = 0;
+            while (true)
+            {
+                new_x = RNG.Next(1, 15) * 16;
+                new_y = RNG.Next(5, 14) * 16;
+                if (IsValidTileLeever(Screen.GetMetaTileTypeAtLocation(new_x, new_y)))
+                    break;
+                if (loop_failsafe++ >= 500)
+                {
+                    HP = 0;
+                    appeared = false;
+                    return;
+                }
+            }
+
+            CheckIfTurn();
         }
     }
 

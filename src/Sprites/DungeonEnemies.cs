@@ -804,9 +804,8 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Statues : Sprite
     {
-        readonly (byte x, byte y)[] orb_starting_positions;
-
-        int[] fireball_timers;
+        readonly (byte x, byte y)[] orb_starting_positions = [];
+        int[] fireball_timers = [];
 
         public Statues() : base(0x1c, 0)
         {
@@ -816,12 +815,18 @@ namespace The_Legend_of_Zelda.Sprites
             if (Program.DC.room_list[Program.DC.current_screen] == (byte)DungeonCode.RoomType.STATUE_DUO)
             {
                 fireball_timers = new int[2];
-                orb_starting_positions = new (byte x, byte y)[2] { (104, 148), (140, 140) };
+                orb_starting_positions = [(104, 148), (140, 140)];
+            }
+            // fireballs that spawn when attacking npc
+            else if (Program.DC.room_list[Program.DC.current_screen] == (byte)DungeonCode.RoomType.VOID)
+            {
+                fireball_timers = new int[2];
+                orb_starting_positions = [(76, 130), (172, 130)];
             }
             else
             {
                 fireball_timers = new int[4];
-                orb_starting_positions = new (byte x, byte y)[4] { (204, 92), (40, 100), (40, 192), (204, 188) };
+                orb_starting_positions = [(204, 92), (40, 100), (40, 192), (204, 188)];
             }
 
             Screen.sprites.Add(this);

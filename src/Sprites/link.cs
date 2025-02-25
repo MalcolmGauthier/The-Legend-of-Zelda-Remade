@@ -156,8 +156,8 @@ namespace The_Legend_of_Zelda.Sprites
             rupy_count = 255;
             // c# doesn't have c++'s friend keyword, so fuck you c#, et reflection and die :)
             // (this is only used for testing ofc)
-            //FieldInfo? lol = typeof(SaveLoad).GetField("map_flags", BindingFlags.NonPublic | BindingFlags.Static);
-            //lol?.SetValue(null, new ushort[] { 0xffff, 0, 0 });
+            FieldInfo? lol = typeof(SaveLoad).GetField("triforce_pieces", BindingFlags.NonPublic | BindingFlags.Static);
+            lol?.SetValue(null, new byte[] { 0xff, 0, 0 });
             //lol = typeof(SaveLoad).GetField("compass_flags", BindingFlags.NonPublic | BindingFlags.Static);
             //lol?.SetValue(null, new ushort[] { 0xffff, 0, 0 });
             bomb_count = 8;
@@ -166,6 +166,7 @@ namespace The_Legend_of_Zelda.Sprites
             boomerang = true;
             power_bracelet = true;
             wooden_sword = true;
+            letter = true;
         }
 
         void CheckIfRecorderPlaying()
@@ -684,10 +685,10 @@ namespace The_Legend_of_Zelda.Sprites
         }
 
         // method to set Link's background state
-        public void SetBGState(bool bg_mod_activated)
+        public void SetBGState(bool bg_mode_activated)
         {
-            self.background = bg_mod_activated;
-            counterpart.background = bg_mod_activated;
+            self.background = bg_mode_activated;
+            counterpart.background = bg_mode_activated;
         }
 
         void Animation()
@@ -1193,7 +1194,8 @@ namespace The_Legend_of_Zelda.Sprites
                     MetatileType.WATER_B or MetatileType.WATER_BL or MetatileType.WATER_BR:
                         // only activate ladder if you have it, it's not being used, scrolling is done and you,re not near the edge of the screen
                         if (ladder && !ladder_used && OC.ScrollingDone() &&
-                            y >= 66 && y <= 222 && x >= 2 && x <= 238)
+                            y >= 66 && y <= 222 && x >= 2 && x <= 238 &&
+                            OC.screens_with_ladder_permissions.Contains(OC.current_screen))
                         {
                             new LadderSprite(metatile_index);
                             return false;

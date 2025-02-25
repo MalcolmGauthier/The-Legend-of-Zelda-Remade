@@ -342,10 +342,11 @@ namespace The_Legend_of_Zelda.Sprites
         }
     }
 
-    internal class TornadoSprite : Sprite, ISmokeSpawn
+    internal class TornadoSprite : Sprite
     {
-        public int smoke_timer { get; set; } = 0;
-        public bool smoke_stage { get; set; } = true;
+        int smoke_timer = 0;
+        bool smoke_stage = true;
+
         bool link_grabbed = false;
         bool second_arrival = true;
         StaticSprite counterpart = new StaticSprite(0x96, 5, 0, 0);
@@ -422,7 +423,7 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        public void SetSmokeGraphic()
+        void SetSmokeGraphic()
         {
             if (smoke_timer == 0)
             {
