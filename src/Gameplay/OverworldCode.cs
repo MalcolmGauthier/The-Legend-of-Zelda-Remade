@@ -29,7 +29,7 @@ namespace The_Legend_of_Zelda.Gameplay
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 100;
+        public const byte DEFAULT_SPAWN_ROOM = 121;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;
@@ -216,7 +216,7 @@ namespace The_Legend_of_Zelda.Gameplay
 
         // spawn ennemies depending on current screen. most enemies are stored in overworld_enemy_list as ints where each 4 bits is the code of an enemy.
         // example: 0000 0000 0101 0101 0101 0101 0110 0110 -> 0 0 5 5 5 5 6 6 -> 4 red Leevers and 2 blue Leevers
-        void SpawnEnemies()
+        public void SpawnEnemies()
         {
             const int NUM_ENS_PER_SCRREN = 6;
             const int ENS_MEM_SIZE_BITS = 4;
@@ -338,72 +338,28 @@ namespace The_Legend_of_Zelda.Gameplay
 
         void CheckForWarp()
         {
+            // when link has returned from r128 and is walking up
             if (black_square_stairs_return_flag)
             {
                 LinkWalkAnimation(false);
                 return;
             }
 
+            // when link is walking down into r128
             if (black_square_stairs_flag)
             {
                 LinkWalkAnimation(true);
                 return;
             }
 
-            if (stair_warp_flag)
+            // when link touches stairs. instant warp. r128 warp code handled in NPCCode.
+            if (stair_warp_flag && current_screen != 128)
             {
-                if (current_screen != 128)
-                {
-                    warp_animation_timer = 65;
-                    LinkWalkAnimation(true);
-                    Link.current_action = LinkAction.WALKING_UP;
-                    Sound.PauseMusic();
-                    return;
-                }
-
-                if (Link.y < 200)
-                {
-                    switch (return_screen)
-                    {
-                        case 29:
-                            if (Link.x < 100)
-                                return_screen = 35;
-                            else if (Link.x > 150)
-                                return_screen = 121;
-                            else
-                                return_screen = 73;
-                            break;
-                        case 35:
-                            if (Link.x < 100)
-                                return_screen = 73;
-                            else if (Link.x > 150)
-                                return_screen = 29;
-                            else
-                                return_screen = 121;
-                            break;
-                        case 73:
-                            if (Link.x < 100)
-                                return_screen = 121;
-                            else if (Link.x > 150)
-                                return_screen = 35;
-                            else
-                                return_screen = 29;
-                            break;
-                        case 121:
-                            if (Link.x < 100)
-                                return_screen = 29;
-                            else if (Link.x > 150)
-                                return_screen = 73;
-                            else
-                                return_screen = 35;
-                            break;
-                    }
-                }
-                LinkWalkAnimation(false);
-                warp_animation_timer = 0;
                 stair_warp_flag = false;
-                Link.SetBGState(false);
-                Link.can_move = true;
+
+                NPCCode.Init();
+                Sound.PauseMusic();
+                return;
             }
         }
 
@@ -420,18 +376,8 @@ namespace The_Legend_of_Zelda.Gameplay
                 Link.current_action = entering ? LinkAction.WALKING_UP : LinkAction.WALKING_DOWN;
                 UnloadSpritesRoomTransition();
                 Sound.PauseMusic();
-                //Sound.EndAllSFX();
-                if (!entering && stair_list.Contains(return_screen))
-                {
-                    warp_animation_timer = 64;
-                    SpawnEnemies();
-                    Program.can_pause = true;
-                    Sound.PlaySong(Sound.Songs.OVERWORLD, false);
-                }
-                else
-                {
-                    Sound.PlaySFX(Sound.SoundEffects.STAIRS, true);
-                }
+                //Sound.EndAllSFX(); //TODO
+                Sound.PlaySFX(Sound.SoundEffects.STAIRS, true);
             }
             else if (warp_animation_timer <= 64)
             {
@@ -446,25 +392,24 @@ namespace The_Legend_of_Zelda.Gameplay
                 if (entering)
                 {
                     NPCCode.Init();
-                }
-                else
-                {
-                    int overshoot_protection = Link.y % 16;
-                    if (overshoot_protection >= 8)
-                        Link.SetPos(new_y: Link.y + (16 - overshoot_protection));
-                    else
-                        Link.SetPos(new_y: Link.y - overshoot_protection);
-                    black_square_stairs_return_flag = false;
-                    Link.SetBGState(false);
-                    Link.can_move = true;
-                    Link.has_moved_after_warp_flag = false;
-                    warp_animation_timer = 0;
-                    Program.can_pause = true;
-                    Menu.can_open_menu = true;
-                    Sound.PlaySong(Sound.Songs.OVERWORLD, false);
-                    SpawnEnemies();
                     return;
                 }
+
+                int overshoot_protection = Link.y % 16;
+                if (overshoot_protection >= 8)
+                    Link.SetPos(new_y: Link.y + (16 - overshoot_protection));
+                else
+                    Link.SetPos(new_y: Link.y - overshoot_protection);
+                black_square_stairs_return_flag = false;
+                Link.SetBGState(false);
+                Link.can_move = true;
+                Link.has_moved_after_warp_flag = false;
+                warp_animation_timer = 0;
+                Program.can_pause = true;
+                Menu.can_open_menu = true;
+                Sound.PlaySong(Sound.Songs.OVERWORLD, false);
+                SpawnEnemies();
+                return;
             }
 
             warp_animation_timer++;
@@ -566,7 +511,7 @@ namespace The_Legend_of_Zelda.Gameplay
         }
 
         // sets the exact x and y coordinates that link will return to when exiting
-        public void SetWarpReturnPosition()
+        public void SetWarpReturnPosition(byte screen)
         {
             Dictionary<byte, (int x, int y)> warpPositions = new()
             {
@@ -601,7 +546,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 { 121, (96, 112) }
             };
 
-            if (warpPositions.TryGetValue(return_screen, out (int x, int y) position))
+            if (warpPositions.TryGetValue(screen, out (int x, int y) position))
             {
                 return_x = position.x;
                 return_y = position.y;

@@ -261,7 +261,7 @@ namespace The_Legend_of_Zelda.Sprites
 
         protected override void OnInit()
         {
-            NPCCode.link_can_move = false;
+            //NPCCode.link_can_move = false;
             NPCCode.npc_appeared = true;
             Menu.can_open_menu = false;
         }

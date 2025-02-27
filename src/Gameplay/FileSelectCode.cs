@@ -32,7 +32,7 @@ namespace The_Legend_of_Zelda.Gameplay
         static int selected_character = 0;
         static byte selected_name_letter = 0;
 
-        static StaticSprite file_cursor = new(SpriteID.BLANK, PaletteID.SP_3, 40, 92);
+        static StaticSprite file_cursor = new(0xf2, (byte)PaletteID.SP_3, 40, 92);
         static StaticSprite name_cursor = new(0x25, 7, 0, 0);
         static StaticSprite letter_cursor = new(SpriteID.BLANK, PaletteID.SP_3, 0, 0);
         static StaticSprite[] link_icons = new StaticSprite[6];
@@ -91,9 +91,10 @@ namespace The_Legend_of_Zelda.Gameplay
                 }
             }
 
-            sprites.Add(file_cursor = new StaticSprite(SpriteID.BLANK, PaletteID.SP_3, 40, 92));
+            sprites.Add(file_cursor);
             sprites.Add(name_cursor);
             sprites.Add(letter_cursor);
+            file_cursor.use_chr_rom = true;
             name_cursor.use_chr_rom = true;
             letter_cursor.use_chr_rom = true;
             name_cursor.background = true;

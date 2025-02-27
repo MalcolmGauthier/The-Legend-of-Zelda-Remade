@@ -43,16 +43,14 @@ namespace The_Legend_of_Zelda.Gameplay
 
         const byte EMPTY_TILE = 0x24;
 
-        public static WarpType warp_info;
-        static byte text_counter = 0;
         static byte item_get_timer = 200;
 
+        static int text_counter = 0;
         static int starting_byte_1 = 0;
         static int starting_byte_2 = 0;
         static int starting_byte_3 = 0;
         static int link_walk_timer = 0;
 
-        public static bool link_can_move = false;
         public static bool npc_gone = false;
         public static bool npc_appeared = false;
         static bool item_collected = false;
@@ -62,6 +60,7 @@ namespace The_Legend_of_Zelda.Gameplay
         static CaveNPC cave_npc = new(0);
         static FlickeringSprite side_rupee = new FlickeringSprite(0x32, 5, 52, 172, 8, 0x32, second_palette_index: 6);
 
+        public static WarpType warp_info;
         static NPC current_npc;
 
         static byte[] text_row_1 = new byte[0];
@@ -115,7 +114,6 @@ namespace The_Legend_of_Zelda.Gameplay
             item_collected = false;
             side_rupee.unload_during_transition = true;
             side_rupee.shown = true;
-            link_can_move = false;
             text_at_end = false;
             if (!refresh)
             {
@@ -600,13 +598,10 @@ namespace The_Legend_of_Zelda.Gameplay
             Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.OVERWORLD_CAVE);
             Palettes.LoadPalette(PaletteID.BG_2, 1, Color._30_WHITE);
             Palettes.LoadPalette(PaletteID.BG_2, 2, Color._0F_BLACK);
-            OC.SetWarpReturnPosition();
-            // if dungeon entrance
-            if (screen_warp_info[OC.current_screen] == 0xe)
+            OC.SetWarpReturnPosition(OC.current_screen);
+            if ((WarpType)screen_warp_info[OC.current_screen] == WarpType.DUNGEON)
             {
                 Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
-                //OC.return_x = Link.x;
-                //OC.return_y = Link.y;
                 Link.SetPos(120, 223);
             }
             else
@@ -616,40 +611,68 @@ namespace The_Legend_of_Zelda.Gameplay
             }
             OC.return_screen = OC.current_screen;
             OC.current_screen = 128;
-            Link.SetBGState(false);
             OC.black_square_stairs_flag = false;
             OC.warp_animation_timer = 0;
+            Link.SetBGState(false);
+            Link.current_action = LinkAction.WALKING_UP;
+            Link.can_move = false;
             link_walk_timer = 0;
+            Menu.blue_candle_limit_reached = false;
+            Menu.can_open_menu = false;
+            can_pause = true;
             Sound.PauseMusic();
         }
 
         static void ExitUnderground()
         {
-            if (warp_info == WarpType.TAKE_ANY_ROAD)
-                OC.SetWarpReturnPosition();
+            if (OC.stair_warp_flag)
+            {
+                Dictionary<byte, (byte left, byte middle, byte right)> connections = new()
+                {
+                    { 29, (35, 73, 121) },
+                    { 35, (73, 121, 29) },
+                    { 73, (121, 29, 35) },
+                    { 121, (29, 35, 73) }
+                };
+
+                if (connections.TryGetValue(OC.return_screen, out (byte left, byte middle, byte right) connection))
+                {
+                    if (Link.x < 100)
+                        OC.return_screen = connection.left;
+                    else if (Link.x > 150)
+                        OC.return_screen = connection.right;
+                    else
+                        OC.return_screen = connection.middle;
+                }
+                OC.SetWarpReturnPosition(OC.return_screen);
+
+                OC.warp_animation_timer = 64;
+                OC.LinkWalkAnimation(false);
+                OC.stair_warp_flag = false;
+            }
+
             Link.SetPos(OC.return_x, OC.return_y);
             Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.MOUNTAIN);
             Palettes.LoadPalette(PaletteID.BG_2, 1, Color._1A_SEMI_LIGHT_GREEN);
             Palettes.LoadPalette(PaletteID.BG_2, 2, Color._37_BEIGE);
             Textures.LoadPPUPage(Textures.PPUDataGroup.OVERWORLD, OC.return_screen, 0);
-            OC.current_screen = OC.return_screen; // keep this after ppu page load or else bombable/burnable tiles fuck up their display
-            Link.SetBGState(true);
-            OC.UnloadSpritesRoomTransition();
-            link_can_move = false;
-            npc_appeared = false;
-            Link.can_move = false;
-            OC.warp_animation_timer = 0;
+            // keep this after ppu page load or else bombable/burnable tiles fuck up their display
+            OC.current_screen = OC.return_screen;
 
-            if (OC.stair_list.Contains(OC.return_screen))
+            OC.UnloadSpritesRoomTransition();
+            npc_appeared = false;
+            OC.warp_animation_timer = 0;
+            Menu.blue_candle_limit_reached = false;
+
+            if (!OC.stair_list.Contains(OC.return_screen))
             {
-                OC.LinkWalkAnimation(false);
-                OC.stair_warp_flag = false;
-                Link.SetBGState(false);
-                Link.can_move = true;
+                OC.black_square_stairs_return_flag = true;
+                Link.SetBGState(true);
+                Link.can_move = false;
             }
             else
             {
-                OC.black_square_stairs_return_flag = true;
+                OC.SpawnEnemies();
             }
         }
 
@@ -670,14 +693,6 @@ namespace The_Legend_of_Zelda.Gameplay
                 TextTick();
             }
 
-            // link can only move if the text is done scrolling and the fire has appeared
-            //TODO: dont check every frame
-            //if (Link.current_action is not (LinkAction.ITEM_GET or LinkAction.ITEM_HELD_UP) && !Menu.menu_open)
-            //{
-            //    Link.can_move = text_counter >= text_row_1.Length + text_row_2.Length && fire_appeared;
-            //    Menu.can_open_menu = Link.can_move;
-            //}
-
             // check for item collection
             LinkItemCollection();
 
@@ -695,8 +710,10 @@ namespace The_Legend_of_Zelda.Gameplay
             if (Link.y < 144 && !(npc_gone && gamemode == Gamemode.DUNGEON))
                 Link.SetPos(new_y: 144);
 
-            if (Link.y >= 224 && gamemode == Gamemode.OVERWORLD)
+            if ((Link.y >= 224 && gamemode == Gamemode.OVERWORLD) || OC.stair_warp_flag)
+            {
                 ExitUnderground();
+            }
         }
 
         // advances text forward if not finished
@@ -735,6 +752,16 @@ namespace The_Legend_of_Zelda.Gameplay
             else if (text_counter < text_row_1.Length + text_row_2.Length)
             {
                 Textures.ppu[starting_byte_2 + text_counter - text_row_1.Length] = text_row_2[text_counter - text_row_1.Length];
+
+                // the potion shop text has alot of empty space that we don't care about, so we skip empty text at the end of text.
+                // in this game we only need it for the 2nd text line, but ideally for arbitrary text this should be in all three somehow.
+                for (int i = text_counter - text_row_1.Length; i < text_row_2.Length; i++)
+                {
+                    if (text_row_2[i] != EMPTY_TILE)
+                        break;
+                    if (i == text_row_2.Length - 1)
+                        text_counter = text_row_1.Length + text_row_2.Length;
+                }
             }
             else if (text_counter < text_row_1.Length + text_row_2.Length + text_row_3.Length)
             {

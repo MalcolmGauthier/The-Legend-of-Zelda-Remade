@@ -24,7 +24,9 @@ namespace The_Legend_of_Zelda.Sprites
             this.damage = damage;
             Screen.sprites.Add(this);
             if (!single_wide)
+            {
                 Screen.sprites.Add(counterpart);
+            }
             unload_during_transition = true;
             counterpart.unload_during_transition = true;
         }
@@ -233,7 +235,11 @@ namespace The_Legend_of_Zelda.Sprites
             }
 
             if (!single_wide)
+            {
+                counterpart.x = x + 8;
+                counterpart.y = y;
                 Screen.sprites.Add(counterpart);
+            }
         }
 
         public override void ProjSpecificActions()
@@ -464,8 +470,6 @@ namespace The_Legend_of_Zelda.Sprites
             counterpart.y = y;
             unload_during_transition = true;
             counterpart.unload_during_transition = true;
-            Screen.sprites.Add(this);
-            Screen.sprites.Add(counterpart);
         }
 
         public override void ProjSpecificActions()
@@ -542,6 +546,7 @@ namespace The_Legend_of_Zelda.Sprites
     internal class MagicBeamSprite : ProjectileSprite
     {
         bool attack_or_fire_flag = false;
+
         public MagicBeamSprite(int x, int y, Direction direction, bool is_from_link) : base(is_from_link, false, 2)
         {
             tile_index = 0x7a;
@@ -550,6 +555,8 @@ namespace The_Legend_of_Zelda.Sprites
             counterpart.palette_index = 4;
             this.x = x;
             this.y = y;
+            counterpart.x = x + 8;
+            counterpart.y = y;
             this.direction = direction;
             unload_during_transition = true;
             counterpart.unload_during_transition = true;
@@ -583,9 +590,9 @@ namespace The_Legend_of_Zelda.Sprites
             {
                 Menu.magic_wave_out = false;
                 attack_or_fire_flag = true;
-                if (SaveLoad.book_of_magic)
+                if (SaveLoad.book_of_magic && is_from_link)
                 {
-                    ThrownFireSprite fire = new ThrownFireSprite(x, y, direction);
+                    ThrownFireSprite fire = new(x, y, direction);
                     fire.animation_timer = 32;
                 }
                 Screen.sprites.Remove(counterpart);
@@ -862,6 +869,8 @@ namespace The_Legend_of_Zelda.Sprites
 
             if (!single_wide)
             {
+                counterpart.x = x + 8;
+                counterpart.y = y;
                 Screen.sprites.Add(counterpart);
             }
         }
