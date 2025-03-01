@@ -53,6 +53,7 @@ namespace The_Legend_of_Zelda.Gameplay
 
         public static bool npc_gone = false;
         public static bool npc_appeared = false;
+        public static bool instant_return;
         static bool item_collected = false;
         static bool text_at_end = false;
 
@@ -570,6 +571,10 @@ namespace The_Legend_of_Zelda.Gameplay
                     current_npc = NPC.OLD_MAN;
                     text_row_1 = new byte[] { 0x18, 0x17, 0xe, 0x1c, 0x24, 0x20, 0x11, 0x18, 0x24, 0xd, 0x18, 0xe, 0x1c, 0x24, 0x17, 0x18, 0x1d, 0x24, 0x11, 0xa, 0x1f, 0xe }; // ONES WHO DOES NOT HAVE
                     text_row_2 = new byte[] { 0x1d, 0x1b, 0x12, 0xf, 0x18, 0x1b, 0xc, 0xe, 0x24, 0xc, 0xa, 0x17, 0x2a, 0x1d, 0x24, 0x10, 0x18, 0x24, 0x12, 0x17, 0x2c }; // TRIFORCE CAN'T COME IN.
+                    DC.nb_enemies_alive++;
+                    break;
+
+                case WarpType.LIFE_OR_MONEY:
                     break;
             }
 
@@ -598,7 +603,8 @@ namespace The_Legend_of_Zelda.Gameplay
             Palettes.LoadPaletteGroup(PaletteID.BG_3, Palettes.PaletteGroups.OVERWORLD_CAVE);
             Palettes.LoadPalette(PaletteID.BG_2, 1, Color._30_WHITE);
             Palettes.LoadPalette(PaletteID.BG_2, 2, Color._0F_BLACK);
-            OC.SetWarpReturnPosition(OC.current_screen);
+            OC.SetWarpReturnPosition(OC.current_screen, OC.stair_warp_flag);
+            instant_return = OC.stair_warp_flag;
             if ((WarpType)screen_warp_info[OC.current_screen] == WarpType.DUNGEON)
             {
                 Textures.LoadPPUPage(Textures.PPUDataGroup.OTHER, Textures.OtherPPUPages.EMPTY, 0);
@@ -612,6 +618,7 @@ namespace The_Legend_of_Zelda.Gameplay
             OC.return_screen = OC.current_screen;
             OC.current_screen = 128;
             OC.black_square_stairs_flag = false;
+            OC.stair_warp_flag = false;
             OC.warp_animation_timer = 0;
             Link.SetBGState(false);
             Link.current_action = LinkAction.WALKING_UP;
@@ -644,7 +651,7 @@ namespace The_Legend_of_Zelda.Gameplay
                     else
                         OC.return_screen = connection.middle;
                 }
-                OC.SetWarpReturnPosition(OC.return_screen);
+                OC.SetWarpReturnPosition(OC.return_screen, true);
 
                 OC.warp_animation_timer = 64;
                 OC.LinkWalkAnimation(false);

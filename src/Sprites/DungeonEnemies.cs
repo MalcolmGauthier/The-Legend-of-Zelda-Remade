@@ -242,6 +242,8 @@ namespace The_Legend_of_Zelda.Sprites
             {
                 FindValidSpawnLocation();
             }
+
+            SetCustomSize(8, 16);
         }
 
         protected override void EnemySpecificActions()
@@ -256,13 +258,13 @@ namespace The_Legend_of_Zelda.Sprites
             }
             else if (current_action == ActionState.WALKING)
             {
-                if (x % 16 == 0 && y % 16 == 0 && local_timer > 8)
-                {
-                    local_timer = 0;
-                    rest_timer = Program.RNG.Next(60);
-                    current_action = ActionState.RESTING;
-                    return;
-                }
+                //if (x % 16 == 0 && y % 16 == 0 && local_timer > 8)
+                //{
+                //    local_timer = 0;
+                //    rest_timer = Program.RNG.Next(60);
+                //    current_action = ActionState.RESTING;
+                //    return;
+                //}
 
                 Walk();
             }
@@ -285,6 +287,14 @@ namespace The_Legend_of_Zelda.Sprites
             Screen.sprites.Remove(puppet);
             shown = true;
             counterpart.shown = true;
+        }
+
+        protected override bool OnTileMoved()
+        {
+            local_timer = 0;
+            rest_timer = Program.RNG.Next(60);
+            current_action = ActionState.RESTING;
+            return true;
         }
     }
 
@@ -375,7 +385,7 @@ namespace The_Legend_of_Zelda.Sprites
                 case ActionState.SHOOTING_PROJECTILE:
                     if (local_timer == 36)
                     {
-                        new BoomerangSprite(x + 4, y, false, stronger, this);
+                        new BoomerangSprite(x + 4, y, false, this);
                     }
                     break;
                 case ActionState.WALKING:

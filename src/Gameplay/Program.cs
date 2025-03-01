@@ -106,6 +106,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 case Gamemode.SCREENTEST:
                     Screen.ScreenTest();
                     break;
+
                 case Gamemode.TITLESCREEN:
                     TitlescreenCode.Tick();
                     break;
@@ -120,6 +121,9 @@ namespace The_Legend_of_Zelda.Gameplay
                     break;
                 case Gamemode.DEATH:
                     DeathCode.Tick();
+                    break;
+                case Gamemode.CREDITS:
+                    CreditsCode.Tick();
                     break;
             }
 
@@ -250,21 +254,21 @@ namespace The_Legend_of_Zelda.Gameplay
             // little endian >:(
             byte[] bmp_header =
             {
-                0x42, 0x4D,             // format windows
-                0x36, 0xD0, 0x02, 0x00, // taille de fichier en octets (184374)
-                0x00, 0x00, 0x00, 0x00, // toujours 0, inutilisé
-                0x36, 0x00, 0x00, 0x00, // adresse dans le fichier du data (0x36)
-                0x28, 0x00, 0x00, 0x00, // taille du header (40 octets)
-                0x00, 0x01, 0x00, 0x00, // largeur de l'image (256 pixels)
-                0xF0, 0x00, 0x00, 0x00, // hauture de l'image (240 pixels)
-                0x01, 0x00,             // nb de planes de couleure (toujours 1)
-                0x18, 0x00,             // bits par pixel (24)
-                0x00, 0x00, 0x00, 0x00, // type de compression (aucune)
-                0x00, 0xD0, 0x02, 0x00, // taille du data en octets (184320)
-                0x13, 0x0B, 0x00, 0x00, // info pour imprimer l'image (pas important)
-                0x13, 0x0B, 0x00, 0x00, // info pour imprimer l'image (pas important)
-                0x00, 0x00, 0x00, 0x00, // taille de palette (aucune palette)
-                0x00, 0x00, 0x00, 0x00  // nb de couleures importantes (0 = toutes)
+                0x42, 0x4D,             // BM - Windows BMP format
+                0xE6, 0xF0, 0x00, 0x00, // File size: 61,750 bytes
+                0x00, 0x00, 0x00, 0x00, // Reserved (unused)
+                0x36, 0x01, 0x00, 0x00, // Pixel data offset (310 bytes)
+                0x28, 0x00, 0x00, 0x00, // DIB header size (40 bytes)
+                0x00, 0x01, 0x00, 0x00, // Width: 256 pixels
+                0xF0, 0x00, 0x00, 0x00, // Height: 240 pixels
+                0x01, 0x00,             // Number of planes (1)
+                0x08, 0x00,             // Bits per pixel (8-bit indexed color)
+                0x00, 0x00, 0x00, 0x00, // Compression (None)
+                0x00, 0xF0, 0x00, 0x00, // Image data size (61,440 bytes)
+                0x13, 0x0B, 0x00, 0x00, // printing info
+                0x13, 0x0B, 0x00, 0x00, // printing info
+                0x40, 0x00, 0x00, 0x00, // Number of colors in palette (64)
+                0x00, 0x00, 0x00, 0x00  // Important colors (0 = all)
             };
 
             uint i = 1;
@@ -278,9 +282,18 @@ namespace The_Legend_of_Zelda.Gameplay
             using (FileStream stream = File.Create(@$"screenshots\capture{i}.bmp"))
             {
                 BinaryWriter bw = new BinaryWriter(stream);
-                SDL_Color couleure;
 
                 bw.Write(bmp_header);
+
+                // update: screenshots now used indexed color, and thus take up 60kb instead of 150kb
+                // color palette
+                for (int p = 0; p < 64; p++)
+                {
+                    bw.Write(Palettes.color_list[p].b);
+                    bw.Write(Palettes.color_list[p].g);
+                    bw.Write(Palettes.color_list[p].r);
+                    bw.Write((byte)0); // must be 0
+                }
 
                 unsafe
                 {
@@ -290,11 +303,7 @@ namespace The_Legend_of_Zelda.Gameplay
                     {
                         for (int x = 0; x < 256; x++)
                         {
-                            couleure = Palettes.color_list[Palettes.active_palette_list[ref_screen[(y << 8) + x]]];
-
-                            bw.Write(couleure.b);
-                            bw.Write(couleure.g);
-                            bw.Write(couleure.r);
+                            bw.Write(Palettes.active_palette_list[ref_screen[(y << 8) + x]]);
                         }
                     }
                 }

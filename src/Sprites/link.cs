@@ -154,10 +154,10 @@ namespace The_Legend_of_Zelda.Sprites
             arrow = true;
             bow = true;
             rupy_count = 255;
-            // c# doesn't have c++'s friend keyword, so fuck you c#, et reflection and die :)
+            // c# doesn't have c++'s friend keyword, so fuck you c#, eat reflection and die :)
             // (this is only used for testing ofc)
-            FieldInfo? lol = typeof(SaveLoad).GetField("triforce_pieces", BindingFlags.NonPublic | BindingFlags.Static);
-            lol?.SetValue(null, new byte[] { 0xff, 0, 0 });
+            //FieldInfo? lol = typeof(SaveLoad).GetField("triforce_pieces", BindingFlags.NonPublic | BindingFlags.Static);
+            //lol?.SetValue(null, new byte[] { 0xff, 0, 0 });
             //lol = typeof(SaveLoad).GetField("compass_flags", BindingFlags.NonPublic | BindingFlags.Static);
             //lol?.SetValue(null, new ushort[] { 0xffff, 0, 0 });
             bomb_count = 8;
@@ -502,7 +502,7 @@ namespace The_Legend_of_Zelda.Sprites
 
                     Attack();
                     pos = FindItemPos(false);
-                    new BoomerangSprite(pos[0], pos[1], true, SaveLoad.magical_boomerang, this);
+                    new BoomerangSprite(pos[0], pos[1], true, this);
                     Menu.boomerang_out = true;
                     break;
 

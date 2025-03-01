@@ -2,7 +2,6 @@
 using static The_Legend_of_Zelda.Gameplay.Program;
 using The_Legend_of_Zelda.Sprites;
 using The_Legend_of_Zelda.Rendering;
-using System.Runtime.CompilerServices;
 
 namespace The_Legend_of_Zelda.Gameplay
 {
@@ -415,12 +414,12 @@ namespace The_Legend_of_Zelda.Gameplay
             else if (current_dungeon is 3 or 5 or 8)
                 Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_469);
 
-            //if (current_dungeon is 0 or 1 or 4 or 6)
-            //    Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_1257);
-            //else if (current_dungeon is 2 or 3 or 5 or 7)
-            //    Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_3468);
-            //else if (current_dungeon == 8)
-            //    Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_9);
+            if (current_dungeon is 0 or 1 or 4 or 6)
+                Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_1257);
+            else if (current_dungeon is 2 or 3 or 5 or 7)
+                Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_3468);
+            else if (current_dungeon == 8)
+                Textures.LoadNewRomData(Textures.ROMData.SPR_DUNGEON_BOSS_9);
 
             for (int i = 0; i < meta_tiles.Length; i++)
             {
@@ -537,7 +536,15 @@ namespace The_Legend_of_Zelda.Gameplay
                 Link.SetPos(OC.return_x, OC.return_y);
                 sprites.Remove(compass_dot);
                 OC.Init();
-                OC.black_square_stairs_return_flag = true;
+                if (NPCCode.instant_return)
+                {
+                    Link.has_moved_after_warp_flag = false;
+                    Link.SetBGState(false);
+                }
+                else
+                {
+                    OC.black_square_stairs_return_flag = true;
+                }
                 OC.warp_animation_timer = 0;
                 OC.current_screen = OC.return_screen;
                 OC.EmptyEnemyKillQueue();
@@ -653,10 +660,12 @@ namespace The_Legend_of_Zelda.Gameplay
                 if (SaveLoad.GetBossKillsFlag((byte)Array.IndexOf(rooms_with_boses, current_screen)))
                     return;
 
+                nb_enemies_alive++;
+
                 switch ((Bosses)(enemies & 0xFFFF))
                 {
                     case Bosses.AQUAMENTUS:
-                        //new Aquamentus();
+                        new Aquamentus();
                         break;
                     case Bosses.DODONGO_TRIPLE:
                         //new Dodongo();
@@ -695,6 +704,12 @@ namespace The_Legend_of_Zelda.Gameplay
                         break;
                     case Bosses.MOLDORM:
                         //new Moldorm();
+                        break;
+                    case Bosses.LANMOLA:
+                        //new Lanmola(false);
+                        break;
+                    case Bosses.LANMOLA_HARDER:
+                        //new Lanmola(true);
                         break;
                     case Bosses.GANON:
                         //new Ganon();

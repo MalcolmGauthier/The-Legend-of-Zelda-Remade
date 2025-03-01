@@ -29,7 +29,7 @@ namespace The_Legend_of_Zelda.Gameplay
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 121;
+        public const byte DEFAULT_SPAWN_ROOM = 55;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;
@@ -187,7 +187,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 if (scroll_direction == Direction.UP)
                     level_5_entrance_count++;
 
-                if (scroll_direction != Direction.LEFT || scroll_direction == Direction.UP && level_5_entrance_count < NUM_OF_SCROLLS_TO_EXIT)
+                if (scroll_direction != Direction.LEFT && !(scroll_direction == Direction.UP && level_5_entrance_count >= NUM_OF_SCROLLS_TO_EXIT))
                     scroll_destination = 27;
 
                 if (scroll_direction != Direction.UP || level_5_entrance_count >= NUM_OF_SCROLLS_TO_EXIT)
@@ -204,7 +204,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 else
                     lost_woods_count = 0;
 
-                if (scroll_direction != Direction.RIGHT || scroll_direction == Direction.LEFT && lost_woods_count == LOST_FOREST_CODE.Length)
+                if (scroll_direction != Direction.RIGHT && !(scroll_direction == Direction.LEFT && lost_woods_count == LOST_FOREST_CODE.Length))
                     scroll_destination = 97;
 
                 if (lost_woods_count >= LOST_FOREST_CODE.Length)
@@ -319,12 +319,12 @@ namespace The_Legend_of_Zelda.Gameplay
             {
                 if (change_the_value)
                 {
-                    if (Link.facing_direction == Direction.DOWN || Link.facing_direction == Direction.RIGHT)
+                    if (Link.facing_direction == Direction.UP || Link.facing_direction == Direction.RIGHT)
                         recorder_destination++;
                     else
                         recorder_destination--;
 
-                    recorder_destination %= 8;
+                    recorder_destination = TrueMod(recorder_destination, 8);
                 }
 
                 if (GetTriforceFlag(i))
@@ -355,8 +355,6 @@ namespace The_Legend_of_Zelda.Gameplay
             // when link touches stairs. instant warp. r128 warp code handled in NPCCode.
             if (stair_warp_flag && current_screen != 128)
             {
-                stair_warp_flag = false;
-
                 NPCCode.Init();
                 Sound.PauseMusic();
                 return;
@@ -431,7 +429,7 @@ namespace The_Legend_of_Zelda.Gameplay
         public void ActivateLevel7Animation() => level_7_entrance_timer = 0;
         void Level7EntranceAnimation()
         {
-            if (level_7_entrance_timer == 255)
+            if (current_screen != 66)
                 return;
 
             switch (level_7_entrance_timer)
@@ -486,18 +484,26 @@ namespace The_Legend_of_Zelda.Gameplay
                     Textures.ppu[19 * 32 + 13] = 0x71;
                     Textures.ppu[19 * 32 + 14] = 0x73;
                     // TODO: play secret sfx
+                    //level_7_entrance_timer = LEVEL_7_ENTRANCE_ANIM_DONE;
                     break;
             }
 
-            if (scroll_animation_timer < 500 && level_7_entrance_timer != 255)
+            // if link exits level 7 entrance with animation done, the animation plays in reverse before the scrolling finishes
+            if (!ScrollingDone() && level_7_entrance_timer != LEVEL_7_ENTRANCE_ANIM_DONE)
             {
                 if (level_7_entrance_timer == 0)
                 {
                     Link.can_move = false;
-                    level_7_entrance_timer = 255;
+                    level_7_entrance_timer = LEVEL_7_ENTRANCE_ANIM_DONE;
                     return;
                 }
 
+                //if (level_7_entrance_timer == LEVEL_7_ENTRANCE_ANIM_DONE)
+                //{
+                //    level_7_entrance_timer = 81;
+                //}
+
+                // force the scroll animation to not advance
                 scroll_animation_timer = 0;
                 y_scroll = 0;
                 Link.SetPos(new_y: 224);
@@ -511,7 +517,7 @@ namespace The_Legend_of_Zelda.Gameplay
         }
 
         // sets the exact x and y coordinates that link will return to when exiting
-        public void SetWarpReturnPosition(byte screen)
+        public void SetWarpReturnPosition(byte screen, bool stair_entrance)
         {
             Dictionary<byte, (int x, int y)> warpPositions = new()
             {
@@ -546,7 +552,7 @@ namespace The_Legend_of_Zelda.Gameplay
                 { 121, (96, 112) }
             };
 
-            if (warpPositions.TryGetValue(screen, out (int x, int y) position))
+            if (warpPositions.TryGetValue(screen, out (int x, int y) position) && stair_entrance)
             {
                 return_x = position.x;
                 return_y = position.y;

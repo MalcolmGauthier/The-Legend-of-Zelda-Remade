@@ -91,7 +91,7 @@ namespace The_Legend_of_Zelda.Rendering
         }
 
         // fuck C# for keeping this bullshit from c/c++
-        static int TrueMod(int x, int m)
+        public static int TrueMod(int x, int m)
         {
             return (x % m + m) % m;
         }

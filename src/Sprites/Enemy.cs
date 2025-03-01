@@ -52,11 +52,14 @@ namespace The_Legend_of_Zelda.Sprites
         protected int target_y;
         protected int frames_between_anim = 0;
         int time_when_stunned = NOT_STUNNED;
+        public int width { get; private set; } = 16;
+        public int height { get; private set; } = 16;
 
         protected bool pause_animation = false;
         protected bool can_damage_link = true;
         protected bool appeared = false;
         protected bool smoke_appearance = false;
+        protected bool instant_smoke = false;
         protected bool stronger = false;
         protected bool spawn_hidden = false;
         protected bool stunnable = true;
@@ -191,10 +194,16 @@ namespace The_Legend_of_Zelda.Sprites
             return IsValidTile(tile_id);
         }
 
+        protected void SetCustomSize(int width, int height)
+        {
+            this.width = width;
+            this.height = height;
+        }
+
         bool IsWithinLink()
         {
-            return x + 12 >= Link.x && x - 12 <= Link.x &&
-                   y + 12 >= Link.y && y - 12 <= Link.y;
+            return x + (width - 4) >= Link.x && x - (width - 4) <= Link.x &&
+                   y + (height - 4) >= Link.y && y - (height - 4) <= Link.y;
         }
 
         protected virtual void OnDamageLink()
@@ -236,6 +245,10 @@ namespace The_Legend_of_Zelda.Sprites
                 if (smoke_random_appearance == 0)
                 {
                     smoke_random_appearance = (byte)RNG.Next(10, 90);
+                }
+                if (instant_smoke)
+                {
+                    smoke_random_appearance = 1;
                 }
                 palette_index = 5;
                 counterpart.palette_index = 5;
@@ -900,22 +913,22 @@ namespace The_Legend_of_Zelda.Sprites
             bool touching = false;
             if (Link.facing_direction == Direction.UP)
             {
-                if (x > Link.x - 9 && x < Link.x + 9 && y > Link.y - 26 && y < Link.y + 8)
+                if (x > Link.x - (width - 7) && x < Link.x + (width - 7) && y > Link.y - (height + 10) && y < Link.y + (height - 8))
                     touching = true;
             }
             else if (Link.facing_direction == Direction.DOWN)
             {
-                if (x > Link.x - 9 && x < Link.x + 9 && y > Link.y - 8 && y < Link.y + 26)
+                if (x > Link.x - (width - 7) && x < Link.x + (width - 7) && y > Link.y - (height - 8) && y < Link.y + (height + 10))
                     touching = true;
             }
             else if (Link.facing_direction == Direction.LEFT)
             {
-                if (x > Link.x - 26 && x < Link.x + 8 && y > Link.y - 9 && y < Link.y + 9)
+                if (x > Link.x - (width + 10) && x < Link.x + (width - 8) && y > Link.y - (height - 7) && y < Link.y + (height - 7))
                     touching = true;
             }
             else
             {
-                if (x > Link.x - 8 && x < Link.x + 26 && y > Link.y - 9 && y < Link.y + 9)
+                if (x > Link.x - (width - 8) && x < Link.x + (width + 10) && y > Link.y - (height - 7) && y < Link.y + (height - 7))
                     touching = true;
             }
 

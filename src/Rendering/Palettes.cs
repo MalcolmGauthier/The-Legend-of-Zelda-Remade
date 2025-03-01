@@ -112,6 +112,7 @@ namespace The_Legend_of_Zelda.Rendering
             DUNGEON4_6,
             DUNGEON5_7,
             DUNGEON8_9,
+            AQUAMENTUS
         }
 
         public static byte[] active_palette_list = new byte[COLORS_IN_PALETTE * NUM_PALETTES];
@@ -119,7 +120,7 @@ namespace The_Legend_of_Zelda.Rendering
         public static Color background_color = Color._1D_BLACK;
         static Color old_bg_color = Color._1D_BLACK;
 
-        static byte[,] palette_list = new byte[20, 3]
+        static byte[,] palette_list =
         {
             {0x0f,0x0f,0x0f}, // black
             {0x1a,0x37,0x12}, // forest
@@ -141,6 +142,7 @@ namespace The_Legend_of_Zelda.Rendering
             {0x08,0x18,0x28}, // dungeon 4 & 6
             {0x0a,0x1a,0x2a}, // dungeon 5 & 7
             {0x00,0x10,0x20}, // dungeon 8 & 9
+            {0x0a,0x29,0x30}, // aquamentus
         };
 
         // full NES color list - https://imgur.com/a/sGzojmV

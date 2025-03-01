@@ -115,6 +115,15 @@
     <None Update="Data\SPR_DUNGEON_469.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Data\SPR_DUNGEON_BOSS_1257.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\SPR_DUNGEON_BOSS_3468.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\SPR_DUNGEON_BOSS_9.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\SPR_FULL.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
