@@ -616,6 +616,7 @@ namespace The_Legend_of_Zelda.Sprites
     internal class HeartContainerSprite : ItemDropSprite
     {
         byte index;
+        bool counterpart_added = false;
         StaticSprite counterpart = new StaticSprite(0x68, 6, 0, 0, true);
 
         public HeartContainerSprite(int x, int y, byte heart_container_index) : base(x, y, false)
@@ -627,11 +628,20 @@ namespace The_Legend_of_Zelda.Sprites
             counterpart.x = x + 8;
             counterpart.y = y;
             counterpart.unload_during_transition = true;
-            Screen.sprites.Add(counterpart);
         }
 
         protected override void ItemSpecificActions()
         {
+            // this is outside of init so that the code works properly when used as an item drop sprite in dungeons
+            if (!counterpart_added)
+            {
+                // offset the assumption that item drop sprites are single wide
+                x -= 4;
+                counterpart.x -= 4;
+                Screen.sprites.Add(counterpart);
+                counterpart_added = true;
+            }
+
             if (collected)
             {
                 SaveLoad.SetHeartContainerFlag(index, true);

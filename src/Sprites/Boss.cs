@@ -20,8 +20,30 @@ namespace The_Legend_of_Zelda.Sprites
         {
             shown = true;
             counterpart.shown = true;
+
+            SaveLoad.SetBossKillsFlag((byte)Array.IndexOf(DC.rooms_with_bosses, DC.current_screen), true);
+
             foreach (Sprite s in body)
                 Screen.sprites.Remove(s);
+        }
+
+        protected void ShootBalls(Direction dir)
+        {
+            Sprite[] s = new Sprite[3];
+
+            if (dir is Direction.LEFT or Direction.RIGHT)
+            {
+                s[0] = new MagicOrbProjectileSprite(x + 8, y, 0);
+                s[1] = new MagicOrbProjectileSprite(x + 8, y, 1);
+                s[2] = new MagicOrbProjectileSprite(x + 8, y, -1);
+            }
+
+            // set sprite priority to above all. without this, projectiles appear behind boss
+            foreach (Sprite spr in s)
+            {
+                Screen.sprites.Remove(spr);
+                Screen.sprites.Insert(0, spr);
+            }
         }
     }
 
@@ -79,11 +101,13 @@ namespace The_Legend_of_Zelda.Sprites
             shooting_timer--;
             if (shooting_timer <= 0)
             {
-                shooting_timer = Program.RNG.Next(60, 240);
-                //int ratio = (int)(Math.Abs(Link.x - x) * 0.4f);
-                new MagicOrbProjectileSprite(x + 8, y, true, -2, 0);
-                new MagicOrbProjectileSprite(x + 8, y, true, -2, 1);
-                new MagicOrbProjectileSprite(x + 8, y, true, -2, -1);
+                body[0].tile_index = 0xcc;
+                shooting_timer = Program.RNG.Next(90, 240);
+                ShootBalls(Direction.LEFT);
+            }
+            else if (shooting_timer == 32)
+            {
+                body[0].tile_index = 0xc0;
             }
 
             for (int i = 0; i < body.Length; i++)
@@ -126,7 +150,7 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Dodongo : Boss
     {
-        public Dodongo(int frames_between_anim, float speed, byte drop_category) : base(drop_category)
+        public Dodongo() : base(4)
         {
         }
 
@@ -138,7 +162,7 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Manhandla : Boss
     {
-        public Manhandla(int frames_between_anim, float speed, byte drop_category) : base(drop_category)
+        public Manhandla() : base(4)
         {
         }
 
@@ -150,8 +174,9 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Gleeok : Boss
     {
-        public Gleeok(int frames_between_anim, float speed, byte drop_category) : base(drop_category)
+        public Gleeok(int heads) : base(4)
         {
+            Math.Clamp(heads, 1, 4);
         }
 
         protected override void EnemySpecificActions()
@@ -162,7 +187,7 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Digdogger : Boss
     {
-        public Digdogger(int frames_between_anim, float speed, byte drop_category) : base(drop_category)
+        public Digdogger(bool triple) : base(0)
         {
         }
 
@@ -174,7 +199,7 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Gohma : Boss
     {
-        public Gohma(int frames_between_anim, float speed, byte drop_category) : base(drop_category)
+        public Gohma(bool harder) : base(0)
         {
         }
 
@@ -186,19 +211,7 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Moldorm : Boss
     {
-        public Moldorm(int frames_between_anim, float speed, byte drop_category) : base(drop_category)
-        {
-        }
-
-        protected override void EnemySpecificActions()
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    internal class Lanmola : Boss
-    {
-        public Lanmola(int frames_between_anim, float speed, byte drop_category) : base(drop_category)
+        public Moldorm() : base(4)
         {
         }
 
@@ -210,7 +223,8 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Patra : Boss
     {
-        public Patra(int frames_between_anim, float speed, byte drop_category) : base(drop_category)
+        // enum? 2 ou 3?
+        public Patra(bool pattern) : base(4)
         {
         }
 
@@ -222,7 +236,7 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Ganon : Boss
     {
-        public Ganon(int frames_between_anim, float speed, byte drop_category) : base(drop_category)
+        public Ganon() : base(0)
         {
         }
 

@@ -49,7 +49,7 @@ namespace The_Legend_of_Zelda.Sprites
             if (gamemode == Gamemode.OVERWORLD)
                 return x >= 232 || x <= 8 || y <= 64 || y >= 216;
             else
-                return x >= 216 || x <= 32 || y <= 96 || y >= 200;
+                return x >= 216 || x <= 24 || y <= 80 || y >= 200;
         }
 
         public void Move(byte speed = 3)
@@ -929,30 +929,22 @@ namespace The_Legend_of_Zelda.Sprites
     {
         float x_speed, y_speed;
         float true_x, true_y;
-        int target_x, target_y;
-        bool target_link = false;
+        int init_pos_x, init_pos_y;
+        int forced_speed;
 
-        public MagicOrbProjectileSprite(int x, int y, bool no_charge = false, int target_x = -1, int target_y = -1) : base(false, true, 0.5f)
+        public MagicOrbProjectileSprite(int x, int y, int forced_speed = 0) : base(false, true, 0.5f)
         {
             this.x = x;
             this.y = y;
+            this.forced_speed = forced_speed;
             true_x = x;
             true_y = y;
+            init_pos_x = x;
+            init_pos_y = y;
+
             tile_index = 0x44;
             unload_during_transition = true;
-
-            if (no_charge)
-                animation_timer = 15;
-
-            if (target_x == -1 && target_y == -1)
-            {
-                target_link = true;
-            }
-            else
-            {
-                this.target_x = target_x;
-                this.target_y = target_y;
-            }
+            is_from_link = false;
         }
 
         public override void ProjSpecificActions()
@@ -964,6 +956,8 @@ namespace The_Legend_of_Zelda.Sprites
 
             if (animation_timer < 16)
             {
+                if (animation_timer % 2 == 0)
+                    y += forced_speed;
                 return;
             }
 
@@ -976,36 +970,10 @@ namespace The_Legend_of_Zelda.Sprites
                 return;
             }
 
-            if (target_link)
-            {
-                target_x = Link.x;
-                target_y = Link.y;
-            }
-            else
-            {
-                x_speed = target_x / 2f;
-                y_speed = target_y / 2f;
-                if (MathF.Abs(x_speed) > MathF.Abs(y_speed))
-                {
-                    if (x_speed > 0)
-                        direction = Direction.RIGHT;
-                    else
-                        direction = Direction.LEFT;
-                }
-                else
-                {
-                    if (y_speed > 0)
-                        direction = Direction.DOWN;
-                    else
-                        direction = Direction.UP;
-                }
-                return;
-            }
-
             // if animation_timer == 16
             // copied from boomerang code
-            int x_dist_from_target = x + 4 - (target_x + 8);
-            int y_dist_from_target = y + 8 - (target_y + 8);
+            int x_dist_from_target = init_pos_x + 4 - (Link.x + 8);
+            int y_dist_from_target = init_pos_y + 8 - (Link.y + 8);
 
             // +0.01f auto converts y_dist_from_link to float AND prevents div by 0 error
             float angle = MathF.Atan(x_dist_from_target / (y_dist_from_target + 0.01f));
@@ -1024,6 +992,11 @@ namespace The_Legend_of_Zelda.Sprites
 
             x_speed = x_dist_to_move;
             y_speed = y_dist_to_move;
+
+            y_speed += forced_speed / 2f;
+            // reset starting position
+            true_x = x;
+            true_y = y;
 
             // setting direction is only so that knockback works properly
             if (MathF.Abs(x_speed) > MathF.Abs(y_speed))

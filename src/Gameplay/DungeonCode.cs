@@ -109,6 +109,9 @@ namespace The_Legend_of_Zelda.Gameplay
             LIKELIKE,
             WIZROBE,
             WIZROBE_HARDER,
+            // LANMOLA IS NOT A BOSS. I REPEAT: LANMOLA IS N_O_T__A__B_O_S_S. DON'T FUCKING PUT IT WITH THE OTHER BOSSES. IT'S NOT ONE. IT DOESN'T BELONG THERE.
+            LANMOLA,
+            LANMOLA_HARDER
         }
 
         enum Bosses
@@ -126,8 +129,6 @@ namespace The_Legend_of_Zelda.Gameplay
             GOHMA_HARDER,
             PATRA,
             MOLDORM,
-            LANMOLA,
-            LANMOLA_HARDER,
             GANON,
         }
 
@@ -189,7 +190,6 @@ namespace The_Legend_of_Zelda.Gameplay
             0b0010000000000100,
             0b0000000100000000,
         };
-        //TODO: change data for bosses: lanmola
         public readonly uint[] dungeon_enemy_list = {
             0x55550000, 0xbbccc000, 0x2288aa00, 0x60000000, 0x00000000, 0x00000000, 0xffff0001, 0x00005555, 0x60000000, 0x55555555, 0x70000000, 0x00000000, 0x55550000, 0xbbbbbb00, 0x00000000, 0x55550000,
             0xffff0005, 0xaa228800, 0xbbbbbb00, 0xbbcccaaa, 0xffff0009, 0xaa228800, 0x99999000, 0x60000000, 0xffff0003, 0x00000000, 0x99999000, 0xffff0004, 0x00000000, 0x60000000, 0x55555550, 0x60000000,
@@ -286,8 +286,9 @@ namespace The_Legend_of_Zelda.Gameplay
             0x05, 0xFF, 0x0c, 0xF5, 0xFF, 0x08, 0xFF, 0x05, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
         };
         // for save file flags
-        public readonly byte[] rooms_with_boses = {
-            61, 54, 6, 69, 24, 27, 94, 44, 16, 20, 131, 132, 148, 162, 177, 178, 208, 228, 242, 245, 230, 197, 166, 150, 233, 218, 169, 175, 158, 202
+        public readonly byte[] rooms_with_bosses = {
+            6, 16, 20, 24, 27, 44, 54, 61, 69, 94, 131, 132, 148, 150, 158, 162,
+            166, 169, 175, 177, 178, 180, 197, 202, 208, 218, 228, 230, 233, 242, 245
         };
         public readonly short[] bombable_connections = {
             3, 5, 18, 45, 49, 50, 51, 58, 61, 65, 78, 110, 137, 142, 150, 152, 167, 174, 217, 219, 256, 257,
@@ -657,7 +658,7 @@ namespace The_Legend_of_Zelda.Gameplay
             if ((enemies & 0xFFFF0000) == 0xFFFF0000)
             {
                 // if boss killed, it's gone
-                if (SaveLoad.GetBossKillsFlag((byte)Array.IndexOf(rooms_with_boses, current_screen)))
+                if (SaveLoad.GetBossKillsFlag((byte)Array.IndexOf(rooms_with_bosses, current_screen)))
                     return;
 
                 nb_enemies_alive++;
@@ -704,12 +705,6 @@ namespace The_Legend_of_Zelda.Gameplay
                         break;
                     case Bosses.MOLDORM:
                         //new Moldorm();
-                        break;
-                    case Bosses.LANMOLA:
-                        //new Lanmola(false);
-                        break;
-                    case Bosses.LANMOLA_HARDER:
-                        //new Lanmola(true);
                         break;
                     case Bosses.GANON:
                         //new Ganon();

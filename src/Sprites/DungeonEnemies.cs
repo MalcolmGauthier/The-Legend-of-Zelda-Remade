@@ -1572,4 +1572,24 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
     }
+
+    internal class Lanmola : Enemy
+    {
+        StaticSprite[] body = new StaticSprite[4];
+        Direction[] body_travel_directions = new Direction[4];
+
+        public Lanmola(bool stronger) : base(AnimationMode.ONEFRAME, 0x9e, 0xa0, stronger, false, 0, 1, 4, true)
+        {
+            if (stronger)
+            {
+                drop_category = 3;
+                palette_index = (byte)PaletteID.SP_1;
+            }
+        }
+
+        protected override void EnemySpecificActions()
+        {
+
+        }
+    }
 }
