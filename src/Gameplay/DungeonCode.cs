@@ -503,8 +503,8 @@ namespace The_Legend_of_Zelda.Gameplay
             Palettes.LoadPaletteGroup(PaletteID.BG_3, chosen_palette);
             Palettes.LoadPaletteGroup(PaletteID.SP_3, chosen_palette);
 
-            // dungeons 3, 5, 6 and 9 have red water (lava?)
-            if (current_dungeon is 2 or 4 or 5 or 8)
+            // dungeons 2, 3, 5, 6 and 9 have red water (lava?)
+            if (current_dungeon is 1 or 2 or 4 or 5 or 8)
                 Palettes.LoadPalette(PaletteID.BG_3, 1, Color._16_RED_ORANGE);
             else
                 Palettes.LoadPalette(PaletteID.BG_3, 1, Color._12_SMEI_DARK_BLUE);
@@ -668,16 +668,16 @@ namespace The_Legend_of_Zelda.Gameplay
                     case Bosses.AQUAMENTUS:
                         new Aquamentus();
                         break;
-                    case Bosses.DODONGO_TRIPLE:
-                        //new Dodongo();
-                        //new Dodongo();
-                        //new Dodongo();
-                        break;
                     case Bosses.DODONGO:
-                        //new Dodongo();
+                        new Dodongo();
+                        break;
+                    case Bosses.DODONGO_TRIPLE:
+                        new Dodongo(true);
+                        new Dodongo(true, 48, 112);
+                        new Dodongo(true, 80, 96);
                         break;
                     case Bosses.MANHANDLA:
-                        //new Manhandla();
+                        new Manhandla();
                         break;
                     case Bosses.GLEEOK:
                         //new Gleeok(2);

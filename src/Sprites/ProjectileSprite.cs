@@ -317,7 +317,7 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class BombSprite : ProjectileSprite
     {
-        byte explosion_timer = 86;
+        public byte explosion_timer = 86;
         StaticSprite[] smoke = new StaticSprite[8];
         static readonly int[,] smoke_init_pos = new int[8, 2]
         {
@@ -450,6 +450,8 @@ namespace The_Legend_of_Zelda.Sprites
                     e.x < x + 24 &&
                     e.x > x - 24)
                 {
+                    e.hit_cause = typeof(BombSprite);
+
                     if (e.TakeDamage(4))
                         i--;
                 }
@@ -945,6 +947,10 @@ namespace The_Legend_of_Zelda.Sprites
             tile_index = 0x44;
             unload_during_transition = true;
             is_from_link = false;
+
+            // put above everything
+            Screen.sprites.Remove(this);
+            Screen.sprites.Insert(0, this);
         }
 
         public override void ProjSpecificActions()

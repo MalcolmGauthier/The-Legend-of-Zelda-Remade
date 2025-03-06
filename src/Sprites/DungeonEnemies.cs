@@ -638,6 +638,7 @@ namespace The_Legend_of_Zelda.Sprites
                 spawn_x = x;
                 spawn_y = y;
                 invincible = true;
+                unaffected_by_clock = true;
                 HP = float.PositiveInfinity;
                 damage = 1f;
                 palette_index = (byte)PaletteID.SP_1;
@@ -909,6 +910,7 @@ namespace The_Legend_of_Zelda.Sprites
             damage = 0;
             bubble_timer = 0;
             bubble_timer_lock = Program.gTimer;
+            unaffected_by_clock = true;
         }
 
         protected override void EnemySpecificActions()

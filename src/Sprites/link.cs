@@ -165,7 +165,7 @@ namespace The_Legend_of_Zelda.Sprites
             raft = true;
             boomerang = true;
             power_bracelet = true;
-            wooden_sword = true;
+            //magical_sword = true;
             letter = true;
         }
 

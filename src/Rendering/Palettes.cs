@@ -72,7 +72,7 @@ namespace The_Legend_of_Zelda.Rendering
         _3F_BLACK
     }
 
-    public enum PaletteID
+    public enum PaletteID : byte
     {
         BG_0,
         BG_1,
@@ -112,7 +112,9 @@ namespace The_Legend_of_Zelda.Rendering
             DUNGEON4_6,
             DUNGEON5_7,
             DUNGEON8_9,
-            AQUAMENTUS
+            AQUAMENTUS,
+            DODONGO,
+            GLEEOK
         }
 
         public static byte[] active_palette_list = new byte[COLORS_IN_PALETTE * NUM_PALETTES];
@@ -143,6 +145,8 @@ namespace The_Legend_of_Zelda.Rendering
             {0x0a,0x1a,0x2a}, // dungeon 5 & 7
             {0x00,0x10,0x20}, // dungeon 8 & 9
             {0x0a,0x29,0x30}, // aquamentus
+            {0x17,0x27,0x30}, // dodongo
+            {0x2a,0x1a,0x0c}, // gleeok
         };
 
         // full NES color list - https://imgur.com/a/sGzojmV

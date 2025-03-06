@@ -29,7 +29,7 @@ namespace The_Legend_of_Zelda.Gameplay
             PEAHAT
         }
 
-        public const byte DEFAULT_SPAWN_ROOM = 55;
+        public const byte DEFAULT_SPAWN_ROOM = 116;
         public const byte LEVEL_7_ENTRANCE_ANIM_DONE = 255;
 
         public byte return_screen = DEFAULT_SPAWN_ROOM;

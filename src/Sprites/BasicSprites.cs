@@ -100,6 +100,7 @@ namespace The_Legend_of_Zelda.Sprites
         {
             this.x = x;
             this.y = y;
+            unaffected_by_clock = true;
             palette_index = (byte)PaletteID.SP_2;
             counterpart.palette_index = (byte)PaletteID.SP_2;
 
@@ -173,6 +174,7 @@ namespace The_Legend_of_Zelda.Sprites
             counterpart.y = y;
             can_always_act = true;
             can_damage_link = false;
+            unaffected_by_clock = true;
             HP = float.PositiveInfinity;
             if (Program.gamemode == Gamemode.OVERWORLD)
                 invincible = true;

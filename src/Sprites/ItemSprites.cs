@@ -672,6 +672,15 @@ namespace The_Legend_of_Zelda.Sprites
             if (collected)
             {
                 Link.clock_flash = true;
+
+                foreach (Sprite sprite in Screen.sprites)
+                {
+                    if (sprite is WizrobeOrange or WizrobeBlue)
+                    {
+                        sprite.shown = true;
+                    }
+                }
+
                 Screen.sprites.Remove(counterpart);
                 Screen.sprites.Remove(this);
             }

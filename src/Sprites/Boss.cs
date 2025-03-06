@@ -1,4 +1,5 @@
-﻿using The_Legend_of_Zelda.Gameplay;
+﻿using System;
+using The_Legend_of_Zelda.Gameplay;
 using The_Legend_of_Zelda.Rendering;
 using static The_Legend_of_Zelda.Gameplay.Program;
 
@@ -14,6 +15,7 @@ namespace The_Legend_of_Zelda.Sprites
             counterpart.tile_index = (byte)SpriteID.BLANK;
             tile_location_1 = tile_index;
             tile_location_2 = tile_index;
+            stunnable = false;
         }
 
         protected override void OnDeath()
@@ -37,15 +39,9 @@ namespace The_Legend_of_Zelda.Sprites
                 s[1] = new MagicOrbProjectileSprite(x + 8, y, 1);
                 s[2] = new MagicOrbProjectileSprite(x + 8, y, -1);
             }
-
-            // set sprite priority to above all. without this, projectiles appear behind boss
-            foreach (Sprite spr in s)
-            {
-                Screen.sprites.Remove(spr);
-                Screen.sprites.Insert(0, spr);
-            }
         }
     }
+
 
     internal class Aquamentus : Boss
     {
@@ -150,33 +146,652 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Dodongo : Boss
     {
-        public Dodongo() : base(4)
+        static HashSet<BombSprite> bombs_on_screen = new();
+        static int bomb_set_lock = 0;
+
+        int real_hp;
+        bool triple;
+
+        public Dodongo(bool triple = false, int custom_x = 80, int custom_y = 160): base(4)
         {
+            smoke_appearance = true;
+            instant_smoke = true;
+            HP = 1;
+            stunnable = false;
+            invincible = true;
+            frames_between_anim = 8;
+            real_hp = 3;
+            speed = 0.5f;
+            body = new StaticSprite[4];
+
+            Palettes.LoadPaletteGroup(PaletteID.SP_3, Palettes.PaletteGroups.DODONGO);
+            palette_index = (byte)PaletteID.SP_3;
+            current_action = ActionState.WALKING;
+            facing_direction = Program.RNG.Next(2) == 0 ? Direction.UP : Direction.RIGHT;
+
+            x = custom_x;
+            y = custom_y;
+            this.triple = triple;
+            SetCustomSize(16, 8);
+            bombs_on_screen.Clear();
+            for (int i = 0; i < body.Length; i++)
+            {
+                body[i] = new(0, PaletteID.SP_3, x + i * 8, y);
+                body[i].unload_during_transition = true;
+            }
+
+            this.triple = triple;
         }
 
         protected override void EnemySpecificActions()
         {
-            throw new NotImplementedException();
+            switch (current_action)
+            {
+                case ActionState.WALKING:
+                    Walk();
+                    CheckForBombs();
+                    break;
+
+                // still
+                case ActionState.DEFAULT:
+                    if (local_timer >= 32)
+                    {
+                        current_action = ActionState.FLYING;
+                        frames_between_anim = 0;
+                        local_timer = 0;
+                    }
+                    break;
+
+                // boom
+                case ActionState.FLYING:
+                    if (local_timer == 1)
+                    {
+                        switch (facing_direction)
+                        {
+                            case Direction.UP:
+                                body[0].tile_index = 0xfe;
+                                body[1].tile_index = 0xfe;
+                                body[1].xflip = true;
+                                break;
+                            case Direction.DOWN:
+                                body[0].tile_index = 0xf8;
+                                body[1].tile_index = 0xf8;
+                                body[1].xflip = true;
+                                break;
+                            case Direction.LEFT:
+                                body[3].tile_index = 0xec;
+                                body[2].tile_index = 0xee;
+                                body[1].tile_index = 0xf0;
+                                body[0].tile_index = 0xf2;
+                                // no need to set xflip because left walk anim already does that
+                                break;
+                            case Direction.RIGHT:
+                                body[0].tile_index = 0xec;
+                                body[1].tile_index = 0xee;
+                                body[2].tile_index = 0xf0;
+                                body[3].tile_index = 0xf2;
+                                break;
+                        }
+                    }
+
+                    if (local_timer >= 65)
+                    {
+                        if (real_hp <= 0)
+                        {
+                            current_action = ActionState.BURROWING;
+                            local_timer = 0;
+                            frames_between_anim = 1;
+                            Animation();
+                            return;
+                        }
+
+                        current_action = ActionState.WALKING;
+                        frames_between_anim = 8;
+                        Animation();
+                    }
+                    break;
+
+                // dying
+                case ActionState.BURROWING:
+                    if (local_timer % 4 == 0)
+                        body[0].shown = true;
+                    else if (local_timer % 4 == 2)
+                        body[0].shown = false;
+
+                    body[1].shown = body[0].shown;
+                    body[2].shown = body[0].shown;
+                    body[3].shown = body[0].shown;
+
+                    if (local_timer >= 64)
+                    {
+                        HP = 0;
+                        appeared = false;
+                        local_timer = 0;
+                        OnDeath();
+                    }
+                    break;
+
+                // stunned from smoke
+                case ActionState.RESTING:
+                    if (local_timer >= 330)
+                    {
+                        current_action = ActionState.WALKING;
+                        frames_between_anim = 8;
+                        invincible = true;
+                    }
+                    break;
+            }
+
+            for (int i = 0; i < body.Length; i++)
+            {
+                body[i].y = y;
+                body[i].x = x + i * 8;
+            }
+        }
+
+        void CheckForBombs()
+        {
+            // update bomb list to keep track of bombs
+            if (bomb_set_lock != Program.gTimer)
+            {
+                // add new bombs
+                foreach (Sprite s in Screen.sprites)
+                {
+                    if (s is BombSprite b)
+                    {
+                        bombs_on_screen.Add(b);
+                    }
+                }
+
+                // remove deleted bombs
+                List<BombSprite> l = bombs_on_screen.ToList();
+                for (int i = 0; i < l.Count; i++)
+                {
+                    if (!Screen.sprites.Contains(l[i]))
+                    {
+                        bombs_on_screen.Remove(l[i]);
+                        l.RemoveAt(i);
+                        i--;
+                    }
+                }
+
+                bomb_set_lock = Program.gTimer;
+            }
+
+            bool bomb_eaten = false;
+
+            foreach (BombSprite bomb in bombs_on_screen)
+            {
+                // dodongo dislikes smoke.
+                if (bomb.explosion_timer == 37)
+                {
+                    if (Math.Abs(bomb.x - x + 8) <= 8 && Math.Abs(bomb.y - y) <= 8)
+                    {
+                        current_action = ActionState.RESTING;
+                        local_timer = 0;
+                        frames_between_anim = 32;
+                        invincible = false;
+                        return;
+                    }
+
+                    continue;
+                }
+
+                // bomb fully exploded
+                if (bomb.explosion_timer < 37)
+                {
+                    continue;
+                }
+
+                // dodongo eating bomb
+                switch (facing_direction)
+                {
+                    case Direction.UP:
+                        if (bomb.x >= x && bomb.x <= x + 8 && bomb.y <= y - 4 && bomb.y >= y - 8)
+                            bomb_eaten = true;
+                        break;
+                    case Direction.DOWN:
+                        if (bomb.x >= x && bomb.x <= x + 8 && bomb.y >= y + 12 && bomb.y <= y + 16)
+                            bomb_eaten = true;
+                        break;
+                    case Direction.LEFT:
+                        if (bomb.y >= y - 4 && bomb.y <= y + 4 && bomb.x <= x - 4 && bomb.x >= x - 8)
+                            bomb_eaten = true;
+                        break;
+                    case Direction.RIGHT:
+                        if (bomb.y >= y - 4 && bomb.y <= y + 4 && bomb.x >= x + 28 && bomb.x <= x + 32)
+                            bomb_eaten = true;
+                        break;
+                }
+
+                if (bomb_eaten)
+                {
+                    real_hp--;
+                    Screen.sprites.Remove(bomb);
+                    Menu.bomb_out = false;
+                    current_action = ActionState.DEFAULT;
+                    local_timer = 0;
+                    return;
+                }
+            }
+        }
+
+        // cancel all damage. damage can only be done by eating bomb.
+        // unless stunned. stunned dodongos are one-hit.
+        protected override void OnDamaged()
+        {
+            if (current_action == ActionState.RESTING)
+                return;
+
+            iframes_timer = 0;
+            knockback_timer = 0;
+            HP = 1;
+        }
+
+        protected override void Animation()
+        {
+            if (frames_between_anim == 0)
+                return;
+
+            bool side_movement = facing_direction == Direction.LEFT || facing_direction == Direction.RIGHT;
+            bool anim_first_half = local_timer % (frames_between_anim * 2) < frames_between_anim;
+            body[2].shown = side_movement;
+            body[3].shown = side_movement;
+
+            switch (facing_direction)
+            {
+                case Direction.UP:
+                    body[0].xflip = !anim_first_half;
+                    body[1].xflip = !anim_first_half;
+                    if (anim_first_half)
+                    {
+                        body[0].tile_index = 0xfa;
+                        body[1].tile_index = 0xfc;
+                    }
+                    else
+                    {
+                        body[0].tile_index = 0xfc;
+                        body[1].tile_index = 0xfa;
+                    }
+                    break;
+                case Direction.DOWN:
+                    body[0].xflip = !anim_first_half;
+                    body[1].xflip = !anim_first_half;
+                    if (anim_first_half)
+                    {
+                        body[0].tile_index = 0xf4;
+                        body[1].tile_index = 0xf6;
+                    }
+                    else
+                    {
+                        body[0].tile_index = 0xf6;
+                        body[1].tile_index = 0xf4;
+                    }
+                    break;
+                case Direction.LEFT:
+                    foreach (Sprite s in body)
+                        s.xflip = true;
+                    if (anim_first_half)
+                    {
+                        body[0].tile_index = 0xe2;
+                        body[1].tile_index = 0xe0;
+                        body[2].tile_index = 0xde;
+                        body[3].tile_index = 0xdc;
+                    }
+                    else
+                    {
+                        body[0].tile_index = 0xea;
+                        body[1].tile_index = 0xe8;
+                        body[2].tile_index = 0xe6;
+                        body[3].tile_index = 0xe4;
+                    }
+                    break;
+                case Direction.RIGHT:
+                    foreach (Sprite s in body)
+                        s.xflip = false;
+                    if (anim_first_half)
+                    {
+                        body[0].tile_index = 0xdc;
+                        body[1].tile_index = 0xde;
+                        body[2].tile_index = 0xe0;
+                        body[3].tile_index = 0xe2;
+                    }
+                    else
+                    {
+                        body[0].tile_index = 0xe4;
+                        body[1].tile_index = 0xe6;
+                        body[2].tile_index = 0xe8;
+                        body[3].tile_index = 0xea;
+                    }
+                    break;
+            }
+        }
+
+        protected override void OnInit()
+        {
+            shown = false;
+            counterpart.shown = false;
+            Animation();
+            for (int i = 0; i < body.Length; i++)
+            {
+                body[i].x = x + i * 8;
+                body[i].palette_index = palette_index;
+                Screen.sprites.Add(body[i]);
+            }
+        }
+
+        protected override bool OnTileMoved()
+        {
+            // prevent dodongo from walking onto rightmost tile collumn
+            if (x >= 192 && facing_direction == Direction.RIGHT)
+            {
+                facing_direction = (Direction)RNG.Next(3);
+            }
+
+            return true;
+        }
+
+        protected override void OnDeath()
+        {
+            base.OnDeath();
+
+            // triple dodongos do not count as bosses, apparently
+            if (triple)
+                SaveLoad.SetBossKillsFlag((byte)Array.IndexOf(DC.rooms_with_bosses, DC.current_screen), false);
         }
     }
 
     internal class Manhandla : Boss
     {
+        private class ManhandlaHead : Enemy
+        {
+            Manhandla parent;
+            int shooting_timer = 0;
+            int animation_timer = 0;
+            bool frame_2 = false;
+
+            public ManhandlaHead(Manhandla parent, Direction dir) : base(0, 0xe0, 0xe4, false, false, 5, 0, 0, true)
+            {
+                this.parent = parent;
+                this.facing_direction = dir;
+                shooting_timer = RNG.Next(30);
+                palette_index = parent.palette_index;
+                counterpart.palette_index = parent.palette_index;
+                DC.nb_enemies_alive++;
+                HP = 4;
+
+                switch (dir)
+                {
+                    case Direction.DOWN:
+                        yflip = true;
+                        counterpart.yflip = true;
+                        goto case Direction.UP;
+                    case Direction.UP:
+                        tile_location_1 = 0xe8;
+                        tile_location_2 = 0xea;
+                        counterpart.xflip = true;
+                        break;
+
+                    case Direction.RIGHT:
+                        tile_location_1 = 0xe4;
+                        tile_location_2 = 0xe0;
+                        xflip = true;
+                        counterpart.xflip = true;
+                        break;
+                    case Direction.LEFT:
+                        tile_location_1 = 0xe0;
+                        tile_location_2 = 0xe4;
+                        break;
+                }
+
+                Animation();
+            }
+
+            protected override void EnemySpecificActions()
+            {
+                shooting_timer--;
+                if (shooting_timer <= 0)
+                {
+                    new MagicOrbProjectileSprite(x + 4, y);
+                    shooting_timer = RNG.Next(60, 120);
+                }
+            }
+
+            protected override void Animation()
+            {
+                animation_timer--;
+
+                if (animation_timer > 0)
+                    return;
+
+                byte tile = frame_2 ? tile_location_2 : tile_location_1;
+                frame_2 = !frame_2;
+
+                if (facing_direction == Direction.UP ||  facing_direction == Direction.DOWN)
+                {
+                    tile_index = tile;
+                    counterpart.tile_index = tile;
+                }
+                else if (facing_direction == Direction.RIGHT)
+                {
+                    // lol
+                    tile_index = (byte)(tile ^ 2);
+                    counterpart.tile_index = tile;
+                }
+                else
+                {
+                    tile_index = tile;
+                    counterpart.tile_index = (byte)(tile ^ 2);
+                }
+
+                animation_timer = RNG.Next(5, 15);
+            }
+
+            // apparently manhandla is immune to fire
+            public override bool OnProjectileHit()
+            {
+                return hit_cause != typeof(ThrownFireSprite);
+            }
+
+            protected override void OnDeath()
+            {
+                parent.speed += 0.5f;
+            }
+        }
+
+        int turn_timer = 0;
+        EightDirection direction;
+        ManhandlaHead[] heads = new ManhandlaHead[4];
+
         public Manhandla() : base(4)
         {
+            smoke_appearance = false;
+            HP = 1;
+            invincible = true;
+            frames_between_anim = 8;
+            speed = 0.5f;
+
+            tile_location_1 = 0xec;
+            tile_location_2 = 0xec;
+            counterpart.xflip = true;
+            animation_mode = AnimationMode.ONEFRAME_M;
+            palette_index = (byte)PaletteID.SP_1;
+            current_action = ActionState.WALKING;
+            facing_direction = Program.RNG.Next(2) == 0 ? Direction.UP : Direction.RIGHT;
+
+            x = 128;
+            y = 128;
+            for (int i = 0; i < heads.Length; i++)
+            {
+                heads[i] = new ManhandlaHead(this, (Direction)i);
+
+                heads[i].x = x;
+                heads[i].y = y;
+
+                switch (heads[i].facing_direction)
+                {
+                    case Direction.UP:
+                        heads[i].y -= 16;
+                        break;
+                    case Direction.DOWN:
+                        heads[i].y += 16;
+                        break;
+                    case Direction.LEFT:
+                        heads[i].x -= 16;
+                        break;
+                    case Direction.RIGHT:
+                        heads[i].x += 16;
+                        break;
+                }
+            }
         }
 
         protected override void EnemySpecificActions()
         {
-            throw new NotImplementedException();
+            // normal spd: 0.5u/f
+            // 3 heads: 1u/f
+            // 2 heads: 1.5u/f
+            // 1 head: 2u/f
+            turn_timer--;
+            if (turn_timer <= 0)
+            {
+                direction = PickNewDirection();
+                turn_timer = RNG.Next(30, 120);
+            }
+
+            Move8D();
+            CheckBounds();
+
+            int head_count = 0;
+            foreach (ManhandlaHead m in heads)
+            {
+                if (m.HP <= 0)
+                    continue;
+
+                head_count++;
+                m.x = x;
+                m.y = y;
+
+                switch (m.facing_direction)
+                {
+                    case Direction.UP:
+                        m.y -= 16;
+                        break;
+                    case Direction.DOWN:
+                        m.y += 16;
+                        break;
+                    case Direction.LEFT:
+                        m.x -= 16;
+                        break;
+                    case Direction.RIGHT:
+                        m.x += 16;
+                        break;
+                }
+            }
+
+            if (head_count == 0)
+            {
+                HP = 0;
+                appeared = false;
+                OnDeath();
+                return;
+            }
+        }
+
+        void Move8D()
+        {
+            int rounded_spd = (int)MathF.Floor(speed);
+
+            if (speed % 1 != 0 && local_timer % 2 == 1)
+                rounded_spd++;
+
+            if (direction == EightDirection.UP || direction == EightDirection.UPLEFT ||
+                direction == EightDirection.UPRIGHT)
+            {
+                y -= rounded_spd;
+            }
+            else if (direction == EightDirection.DOWN || direction == EightDirection.DOWNLEFT ||
+                direction == EightDirection.DOWNRIGHT)
+            {
+                y += rounded_spd;
+            }
+
+            if (direction == EightDirection.LEFT || direction == EightDirection.UPLEFT ||
+                direction == EightDirection.DOWNLEFT)
+            {
+                x -= rounded_spd;
+            }
+            else if (direction == EightDirection.RIGHT || direction == EightDirection.UPRIGHT ||
+                direction == EightDirection.DOWNRIGHT)
+            {
+                x += rounded_spd;
+            }
+        }
+
+        // either turns left, turns right or continues forward
+        EightDirection PickNewDirection()
+        {
+            EightDirection return_val = direction;
+            int rng = Program.RNG.Next(3);
+
+            if (rng == 2)
+                return return_val;
+
+            if (direction == EightDirection.UP)
+                return rng == 0 ? EightDirection.UPLEFT : EightDirection.UPRIGHT;
+            if (direction == EightDirection.DOWN)
+                return rng == 0 ? EightDirection.DOWNLEFT : EightDirection.DOWNRIGHT;
+            if (direction == EightDirection.LEFT)
+                return rng == 0 ? EightDirection.UPLEFT : EightDirection.DOWNLEFT;
+            if (direction == EightDirection.RIGHT)
+                return rng == 0 ? EightDirection.UPRIGHT : EightDirection.DOWNRIGHT;
+            if (direction == EightDirection.UPLEFT)
+                return rng == 0 ? EightDirection.UP : EightDirection.LEFT;
+            if (direction == EightDirection.DOWNLEFT)
+                return rng == 0 ? EightDirection.DOWN : EightDirection.LEFT;
+            if (direction == EightDirection.UPRIGHT)
+                return rng == 0 ? EightDirection.UP : EightDirection.RIGHT;
+            else
+                return rng == 0 ? EightDirection.RIGHT : EightDirection.DOWN;
+        }
+
+        void CheckBounds()
+        {
+            if (x <= 48 || x >= 192 || y <= 112 || y >= 176)
+            {
+                // the math works out.
+                if (direction < (EightDirection)4)
+                    direction ^= (EightDirection)1;
+                else
+                    direction ^= (EightDirection)0b11;
+
+                Move8D();
+            }
         }
     }
 
     internal class Gleeok : Boss
     {
+        private class GleeokHead : Enemy
+        {
+            Gleeok parent;
+            StaticSprite[] neck = new StaticSprite[3];
+
+            public GleeokHead(Gleeok parent) : base(0, 0xdc, 0x1c, false, false, 0, 0, 0, true)
+            {
+
+            }
+
+            protected override void EnemySpecificActions()
+            {
+                ;
+            }
+        }
+
         public Gleeok(int heads) : base(4)
         {
             Math.Clamp(heads, 1, 4);
+            body = new StaticSprite[7];
         }
 
         protected override void EnemySpecificActions()
@@ -223,8 +838,15 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class Patra : Boss
     {
-        // enum? 2 ou 3?
-        public Patra(bool pattern) : base(4)
+        public enum PatraType
+        {
+            EXPANDING,
+            ROTATING
+        }
+
+        PatraType type;
+
+        public Patra(PatraType pattern) : base(4)
         {
         }
 

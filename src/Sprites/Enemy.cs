@@ -66,6 +66,7 @@ namespace The_Legend_of_Zelda.Sprites
         protected bool die_when_stunned = false;
         protected bool no_random_turn_flag = false;
         protected bool can_always_act = false;
+        protected bool unaffected_by_clock = false;
         public bool invincible = false;
         public bool bomb_death = false;
         bool target_antilink = false;
@@ -79,11 +80,11 @@ namespace The_Legend_of_Zelda.Sprites
         byte nb_of_times_moved = 0;
         byte og_palette;
 
-        protected float HP = 0;
+        public float HP { get; protected set; } = 0;
         protected float speed = 0;
         protected float damage = 0;
 
-        protected Direction facing_direction;
+        public Direction facing_direction { get; protected set; }
         protected Direction knockback_direction;
         protected AnimationMode animation_mode;
         public ActionState current_action = ActionState.DEFAULT;
@@ -165,7 +166,7 @@ namespace The_Legend_of_Zelda.Sprites
 
                 TouchingSword();
 
-                if (current_action == ActionState.STUNNED || Link.clock_flash)
+                if (current_action == ActionState.STUNNED || (Link.clock_flash && !unaffected_by_clock))
                     Stunned();
                 else
                     EnemySpecificActions();

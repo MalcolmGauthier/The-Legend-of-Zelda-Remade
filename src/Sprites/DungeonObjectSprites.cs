@@ -266,6 +266,7 @@ namespace The_Legend_of_Zelda.Sprites
         public DamageableFireSprite() : base(AnimationMode.TWOFRAMES, (byte)SpriteID.FIRE_L, (byte)SpriteID.FIRE_L, false, false, 6, 0, 0, true)
         {
             HP = 1;
+            unaffected_by_clock = true;
         }
 
         protected override void EnemySpecificActions()
