@@ -518,6 +518,7 @@ namespace The_Legend_of_Zelda.Sprites
                 palette_index = parent.palette_index;
                 counterpart.palette_index = parent.palette_index;
                 DC.nb_enemies_alive++;
+                stunnable = false;
                 HP = 4;
 
                 switch (dir)
@@ -774,41 +775,348 @@ namespace The_Legend_of_Zelda.Sprites
     {
         private class GleeokHead : Enemy
         {
+            public const int NECK_START_X = 124;
+            public const int NECK_START_Y = 112;
+
+            int projectile_timer = 0;
+            int random_turn_timer = 0;
             Gleeok parent;
+            EightDirection direction;
             StaticSprite[] neck = new StaticSprite[3];
 
             public GleeokHead(Gleeok parent) : base(0, 0xdc, 0x1c, false, false, 0, 0, 0, true)
             {
+                this.parent = parent;
+                this.x = 124;
+                this.y = 132;
+                direction = (EightDirection)RNG.Next(4, 8);
+                tile_index = 0xdc;
+                palette_index = (byte)PaletteID.SP_3;
+                HP = 10;
+                stunnable = false;
+                for (int i = 0; i < neck.Length; i++)
+                {
+                    neck[i] = new StaticSprite(0xda, (byte)PaletteID.SP_3, 0, 0);
+                    Screen.sprites.Add(neck[i]);
+                }
 
+                EnemySpecificActions();
             }
 
             protected override void EnemySpecificActions()
             {
-                ;
+                projectile_timer--;
+                if (projectile_timer <= 0)    
+                {
+                    new MagicOrbProjectileSprite(x, y);
+                    projectile_timer = RNG.Next(120, 240);
+                }
+
+                Move8D();
+                CheckBounds();
+
+                if (invincible)
+                    return;
+
+                for (int i = 0; i < neck.Length; i++)
+                {
+                    // overengineered way of just saying 0.25, 0.5 and 0.75
+                    float factor = (i + 1) * (1f / (neck.Length + 1));
+                    // squaring the factor makes it not a straight line
+                    neck[i].x = (int)(x + (NECK_START_X - x) * factor * factor);
+                    neck[i].y = (int)(y + (NECK_START_Y - y) * factor);
+                }
+            }
+
+            protected override void Animation()
+            {
+                if (!invincible)
+                    return;
+
+                if (local_timer % 2 == 0)
+                    tile_index = 0xde;
+                else
+                    tile_index = 0xee;
+
+                counterpart.tile_index = tile_index;
+            }
+
+            protected override void OnDamaged()
+            {
+                parent.flash_timer = flash_timer;
+                flash_timer = 0;
+            }
+
+            public override bool OnProjectileHit()
+            {
+                return hit_cause == typeof(SwordProjectileSprite);
+            }
+
+            protected override void OnDeath()
+            {
+                invincible = true;
+                appeared = false;
+                HP = 1;
+                foreach (Sprite s in neck)
+                {
+                    Screen.sprites.Remove(s);
+                }
+
+                tile_index = 0xde;
+                counterpart.tile_index = 0xde;
+                counterpart.xflip = true;
+                palette_index = (byte)PaletteID.SP_2;
+                counterpart.palette_index = (byte)PaletteID.SP_2;
+            }
+
+            public void Kill()
+            {
+                Screen.sprites.Remove(this);
+                Screen.sprites.Remove(counterpart);
+            }
+
+
+            void Move8D()
+            {
+                if (!invincible)
+                {
+                    if (local_timer % 4 != 0)
+                        return;
+                }
+                else
+                {
+                    if (local_timer % 8 == 0)
+                        return;
+                }
+
+                if (direction == EightDirection.UP || direction == EightDirection.UPLEFT ||
+                    direction == EightDirection.UPRIGHT)
+                {
+                    y--;
+                }
+                else if (direction == EightDirection.DOWN || direction == EightDirection.DOWNLEFT ||
+                    direction == EightDirection.DOWNRIGHT)
+                {
+                    y++;
+                }
+
+                if (direction == EightDirection.LEFT || direction == EightDirection.UPLEFT ||
+                    direction == EightDirection.DOWNLEFT)
+                {
+                    x--;
+                }
+                else if (direction == EightDirection.RIGHT || direction == EightDirection.UPRIGHT ||
+                    direction == EightDirection.DOWNRIGHT)
+                {
+                    x++;
+                }
+            }
+
+            EightDirection PickNewDirection()
+            {
+                EightDirection return_val = direction;
+                int rng = Program.RNG.Next(3);
+
+                if (rng == 2)
+                    return return_val;
+
+                if (direction == EightDirection.UP)
+                    return rng == 0 ? EightDirection.UPLEFT : EightDirection.UPRIGHT;
+                if (direction == EightDirection.DOWN)
+                    return rng == 0 ? EightDirection.DOWNLEFT : EightDirection.DOWNRIGHT;
+                if (direction == EightDirection.LEFT)
+                    return rng == 0 ? EightDirection.UPLEFT : EightDirection.DOWNLEFT;
+                if (direction == EightDirection.RIGHT)
+                    return rng == 0 ? EightDirection.UPRIGHT : EightDirection.DOWNRIGHT;
+                if (direction == EightDirection.UPLEFT)
+                    return rng == 0 ? EightDirection.UP : EightDirection.LEFT;
+                if (direction == EightDirection.DOWNLEFT)
+                    return rng == 0 ? EightDirection.DOWN : EightDirection.LEFT;
+                if (direction == EightDirection.UPRIGHT)
+                    return rng == 0 ? EightDirection.UP : EightDirection.RIGHT;
+                else
+                    return rng == 0 ? EightDirection.RIGHT : EightDirection.DOWN;
+            }
+
+            void CheckBounds()
+            {
+                random_turn_timer--;
+
+                if (!invincible)
+                {
+                    if (random_turn_timer <= 0)
+                    {
+                        random_turn_timer = RNG.Next(120, 600);
+                        direction ^= (EightDirection)0b11;
+                    }
+
+                    // lol bitwise reflection
+                    if (y < 120)
+                        direction |= (EightDirection)0b10;
+                    else if (y > 142)
+                        direction &= (EightDirection)0b101;
+                    else if (x < 104)
+                        direction |= (EightDirection)0b1;
+                    else if (x > 144)
+                        direction &= (EightDirection)0b110;
+                }
+                else
+                {
+                    if (random_turn_timer <= 0)
+                    {
+                        random_turn_timer = RNG.Next(15, 60);
+                        direction = PickNewDirection();
+                    }
+
+                    if (x <= 32 || x >= 208 || y <= 96 || y >= 192)
+                    {
+                        // the math works out.
+                        if (direction < (EightDirection)4)
+                            direction ^= (EightDirection)1;
+                        else
+                            direction ^= (EightDirection)0b11;
+
+                        Move8D();
+                    }
+                }
             }
         }
 
+
+        GleeokHead[] heads;
+
         public Gleeok(int heads) : base(4)
         {
-            Math.Clamp(heads, 1, 4);
+            this.heads = new GleeokHead[heads];
             body = new StaticSprite[7];
+            invincible = true;
+            palette_index = (byte)PaletteID.SP_3;
+            frames_between_anim = 17;
+            HP = 1;
+            x = 116;
+            y = 88;
+
+            Palettes.LoadPaletteGroup(PaletteID.SP_3, Palettes.PaletteGroups.GLEEOK);
+
+            for (int i = 0; i < heads; i++)
+            {
+                this.heads[i] = new GleeokHead(this);
+            }
+
+            // give priority to neck root
+            body[6] = new StaticSprite(0xda, (byte)PaletteID.SP_3, GleeokHead.NECK_START_X, GleeokHead.NECK_START_Y);
+            body[6].unload_during_transition = true;
+            Screen.sprites.Add(body[6]);
+            for (int i = 0; i < body.Length - 1; i++)
+            {
+                body[i] = new StaticSprite(0, (byte)PaletteID.SP_3, x + (i % 3) * 8, y + (i / 3) * 16);
+                body[i].unload_during_transition = true;
+                Screen.sprites.Add(body[i]);
+            }
+
+            body[4].tile_index = 0xc6;
+            Animation();
         }
 
         protected override void EnemySpecificActions()
         {
-            throw new NotImplementedException();
+            int head_count = 0;
+            foreach (GleeokHead g in heads)
+            {
+                // if red floating head
+                if (g.invincible)
+                    continue;
+
+                head_count++;
+            }
+
+            if (head_count == 0)
+            {
+                HP = 0;
+                appeared = false;
+                local_timer = 0;
+                x += 8;
+                y += 16;
+                OnDeath();
+                foreach (GleeokHead g in heads)
+                {
+                    g.Kill();
+                }
+                return;
+            }
+        }
+
+        protected override void Animation()
+        {
+            int cycle_index = local_timer % (frames_between_anim * 4);
+
+            if (cycle_index < frames_between_anim)
+            {
+                body[0].tile_index = 0xc0;
+                body[1].tile_index = 0xc4;
+                body[2].tile_index = 0xc8;
+                body[3].tile_index = 0xc2;
+                body[5].tile_index = 0xca;
+            }
+            else if (cycle_index < frames_between_anim * 2 ||
+                    cycle_index >= frames_between_anim * 3)
+            {
+                body[0].tile_index = 0xcc;
+                body[1].tile_index = 0xc4;
+                body[2].tile_index = 0xce;
+                body[3].tile_index = 0xc2;
+                body[5].tile_index = 0xd0;
+            }
+            else
+            {
+                body[0].tile_index = 0xd2;
+                body[1].tile_index = 0xd6;
+                body[2].tile_index = 0xd8;
+                body[3].tile_index = 0xd4;
+                body[5].tile_index = 0xd0;
+            }
+
+            for (int i = 0; i < body.Length; i++)
+            {
+                body[i].palette_index = palette_index;
+            }
         }
     }
 
     internal class Digdogger : Boss
     {
-        public Digdogger(bool triple) : base(0)
+        bool triple;
+
+        public Digdogger(bool triple, bool start_small = false) : base(0)
         {
+            this.triple = triple;
+            invincible = true;
+            x = 160;
+            y = 192;
+            smoke_appearance = true;
+            instant_smoke = true;
+            SetCustomSize(32, 32);
+            body = new StaticSprite[8];
         }
 
         protected override void EnemySpecificActions()
         {
-            throw new NotImplementedException();
+            ;
+        }
+
+        public void OnRecorderPlayed()
+        {
+            if (triple)
+            {
+                new Digdogger(false, true);
+                new Digdogger(false, true);
+            }
+        }
+
+
+        protected override void Animation()
+        {
+
         }
     }
 

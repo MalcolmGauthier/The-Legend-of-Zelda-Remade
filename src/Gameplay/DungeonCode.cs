@@ -354,7 +354,7 @@ namespace The_Legend_of_Zelda.Gameplay
         public void Init(byte dungeon)
         {
             ReadOnlySpan<byte> starting_screens = new byte[]{
-                123, 117, 116, 121, 126, 113, 241, 246, 254
+                123, 117, 116, 121, 126, 16, 241, 246, 254//113
             };
 
             // reset link
@@ -680,13 +680,13 @@ namespace The_Legend_of_Zelda.Gameplay
                         new Manhandla();
                         break;
                     case Bosses.GLEEOK:
-                        //new Gleeok(2);
+                        new Gleeok(2);
                         break;
                     case Bosses.GLEEOK_TRIPLE:
-                        //new Gleeok(3);
+                        new Gleeok(3);
                         break;
                     case Bosses.GLEEOK_QUADRUPLE:
-                        //new Gleeok(4);
+                        new Gleeok(4);
                         break;
                     case Bosses.DIGDOGGER:
                         //new Digdogger(false);
@@ -701,7 +701,9 @@ namespace The_Legend_of_Zelda.Gameplay
                         //new Gohma(true);
                         break;
                     case Bosses.PATRA:
-                        //new Patra();
+                        byte[] rooms_with_twisting_patra = { };//TODO
+                        Patra.PatraType pattern = rooms_with_twisting_patra.Contains(current_screen) ? Patra.PatraType.ROTATING : Patra.PatraType.EXPANDING;
+                        //new Patra(pattern);
                         break;
                     case Bosses.MOLDORM:
                         //new Moldorm();

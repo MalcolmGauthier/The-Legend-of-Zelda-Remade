@@ -51,6 +51,8 @@ namespace The_Legend_of_Zelda.Sprites
         protected int target_x;
         protected int target_y;
         protected int frames_between_anim = 0;
+        protected int iframes_timer = 0;
+        protected int flash_timer = 0;
         int time_when_stunned = NOT_STUNNED;
         public int width { get; private set; } = 16;
         public int height { get; private set; } = 16;
@@ -72,7 +74,6 @@ namespace The_Legend_of_Zelda.Sprites
         bool target_antilink = false;
 
         protected byte smoke_random_appearance = 0;
-        protected byte iframes_timer = 0;
         protected byte knockback_timer = 0;
         protected byte drop_category = 0;
         protected byte tile_location_1 = 0;
@@ -171,7 +172,8 @@ namespace The_Legend_of_Zelda.Sprites
                 else
                     EnemySpecificActions();
 
-                if (iframes_timer > 0)
+                iframes_timer--;
+                if (flash_timer > 0)
                     HitFlash();
                 Knockback();
             }
@@ -896,14 +898,14 @@ namespace The_Legend_of_Zelda.Sprites
         void HitFlash()
         {
             byte new_palette;
-            if (iframes_timer == 1)
+            if (flash_timer == 1)
                 new_palette = og_palette;
             else
                 new_palette = (byte)((gTimer / 2) % 4 + 4);
 
             palette_index = new_palette;
             counterpart.palette_index = new_palette;
-            iframes_timer--;
+            flash_timer--;
         }
 
         void TouchingSword()
@@ -967,6 +969,7 @@ namespace The_Legend_of_Zelda.Sprites
             if (damage_taken != 0)
             {
                 iframes_timer = 48;
+                flash_timer = iframes_timer;
                 // if aligned on grid
                 if ((int)knockback_direction < 2 && x % 16 == 0 || (int)knockback_direction >= 2 && y % 16 == 0)
                     knockback_timer = 8;

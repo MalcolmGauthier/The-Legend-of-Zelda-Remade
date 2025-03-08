@@ -443,6 +443,14 @@ namespace The_Legend_of_Zelda.Sprites
                             new TornadoSprite(0, y);
                             Menu.tornado_out = true;
                         }
+                        else if (gamemode == Gamemode.DUNGEON)
+                        {
+                            foreach (Sprite s in sprites)
+                            {
+                                if (s is Digdogger d)
+                                    d.OnRecorderPlayed();
+                            }
+                        }
                     }
                     break;
 

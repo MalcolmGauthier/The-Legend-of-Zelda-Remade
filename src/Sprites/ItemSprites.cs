@@ -8,7 +8,7 @@ namespace The_Legend_of_Zelda.Sprites
     {
         UP,
         DOWN,
-        LEFT,// the ordering of the first 4 needs to be the same as Direction for FindBoomerangDirection() to be simpler
+        LEFT,// the ordering of the first 4 needs to be the same as Direction
         RIGHT,
         UPLEFT,
         UPRIGHT,
