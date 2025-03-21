@@ -150,7 +150,7 @@ namespace The_Legend_of_Zelda.Sprites
 
     internal class CaveNPC : Enemy
     {
-        public byte flash_timer = 200;
+        public byte npc_flash_timer = 200;
         bool aggressive = false;
 
         public CaveNPC(NPCCode.NPC displayed_npc) : base(AnimationMode.ONEFRAME_M, 0x70, 0, false, true, 0, 0, 0, true)
@@ -222,7 +222,7 @@ namespace The_Legend_of_Zelda.Sprites
 
         protected override void EnemySpecificActions()
         {
-            if (flash_timer < 100)
+            if (npc_flash_timer < 100)
             {
                 FlashDissapear();
             }
@@ -230,8 +230,8 @@ namespace The_Legend_of_Zelda.Sprites
 
         public void FlashDissapear()
         {
-            flash_timer++;
-            if (flash_timer % 2 == 1)
+            npc_flash_timer++;
+            if (npc_flash_timer % 2 == 1)
             {
                 shown = true;
                 counterpart.shown = true;
@@ -242,7 +242,7 @@ namespace The_Legend_of_Zelda.Sprites
                 counterpart.shown = false;
             }
 
-            if (flash_timer == 100)
+            if (npc_flash_timer == 100)
             {
                 NPCCode.npc_gone = true;
                 Program.DC.npc_active = false;

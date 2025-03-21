@@ -354,7 +354,7 @@ namespace The_Legend_of_Zelda.Gameplay
         public void Init(byte dungeon)
         {
             ReadOnlySpan<byte> starting_screens = new byte[]{
-                123, 117, 116, 121, 126, 16, 241, 246, 254//113
+                123, 117, 116, 121, 44, 113, 241, 246, 254//126
             };
 
             // reset link
@@ -651,6 +651,11 @@ namespace The_Legend_of_Zelda.Gameplay
             if (!ScrollingDone())
                 return;
 
+            if (room_list[current_screen] is ((byte)RoomType.STATUE_DUO or (byte)RoomType.ARENA))
+            {
+                new Statues();
+            }
+
             uint enemies = dungeon_enemy_list[current_screen];
             // the first 16 bits of the enemy code being FFFF is a signal to load the boss of that room instead, whose id is the 16 next bits.
             // yes, this means a dungeon room can't have 8 of the enemy of ID 15, because 0xFFFFFFFF spawns ganon.
@@ -689,10 +694,10 @@ namespace The_Legend_of_Zelda.Gameplay
                         new Gleeok(4);
                         break;
                     case Bosses.DIGDOGGER:
-                        //new Digdogger(false);
+                        new Digdogger(false);
                         break;
                     case Bosses.DIGDOGGER_TRIPLE:
-                        //new Digdogger(true);
+                        new Digdogger(true);
                         break;
                     case Bosses.GOHMA:
                         //new Gohma(false);
@@ -849,11 +854,6 @@ namespace The_Legend_of_Zelda.Gameplay
                 }
 
                 enemy_selector >>= 4;
-            }
-
-            if (room_list[current_screen] is ((byte)RoomType.STATUE_DUO or (byte)RoomType.ARENA))
-            {
-                new Statues();
             }
         }
 

@@ -1049,7 +1049,7 @@ namespace The_Legend_of_Zelda.Gameplay
             // of all the cases this function is used for, only the secret money doesn't make the NPC go away on collection
             if (warp_info is not (WarpType.SECRET_10 or WarpType.SECRET_30 or WarpType.SECRET_100) && able_to_get_item)
             {
-                cave_npc.flash_timer = 0;
+                cave_npc.npc_flash_timer = 0;
                 EraseText();
             }
 

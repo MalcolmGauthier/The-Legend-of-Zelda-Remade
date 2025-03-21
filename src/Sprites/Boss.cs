@@ -8,6 +8,11 @@ namespace The_Legend_of_Zelda.Sprites
     internal abstract class Boss : Enemy
     {
         protected StaticSprite[] body = [];
+        protected EightDirection facing_direction_8d;
+
+        protected int turnaround_timer_min = 0;
+        protected int turnaround_timer_max = 0;
+        int turnaround_timer_8d = 0;
 
         public Boss(byte drop_category) : base(AnimationMode.ONEFRAME, 0, 0, false, false, 0, 0, drop_category, true)
         {
@@ -38,6 +43,112 @@ namespace The_Legend_of_Zelda.Sprites
                 s[0] = new MagicOrbProjectileSprite(x + 8, y, 0);
                 s[1] = new MagicOrbProjectileSprite(x + 8, y, 1);
                 s[2] = new MagicOrbProjectileSprite(x + 8, y, -1);
+            }
+        }
+
+        protected void Move8D(float speed)
+        {
+            if (--turnaround_timer_8d <= 0)
+            {
+                facing_direction_8d = PickNewDirection();
+                turnaround_timer_8d = RNG.Next(turnaround_timer_min, turnaround_timer_max);
+            }
+
+            if (speed % 1 != 0)
+            {
+                float remainder = speed % 1;
+
+                // calculate the cycle length and when to add an extra speed unit
+                int cycleLength = (int)Math.Round(1f / remainder);
+                if (local_timer % cycleLength < remainder * cycleLength)
+                    speed = (int)Math.Ceiling(speed);
+                else
+                    speed = (int)Math.Floor(speed);
+            }
+
+            if (facing_direction_8d == EightDirection.UP || facing_direction_8d == EightDirection.UPLEFT ||
+                facing_direction_8d == EightDirection.UPRIGHT)
+            {
+                y -= (int)speed;
+            }
+            else if (facing_direction_8d == EightDirection.DOWN || facing_direction_8d == EightDirection.DOWNLEFT ||
+                facing_direction_8d == EightDirection.DOWNRIGHT)
+            {
+                y += (int)speed;
+            }
+
+            if (facing_direction_8d == EightDirection.LEFT || facing_direction_8d == EightDirection.UPLEFT ||
+                facing_direction_8d == EightDirection.DOWNLEFT)
+            {
+                x -= (int)speed;
+            }
+            else if (facing_direction_8d == EightDirection.RIGHT || facing_direction_8d == EightDirection.UPRIGHT ||
+                facing_direction_8d == EightDirection.DOWNRIGHT)
+            {
+                x += (int)speed;
+            }
+
+            CheckBounds();
+        }
+
+        EightDirection PickNewDirection()
+        {
+            EightDirection return_val = facing_direction_8d;
+            int rng = Program.RNG.Next(3);
+
+            if (rng == 2)
+                return return_val;
+
+            if (facing_direction_8d == EightDirection.UP)
+                return rng == 0 ? EightDirection.UPLEFT : EightDirection.UPRIGHT;
+            if (facing_direction_8d == EightDirection.DOWN)
+                return rng == 0 ? EightDirection.DOWNLEFT : EightDirection.DOWNRIGHT;
+            if (facing_direction_8d == EightDirection.LEFT)
+                return rng == 0 ? EightDirection.UPLEFT : EightDirection.DOWNLEFT;
+            if (facing_direction_8d == EightDirection.RIGHT)
+                return rng == 0 ? EightDirection.UPRIGHT : EightDirection.DOWNRIGHT;
+            if (facing_direction_8d == EightDirection.UPLEFT)
+                return rng == 0 ? EightDirection.UP : EightDirection.LEFT;
+            if (facing_direction_8d == EightDirection.DOWNLEFT)
+                return rng == 0 ? EightDirection.DOWN : EightDirection.LEFT;
+            if (facing_direction_8d == EightDirection.UPRIGHT)
+                return rng == 0 ? EightDirection.UP : EightDirection.RIGHT;
+            else
+                return rng == 0 ? EightDirection.RIGHT : EightDirection.DOWN;
+        }
+
+        protected virtual void CheckBounds()
+        {
+            if (x <= 32 || x >= 224 - width || y <= 96 || y >= 208 - height)
+            {
+                // the math works out.
+                if (facing_direction_8d < (EightDirection)4)
+                    facing_direction_8d ^= (EightDirection)1;
+                else
+                    facing_direction_8d ^= (EightDirection)0b11;
+
+                // don't call move8d(1) because that contains this method and would throw stackoverflow exception
+                if (facing_direction_8d == EightDirection.UP || facing_direction_8d == EightDirection.UPLEFT ||
+                facing_direction_8d == EightDirection.UPRIGHT)
+                {
+                    y--;
+                }
+                else if (facing_direction_8d == EightDirection.DOWN || facing_direction_8d == EightDirection.DOWNLEFT ||
+                    facing_direction_8d == EightDirection.DOWNRIGHT)
+                {
+                    y++;
+                }
+
+                if (facing_direction_8d == EightDirection.LEFT || facing_direction_8d == EightDirection.UPLEFT ||
+                    facing_direction_8d == EightDirection.DOWNLEFT)
+                {
+                    x--;
+                }
+                else if (facing_direction_8d == EightDirection.RIGHT || facing_direction_8d == EightDirection.UPRIGHT ||
+                    facing_direction_8d == EightDirection.DOWNRIGHT)
+                {
+                    x++;
+                }
             }
         }
     }
@@ -600,8 +711,6 @@ namespace The_Legend_of_Zelda.Sprites
             }
         }
 
-        int turn_timer = 0;
-        EightDirection direction;
         ManhandlaHead[] heads = new ManhandlaHead[4];
 
         public Manhandla() : base(4)
@@ -619,6 +728,8 @@ namespace The_Legend_of_Zelda.Sprites
             palette_index = (byte)PaletteID.SP_1;
             current_action = ActionState.WALKING;
             facing_direction = Program.RNG.Next(2) == 0 ? Direction.UP : Direction.RIGHT;
+            turnaround_timer_min = 30;
+            turnaround_timer_max = 120;
 
             x = 128;
             y = 128;
@@ -653,15 +764,7 @@ namespace The_Legend_of_Zelda.Sprites
             // 3 heads: 1u/f
             // 2 heads: 1.5u/f
             // 1 head: 2u/f
-            turn_timer--;
-            if (turn_timer <= 0)
-            {
-                direction = PickNewDirection();
-                turn_timer = RNG.Next(30, 120);
-            }
-
-            Move8D();
-            CheckBounds();
+            Move8D(speed);
 
             int head_count = 0;
             foreach (ManhandlaHead m in heads)
@@ -696,77 +799,6 @@ namespace The_Legend_of_Zelda.Sprites
                 appeared = false;
                 OnDeath();
                 return;
-            }
-        }
-
-        void Move8D()
-        {
-            int rounded_spd = (int)MathF.Floor(speed);
-
-            if (speed % 1 != 0 && local_timer % 2 == 1)
-                rounded_spd++;
-
-            if (direction == EightDirection.UP || direction == EightDirection.UPLEFT ||
-                direction == EightDirection.UPRIGHT)
-            {
-                y -= rounded_spd;
-            }
-            else if (direction == EightDirection.DOWN || direction == EightDirection.DOWNLEFT ||
-                direction == EightDirection.DOWNRIGHT)
-            {
-                y += rounded_spd;
-            }
-
-            if (direction == EightDirection.LEFT || direction == EightDirection.UPLEFT ||
-                direction == EightDirection.DOWNLEFT)
-            {
-                x -= rounded_spd;
-            }
-            else if (direction == EightDirection.RIGHT || direction == EightDirection.UPRIGHT ||
-                direction == EightDirection.DOWNRIGHT)
-            {
-                x += rounded_spd;
-            }
-        }
-
-        // either turns left, turns right or continues forward
-        EightDirection PickNewDirection()
-        {
-            EightDirection return_val = direction;
-            int rng = Program.RNG.Next(3);
-
-            if (rng == 2)
-                return return_val;
-
-            if (direction == EightDirection.UP)
-                return rng == 0 ? EightDirection.UPLEFT : EightDirection.UPRIGHT;
-            if (direction == EightDirection.DOWN)
-                return rng == 0 ? EightDirection.DOWNLEFT : EightDirection.DOWNRIGHT;
-            if (direction == EightDirection.LEFT)
-                return rng == 0 ? EightDirection.UPLEFT : EightDirection.DOWNLEFT;
-            if (direction == EightDirection.RIGHT)
-                return rng == 0 ? EightDirection.UPRIGHT : EightDirection.DOWNRIGHT;
-            if (direction == EightDirection.UPLEFT)
-                return rng == 0 ? EightDirection.UP : EightDirection.LEFT;
-            if (direction == EightDirection.DOWNLEFT)
-                return rng == 0 ? EightDirection.DOWN : EightDirection.LEFT;
-            if (direction == EightDirection.UPRIGHT)
-                return rng == 0 ? EightDirection.UP : EightDirection.RIGHT;
-            else
-                return rng == 0 ? EightDirection.RIGHT : EightDirection.DOWN;
-        }
-
-        void CheckBounds()
-        {
-            if (x <= 48 || x >= 192 || y <= 112 || y >= 176)
-            {
-                // the math works out.
-                if (direction < (EightDirection)4)
-                    direction ^= (EightDirection)1;
-                else
-                    direction ^= (EightDirection)0b11;
-
-                Move8D();
             }
         }
     }
@@ -995,6 +1027,7 @@ namespace The_Legend_of_Zelda.Sprites
             HP = 1;
             x = 116;
             y = 88;
+            SetCustomSize(32, 16);
 
             Palettes.LoadPaletteGroup(PaletteID.SP_3, Palettes.PaletteGroups.GLEEOK);
 
@@ -1086,37 +1119,126 @@ namespace The_Legend_of_Zelda.Sprites
     internal class Digdogger : Boss
     {
         bool triple;
+        bool is_small;
+        float frames_between_movement = 3;
 
-        public Digdogger(bool triple, bool start_small = false) : base(0)
+        public Digdogger(bool triple, Digdogger? parent = null) : base(0)
         {
             this.triple = triple;
-            invincible = true;
-            x = 160;
-            y = 192;
+            this.is_small = parent is not null;
+            x = parent is not null ? parent.x : 168;
+            y = parent is not null ? parent.y : 176;
+
+            HP = 8;
             smoke_appearance = true;
             instant_smoke = true;
-            SetCustomSize(32, 32);
-            body = new StaticSprite[8];
+            Palettes.LoadPaletteGroup(PaletteID.SP_3, Palettes.PaletteGroups.DODONGO);
+
+            tile_index = 0xda;
+            counterpart.tile_index = tile_index;
+            palette_index = (byte)PaletteID.SP_3;
+            counterpart.palette_index = palette_index;
+
+            if (is_small)
+            {
+                turnaround_timer_min = 5;
+                turnaround_timer_max = 15;
+            }
+            else
+            {
+                turnaround_timer_min = 15;
+                turnaround_timer_max = 60;
+            }
         }
 
         protected override void EnemySpecificActions()
         {
-            ;
+            if (is_small && local_timer % 60 == 0 && frames_between_movement > 0.5f)
+            {
+                frames_between_movement -= 0.5f;
+            }
+            
+            Move8D(1 / frames_between_movement);
+
+            if (!is_small)
+            {
+                for (int i = 0; i < body.Length; i++)
+                {
+                    body[i].x = x - 8 + (i % 4) * 8;
+                    body[i].y = y - 8 + (i / 4) * 16;
+                }
+            }
         }
 
         public void OnRecorderPlayed()
         {
+            if (is_small)
+                return;
+
+            foreach (Sprite s in body)
+            {
+                Screen.sprites.Remove(s);
+            }
+            local_timer = 0;
+            appeared = false;
+            SetCustomSize(16, 16);
+            is_small = true;
+            turnaround_timer_min = 5;
+            turnaround_timer_max = 15;
+            invincible = false;
+            shown = true;
+            counterpart.shown = true;
+
             if (triple)
             {
-                new Digdogger(false, true);
-                new Digdogger(false, true);
+                new Digdogger(false, this);
+                new Digdogger(false, this);
+                DC.nb_enemies_alive += 2;
             }
         }
 
 
         protected override void Animation()
         {
+            if (!is_small)
+            {
+                shown = local_timer % 2 == 0;
+                counterpart.shown = !shown;
+            }
 
+            if (local_timer % 6 == 0)
+            {
+                tile_index = 0xda;
+                counterpart.tile_index = tile_index;
+            }
+            else if (local_timer % 6 == 3)
+            {
+                tile_index = 0xd8;
+                counterpart.tile_index = tile_index;
+            }
+        }
+
+        // can't be in constructor. dumb.
+        protected override void OnInit()
+        {
+            if (!is_small)
+            {
+                // xy0 not in top left, rather near center.
+                SetCustomSize(24, 24);
+                invincible = true;
+
+                body = new StaticSprite[8];
+                for (int i = 0; i < body.Length; i++)
+                {
+                    byte tile = (byte)(i % 4 == 0 || i % 4 == 3 ? 0xd4 : 0xd6);
+                    body[i] = new(tile, (byte)PaletteID.SP_3, x - 8 + (i % 4) * 8, y - 8 + (i / 4) * 16);
+                    body[i].xflip = i % 4 >= 2;
+                    body[i].yflip = i >= 4;
+                    body[i].unload_during_transition = true;
+                    Screen.sprites.Add(body[i]);
+                }
+            }
+            counterpart.xflip = true;
         }
     }
 
@@ -1156,11 +1278,15 @@ namespace The_Legend_of_Zelda.Sprites
 
         public Patra(PatraType pattern) : base(4)
         {
+            this.type = pattern;
         }
 
         protected override void EnemySpecificActions()
         {
-            throw new NotImplementedException();
+            switch (type)
+            {
+                default: break;
+            }
         }
     }
 

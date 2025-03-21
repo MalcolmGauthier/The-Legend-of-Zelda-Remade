@@ -445,10 +445,13 @@ namespace The_Legend_of_Zelda.Sprites
                         }
                         else if (gamemode == Gamemode.DUNGEON)
                         {
-                            foreach (Sprite s in sprites)
+                            for (int i = 0; i < sprites.Count; i++)
                             {
-                                if (s is Digdogger d)
+                                if (sprites[i] is Digdogger d)
+                                {
                                     d.OnRecorderPlayed();
+                                    break;
+                                }
                             }
                         }
                     }
